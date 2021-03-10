@@ -27,7 +27,11 @@ def generate_insert_query(table_name, cols):
 
 
 # Should discard duplicate posts during batch insertion.
-def generate_insert_with_unique_query(table_name, cols):
+def generate_insert_with_ignore(table_name, cols):
     cols_sql = "(" + ",".join(cols) + ")"
     vals_sql = "(" + ",".join(["?"] * len(cols)) + ")"
     return "INSERT OR IGNORE INTO " + table_name + cols_sql + " VALUES " + vals_sql
+
+
+def generate_select_range_query(table_name, col, low, high):
+    return "SELECT * FROM {0} WHERE {1} > {2} AND {1} < {3}".format(table_name, col, low, high)

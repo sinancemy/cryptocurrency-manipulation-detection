@@ -41,7 +41,7 @@ class Database(object):
         pass
 
     def insert_posts(self, posts):
-        insert_sql = generate_insert_with_unique_query("posts", ["unique_id", "user", "content", "source", "interaction", "time"])
+        insert_sql = generate_insert_with_ignore("posts", ["unique_id", "user", "content", "source", "interaction", "time"])
         # Batch insert the given posts.
         print(insert_sql)
         self.conn.executemany(insert_sql, map(lambda p: [p.unique_id, p.poster, p.content, p.source, p.interaction, p.time], posts))
