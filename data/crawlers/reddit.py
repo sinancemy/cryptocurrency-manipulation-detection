@@ -21,21 +21,14 @@ def get_reddit():
         coin_subreddit = reddit.subreddit(coin)
         # limit degistir
         for post in coin_subreddit.hot(limit=10):
-            utc0 = get_date(post).astimezone(pytz.timezone('UTC'))
-            post_date = utc0.date()
-            post_time = utc0.time()
             posts.append([post.title, post.score, post.id, post.subreddit, post.url, post.num_comments, post.selftext,
-                          post.created, post_date, post_time])
+                          int(post.created)])
             submission = reddit.submission(id=post.id)
             for top_level_comment in submission.comments:
                 if isinstance(top_level_comment, MoreComments):
                     continue
-                utc0 = get_date(top_level_comment).astimezone(pytz.timezone('UTC'))
-                comment_date = utc0.date()
-                comment_time = utc0.time()
-                posts.append([top_level_comment.body, '', '', '', '', '', '', '', comment_date, comment_time])
-
-    pd.DataFrame(posts, columns=['title', 'score', 'id', 'subreddit', 'url', 'num_comments', 'body', 'created', 'date', 'time']).to_csv(
+                posts.append([top_level_comment.body, '', '', '', '', '', '', int(top_level_comment.created)])
+    pd.DataFrame(posts, columns=['title', 'score', 'id', 'subreddit', 'url', 'num_comments', 'body', 'created']).to_csv(
         "reddit.csv")
     print("Done!")
 
