@@ -51,9 +51,9 @@ def pull_coin_prices(coin, start, end, resolution):
     """
     Same parameters as pull_coin_history()
 
-    :return: The "Open" column of the pandas DataFrame pull_coin_history() returns as a list.
+    :return: The "Open" (price at time) column of the pandas DataFrame pull_coin_history() returns.
     """
-    return list(pull_coin_history(coin, start, end, resolution)["Open"])
+    return pull_coin_history(coin, start, end, resolution)["Open"]
 
 
 def _example_pull_request():
