@@ -29,9 +29,9 @@ def get_tweets():
                 tweet_id = tweet.id
                 username = tweet.username
                 tweet_body = tweet.tweet
-                interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count, tweet.retweet_count)
+                interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count, tweet.retweets_count)
                 unix_timestamp = convert_to_unix(tweet.datestamp, tweet.timestamp)
-                comment_model = Post("tw"+tweet_id, username, tweet_body, interaction_score, "twitter", unix_timestamp)
+                comment_model = Post("tw"+str(tweet_id), username, tweet_body, interaction_score, "twitter", unix_timestamp)
                 posts.append(comment_model)
 
     return posts
