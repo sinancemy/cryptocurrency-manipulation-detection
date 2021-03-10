@@ -53,7 +53,7 @@ def pull_coin_prices(coin, start, end, resolution):
 
     :return: The "Open" (price at time) column of the pandas DataFrame pull_coin_history() returns.
     """
-    return pull_coin_history(coin, start, end, resolution)["Open"]
+    return pull_coin_history(coin, start, end, resolution)[["Open"]]
 
 
 def _example_pull_request():
@@ -66,4 +66,3 @@ def _example_pull_request():
     resolution = "1d"
     plt.plot(pull_coin_prices(coin, start, end, resolution))
     plt.show()
-
