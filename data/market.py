@@ -2,6 +2,16 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
+from database.models import MarketPrice
+
+
+def pull_coin_prices_as_models(coin, start, end, resolution):
+    price_history = pull_coin_prices(coin, start, end, resolution)
+    prices = []
+    for price in price_history.iterrows():
+        price = MarketPrice("BTC", price[1].Open, price[0])
+        prices.append(price)
+    return prices
 
 
 def pull_coin_history(coin, start, end, resolution):
@@ -41,7 +51,7 @@ def pull_coin_history(coin, start, end, resolution):
         hist = hist[start:end]
 
     # Convert date/time data to UNIX timestamps.
-    hist.index = hist.index.astype(np.int64) // 10**9
+    hist.index = hist.index.astype(np.int64) // 10 ** 9
     hist.index.name = "Timestamp"
 
     return hist
@@ -61,8 +71,8 @@ def _example_pull_request():
     An example pull request for reference and debugging purposes.
     """
     coin = "DOGE"
-    start = datetime(2017, 6, 14, 11, 0, 0)     # or 1497398400
-    end = datetime(2021, 3, 7, 2, 0, 0)         # or 1615075200
+    start = datetime(2017, 6, 14, 11, 0, 0)  # or 1497398400
+    end = datetime(2021, 3, 7, 2, 0, 0)  # or 1615075200
     resolution = "1d"
     plt.plot(list(pull_coin_prices(coin, start, end, resolution)["Open"]))
     plt.show()
