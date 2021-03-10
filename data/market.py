@@ -40,7 +40,7 @@ def pull_coin_history(coin, start, end, resolution):
     except TypeError:
         hist = hist[start:end]
 
-    # Convert datetime's to UNIX timestamps.
+    # Convert date/time data to UNIX timestamps.
     hist.index = hist.index.astype(np.int64) // 10**9
     hist.index.name = "Timestamp"
 
@@ -64,5 +64,5 @@ def _example_pull_request():
     start = datetime(2017, 6, 14, 11, 0, 0)     # or 1497398400
     end = datetime(2021, 3, 7, 2, 0, 0)         # or 1615075200
     resolution = "1d"
-    plt.plot(pull_coin_prices(coin, start, end, resolution))
+    plt.plot(list(pull_coin_prices(coin, start, end, resolution)["Open"]))
     plt.show()
