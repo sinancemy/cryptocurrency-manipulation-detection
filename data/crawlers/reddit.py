@@ -31,19 +31,23 @@ def get_reddit_posts_as_models(limit):
             print("RedditCrawler: Browsing submission:", submission.title)
             interaction_score = calculate_interaction_score(submission.num_comments, submission.score)
             subreddit_source = "reddit/" + submission.subreddit.display_name
-            submission_model = Post(submission.author.name, submission.selftext, interaction_score, subreddit_source,
-                                    int(submission.created_utc))
+            # Either use the title or the contents of the post.
+            submission_text = submission.title if submission.selftext.strip() == '' else submission.selftext
+            submission_model = Post("rs" + submission.id, submission.author.name, submission_text, interaction_score,
+                                    subreddit_source, int(submission.created_utc))
             posts.append(submission_model)
             submission = reddit.submission(id=submission.id)
-            # Only consider top level comments and do not expand the "more comments" links.
-            for top_comment in list(submission.comments.replace_more(limit=0)):
+            # Expand the comments once.
+            submission.comments.replace_more(limit=1)
+            # Iterate over all the comments.
+            for top_comment in submission.comments.list():
                 if isinstance(top_comment, MoreComments):
                     continue
-                # Discard the comments with no content.
-                if top_comment.body is None or top_comment.body.trim() == '':
+                # Discard the comments with no content and deleted comments.
+                if top_comment.body is None or top_comment.author is None or top_comment.body.strip() == '':
                     continue
                 comment_interaction_score = calculate_interaction_score(len(top_comment.replies), top_comment.score)
-                comment_model = Post(top_comment.author.name, top_comment.body, comment_interaction_score,
+                comment_model = Post("rc" + top_comment.id, top_comment.author.name, top_comment.body, comment_interaction_score,
                                      subreddit_source, top_comment.created_utc)
                 posts.append(comment_model)
     print("RedditCrawler: Done!")

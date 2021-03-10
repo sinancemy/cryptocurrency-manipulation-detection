@@ -4,7 +4,7 @@ import data.market as mrk_crawler
 import time
 
 print("Recreating the database...")
-recreate_database()
+#recreate_database()
 
 print("Connecting to the database...")
 db = Database()

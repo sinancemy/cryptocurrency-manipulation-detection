@@ -23,7 +23,7 @@ class Database(object):
         try:
             self.conn = sqlite3.connect(DATABASE_FILE)
         except Exception as e:
-            print("Could not connect to database", e)
+            print("Could not connect to the database", e)
 
     def add_user(self, username, password):
         pass
@@ -41,9 +41,10 @@ class Database(object):
         pass
 
     def insert_posts(self, posts):
-        insert_sql = generate_insert_query("posts", ["user", "content", "source", "interaction", "time"])
+        insert_sql = generate_insert_with_unique_query("posts", ["unique_id", "user", "content", "source", "interaction", "time"])
         # Batch insert the given posts.
-        self.conn.executemany(insert_sql, map(lambda p: [p.poster, p.content, p.source, p.interaction, p.time], posts))
+        print(insert_sql)
+        self.conn.executemany(insert_sql, map(lambda p: [p.unique_id, p.poster, p.content, p.source, p.interaction, p.time], posts))
         self.conn.commit()
 
     def insert_prices(self, prices):

@@ -1,11 +1,12 @@
 # Represent a generic social media post.
 class Post(object):
-    def __init__(self, poster, content, interaction, source, time):
+    def __init__(self, unique_id, poster, content, interaction, source, time):
         self.poster = poster
         self.content = content
         self.interaction = interaction
         self.source = source
         self.time = time
+        self.unique_id = unique_id
 
 
 # Represents a market price of a particular coin for a particular time.
