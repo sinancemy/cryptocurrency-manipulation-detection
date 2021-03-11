@@ -1,5 +1,5 @@
 # Preliminary Research Report
-
+This preliminary research report outlines the tools that we are planning to use in this project. 
 ## 1. Sentiment Analysis
 For sentiment analysis, we have found that [VADER](https://github.com/cjhutto/vaderSentiment) is an acceptable base NLP model for our purpose, however we aim to develop and train our own model as well and use VADER as a baseline for its performance. If, however, VADER achieves better accuracy than our model, we will opt to use it. Furthermore, we will consider using [Spacy]() and [NLTK]() NLP libraries that provide sentimnent analysis tools to get the best results.
 
