@@ -20,18 +20,45 @@ TABLE_CREATE_QUERIES = ["""
 """]
 
 
+class RangeSelector:
+    def __init__(self, col, low, high):
+        self.col = col
+        self.low = low
+        self.high = high
+
+
+class MatchSelector:
+    def __init__(self, col, needle):
+        self.col = col
+        self.needle = needle
+
+
+# Creates an INSERT query.
 def generate_insert_query(table_name, cols):
     cols_sql = "(" + ",".join(cols) + ")"
     vals_sql = "(" + ",".join(["?"] * len(cols)) + ")"
     return "INSERT INTO " + table_name + cols_sql + " VALUES " + vals_sql
 
 
-# Should discard duplicate posts during batch insertion.
-def generate_insert_with_ignore(table_name, cols):
+# Creates an INSERT query.
+# Should ignore errors during batch insertion.
+def generate_insert_with_ignore_query(table_name, cols):
     cols_sql = "(" + ",".join(cols) + ")"
     vals_sql = "(" + ",".join(["?"] * len(cols)) + ")"
     return "INSERT OR IGNORE INTO " + table_name + cols_sql + " VALUES " + vals_sql
 
 
-def generate_select_range_query(table_name, col, low, high):
-    return "SELECT * FROM {0} WHERE {1} > {2} AND {1} < {3}".format(table_name, col, low, high)
+# Creates a SELECT query with given predicates in the form of selector objects.
+def generate_select_query(table_name, selectors):
+    sql = "SELECT * FROM " + table_name
+    conds = []
+    for selector in selectors:
+        if isinstance(selector, RangeSelector):
+            cond = selector.col + "<=" + str(selector.high) + " AND " + selector.col + ">=" + str(selector.low)
+            conds.append(cond)
+        elif isinstance(selector, MatchSelector):
+            cond = selector.col + "=" + selector.needle
+            conds.append(cond)
+    if len(conds) > 0:
+        sql += " WHERE " + " AND ".join(conds)
+    return sql

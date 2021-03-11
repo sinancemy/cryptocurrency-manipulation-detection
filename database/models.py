@@ -8,6 +8,9 @@ class Post(object):
         self.time = time
         self.unique_id = unique_id
 
+    def __repr__(self):
+        return "Post[poster=" + self.poster + ",content=" + self.content[0:20] + "...]"
+
 
 # Represents a market price of a particular coin for a particular time.
 class MarketPrice(object):

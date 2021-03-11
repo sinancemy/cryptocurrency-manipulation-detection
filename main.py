@@ -15,12 +15,15 @@ print("Gathering from Reddit...")
 print("Reddit posts gathered. Inserting into the database...")
 #db.insert_posts(reddit_posts)
 print("Gathering from Twitter...")
-tweets = tw_crawler.get_tweets("BTC")
+#tweets = tw_crawler.get_tweets("BTC")
 print("Tweets gathered. Inserting into the database...")
-db.insert_posts(tweets)
+#db.create_posts(tweets)
 print("Gathering price information...")
 # Gather bitcoin price information for the last 1 hour with 1 minute intervals.
-price_history = mrk_crawler.pull_coin_prices_as_models("BTC", time.time(), time.time() - 60 * 60, "1m")
+#price_history = mrk_crawler.pull_coin_prices_as_models("BTC", time.time(), time.time() - 60 * 60, "1m")
 print("Prices gathered. Inserting into the database...")
-db.insert_prices(price_history)
+#db.create_prices(price_history)
+
+for p in db.read_posts_by_interaction(0, 5):
+    print(p)
 
