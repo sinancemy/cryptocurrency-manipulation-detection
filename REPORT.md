@@ -1,7 +1,7 @@
 # Preliminary Research Report
 
 ## 1. Sentiment Analysis
-For sentiment analysis, we have found that VADER [link src] is an acceptable base NLP model for our purposes, however we aim to develop and train our own model as well and use VADER only as a baseline for its performance. If, however, VADER achieves better accuracy than our model, we will opt to use it.
+For sentiment analysis, we have found that [VADER](https://github.com/cjhutto/vaderSentiment) is an acceptable base NLP model for our purposes, however we aim to develop and train our own model as well and use VADER only as a baseline for its performance. If, however, VADER achieves better accuracy than our model, we will opt to use it.
 
 ## 2. Market Prediction
 We aim to predict the future trend of a coin through a regression method, which when given the output of the sentiment analysis of posts along with the meta data (poster, interaction, etc.) belonging to the posts, will predict the impact it will have on the market as a score between -1 and 1.
