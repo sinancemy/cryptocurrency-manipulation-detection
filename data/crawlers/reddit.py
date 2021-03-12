@@ -4,8 +4,11 @@ import threading
 import datetime
 from database.models import Post
 
-# bunlari sonra acariz
-# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
+# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge",
+# "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb",
+# "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm",
+# "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR",
+# "mkr", "Chiliz", "CHZ", "chz"]
 
 coins = ["Bitcoin", "Doge"]
 client_id = '7PKSFWfDqgf_lA'
@@ -18,7 +21,7 @@ def calculate_interaction_score(num_comments, score):
 
 
 def get_reddit_posts_as_models(limit):
-    # timer ayarla
+    # set timer
     # threading.Timer(10.0, get_reddit).start()
     reddit = praw.Reddit(client_id=client_id, client_secret=client_secret,
                          user_agent=user_agent)
@@ -26,7 +29,6 @@ def get_reddit_posts_as_models(limit):
     posts = []
     for coin in coins:
         coin_subreddit = reddit.subreddit(coin)
-        # limit degistir
         for submission in coin_subreddit.hot(limit=limit):
             print("RedditCrawler: Browsing submission:", submission.title)
             interaction_score = calculate_interaction_score(submission.num_comments, submission.score)
@@ -52,8 +54,3 @@ def get_reddit_posts_as_models(limit):
                 posts.append(comment_model)
     print("RedditCrawler: Done!")
     return posts
-
-
-def get_date(submission):
-    time = submission.created
-    return datetime.datetime.fromtimestamp(time)
