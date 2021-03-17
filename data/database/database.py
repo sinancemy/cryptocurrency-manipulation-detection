@@ -18,16 +18,6 @@ def recreate_database():
     conn.close()
 
 
-# Converts a row from 'posts' table into a Post.
-def row_to_post(r):
-    return Post(CoinType(r[1]), r[2], r[3], r[4], r[5], r[6], r[7])
-
-
-# Converts a row from 'prices' table into a MarketPrice
-def row_to_price(r):
-    return MarketPrice(CoinType(r[1]), r[2], r[3], r[4])
-
-
 class Database(object):
     conn = None
 
@@ -42,15 +32,19 @@ class Database(object):
                                                        ["coin_type", "user", "content", "source", "interaction",
                                                         "time", "unique_id"])
         # Batch insert the given posts.
-        self.conn.executemany(insert_sql,
-                              map(lambda p: [p.coin_type.value, p.user, p.content, p.source, p.interaction,
-                                             p.time, p.unique_id], posts))
+        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.user, p.content, p.source, p.interaction,
+                                                         p.time, p.unique_id], posts))
         self.conn.commit()
 
     def create_prices(self, prices):
         insert_sql = generate_insert_query("prices", ["coin_type", "price", "time", "volume"])
         # Batch insert the given prices.
         self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.price, p.time, p.volume], prices))
+        self.conn.commit()
+
+    def create_cached_ranges(self, ranges):
+        insert_sql = generate_insert_query("cached_ranges", ["low", "high", "type"])
+        self.conn.executemany(insert_sql, map(lambda r: [r.low, r.high, r.range_type], ranges))
         self.conn.commit()
 
     # Generic reading method.
@@ -61,6 +55,9 @@ class Database(object):
         rows = cur.fetchall()
         # Convert using the given converter.
         return [row_converter(r) for r in rows]
+
+    def read_cached_ranges_by_type(self, type):
+        return self.read_by("cached_ranges", [MatchSelector("type", "'" + type + "'")], row_to_cached_range)
 
     def read_posts(self):
         return self.read_by("posts", [], row_to_post)
@@ -76,6 +73,10 @@ class Database(object):
 
     def read_posts_by_time(self, low, high):
         return self.read_by("posts", [RangeSelector("time", low, high)], row_to_post)
+
+    def read_posts_by_time_and_coin_type(self, low, high, coin_type: CoinType):
+        return self.read_by("posts", [RangeSelector("time", low, high),
+                                      MatchSelector('coin_type', "'" + coin_type.value + "'")], row_to_post)
 
     def read_prices(self):
         return self.read_by("prices", [], row_to_price)
