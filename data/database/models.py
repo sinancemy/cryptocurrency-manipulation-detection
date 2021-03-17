@@ -11,7 +11,8 @@ class Post(object):
 
 # Represents a market price of a particular coin for a particular time.
 class MarketPrice(object):
-    def __init__(self, coin_name, price, time):
+    def __init__(self, coin_name, price, volume, time):
         self.coin_name = coin_name
         self.price = price
+        self.volume = volume
         self.time = time
