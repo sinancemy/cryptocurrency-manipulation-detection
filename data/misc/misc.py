@@ -2,10 +2,10 @@ from datetime import datetime
 from enum import Enum
 
 
-class CoinType(Enum):
-    BTC = 1
-    ETH = 2
-    DOGE = 3
+class CoinType(str, Enum):
+    BTC = "btc"
+    ETH = "eth"
+    DOGE = "doge"
 
 
 def time_to_str(timestamp):

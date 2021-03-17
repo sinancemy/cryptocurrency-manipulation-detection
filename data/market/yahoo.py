@@ -3,18 +3,19 @@ import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
 from data.database.models import MarketPrice
+from data.misc.misc import CoinType
 
 
-def pull_coin_prices_as_models(coin, start, end, resolution):
+def pull_coin_prices_as_models(coin: CoinType, start, end, resolution):
     price_history = pull_coin_prices(coin, start, end, resolution)
     prices = []
     for price in price_history.iterrows():
-        price = MarketPrice("BTC", price[1].Open, price[0])
+        price = MarketPrice(coin_type=coin, price=price[1].Open, time=price[0], volume=0.0)
         prices.append(price)
     return prices
 
 
-def pull_coin_history(coin, start, end, resolution):
+def pull_coin_history(coin: CoinType, start, end, resolution):
     """
     :param coin: The common abbreviation of the requested coin as a string.
     :param start: datetime object or UNIX timestamp indicating the starting point of the requested data interval.
@@ -40,7 +41,7 @@ def pull_coin_history(coin, start, end, resolution):
     end += timedelta(days=1)
 
     # Pull data with yfinance.
-    hist = yf.Ticker("%s-USD" % coin).history(interval=resolution,
+    hist = yf.Ticker("%s-USD" % coin.value).history(interval=resolution,
                                               start=start.strftime("%Y-%m-%d"),
                                               end=end.strftime("%Y-%m-%d"))
 

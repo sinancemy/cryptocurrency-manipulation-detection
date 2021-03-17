@@ -12,7 +12,7 @@ print("Connecting to the database...")
 db = Database()
 
 for p in db.read_posts_by_interaction(100, 200):
-    print(p.poster, p.interaction)
+    print(p.user, p.interaction)
 
 print("Gathering from Reddit...")
 reddit_posts = rd_crawler.get_reddit_posts_as_models(limit=10)

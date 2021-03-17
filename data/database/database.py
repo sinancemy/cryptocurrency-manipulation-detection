@@ -3,7 +3,7 @@ from data.database.sql_generator import *
 from data.database.models import *
 import os
 
-DATABASE_FILE = "database.db"
+DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"
 
 
 # Recreates the database from scratch.
@@ -11,6 +11,7 @@ def recreate_database():
     if os.path.exists(DATABASE_FILE):
         os.remove(DATABASE_FILE)
     conn = sqlite3.connect(DATABASE_FILE)
+    # Create all the tables.
     for q in TABLE_CREATE_QUERIES:
         conn.execute(q)
     conn.commit()
@@ -19,12 +20,12 @@ def recreate_database():
 
 # Converts a row from 'posts' table into a Post.
 def row_to_post(r):
-    return Post(r[6], r[1], r[2], r[4], r[3], r[5])
+    return Post(CoinType(r[1]), r[2], r[3], r[4], r[5], r[6], r[7])
 
 
 # Converts a row from 'prices' table into a MarketPrice
 def row_to_price(r):
-    return MarketPrice(r[1], r[2], r[3])
+    return MarketPrice(CoinType(r[1]), r[2], r[3], r[4])
 
 
 class Database(object):
@@ -38,17 +39,18 @@ class Database(object):
 
     def create_posts(self, posts):
         insert_sql = generate_insert_with_ignore_query("posts",
-                                                       ["unique_id", "user", "content", "source", "interaction",
-                                                        "time"])
+                                                       ["coin_type", "user", "content", "source", "interaction",
+                                                        "time", "unique_id"])
         # Batch insert the given posts.
         self.conn.executemany(insert_sql,
-                              map(lambda p: [p.unique_id, p.poster, p.content, p.source, p.interaction, p.time], posts))
+                              map(lambda p: [p.coin_type.value, p.user, p.content, p.source, p.interaction,
+                                             p.time, p.unique_id], posts))
         self.conn.commit()
 
     def create_prices(self, prices):
-        insert_sql = generate_insert_query("prices", ["coin", "price", "time"])
+        insert_sql = generate_insert_query("prices", ["coin_type", "price", "time"])
         # Batch insert the given prices.
-        self.conn.executemany(insert_sql, map(lambda p: [p.coin_name, p.price, p.time], prices))
+        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.price, p.time], prices))
         self.conn.commit()
 
     # Generic reading method.

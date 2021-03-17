@@ -5,18 +5,28 @@ TABLE_CREATE_QUERIES = ["""
     "content"	TEXT NOT NULL,
     "source"	TEXT NOT NULL,
     "interaction"	INTEGER DEFAULT 0,
-    "time"	BLOB NOT NULL,
+    "time"	INTEGER NOT NULL,
     "unique_id"	TEXT NOT NULL UNIQUE,
+    "coin_type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
-    )
+)
 """, """
     CREATE TABLE "prices" (
     "id"	INTEGER NOT NULL UNIQUE,
     "coin"	TEXT NOT NULL,
     "price"	REAL NOT NULL,
     "time"	BLOB NOT NULL,
+    "volume"	INTEGER NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
-    )
+)
+""", """
+CREATE TABLE "cached_ranges" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "low"	INTEGER NOT NULL,
+    "high"	INTEGER NOT NULL,
+    "type"	TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
 """]
 
 
