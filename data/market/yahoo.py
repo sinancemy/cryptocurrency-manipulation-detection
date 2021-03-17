@@ -2,8 +2,17 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
+import time
+
+from data.crawler import MarketPriceCrawler
+from data.database.database import Database
 from data.database.models import MarketPrice
-from data.misc.misc import CoinType
+from data.misc.misc import CoinType, TimeRange
+
+
+class YahooPriceCrawler(MarketPriceCrawler):
+    def collect_prices(self, coin: CoinType, time_range: TimeRange, resolution: str):
+        return pull_coin_prices_as_models(coin, time_range.low, time_range.high, resolution)
 
 
 def pull_coin_prices_as_models(coin: CoinType, start, end, resolution):
@@ -42,8 +51,8 @@ def pull_coin_history(coin: CoinType, start, end, resolution):
 
     # Pull data with yfinance.
     hist = yf.Ticker("%s-USD" % coin.value).history(interval=resolution,
-                                              start=start.strftime("%Y-%m-%d"),
-                                              end=end.strftime("%Y-%m-%d"))
+                                                    start=start.strftime("%Y-%m-%d"),
+                                                    end=end.strftime("%Y-%m-%d"))
 
     # Select only the required time-price points and zero out the GMT offsets if needed.
     try:
@@ -77,3 +86,12 @@ def _example_pull_request():
     resolution = "1d"
     plt.plot(list(pull_coin_prices(coin, start, end, resolution)["Open"]))
     plt.show()
+
+
+# Testing
+cr = YahooPriceCrawler()
+prices = cr.collect_prices(CoinType.ETH, TimeRange(time.time() - 100, time.time()), "1m")
+db = Database()
+db.create_prices(prices)
+prices_ = db.read_prices()
+print(prices_)

@@ -48,37 +48,37 @@ class Database(object):
         self.conn.commit()
 
     def create_prices(self, prices):
-        insert_sql = generate_insert_query("prices", ["coin_type", "price", "time"])
+        insert_sql = generate_insert_query("prices", ["coin_type", "price", "time", "volume"])
         # Batch insert the given prices.
-        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.price, p.time], prices))
+        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.price, p.time, p.volume], prices))
         self.conn.commit()
 
     # Generic reading method.
-    def read_by(self, table, selectors):
+    def read_by(self, table, selectors, row_converter):
         select_sql = generate_select_query(table, selectors)
         cur = self.conn.cursor()
         cur.execute(select_sql)
         rows = cur.fetchall()
-        # Convert to Post models.
-        return [row_to_post(r) for r in rows]
+        # Convert using the given converter.
+        return [row_converter(r) for r in rows]
 
     def read_posts(self):
-        return self.read_by("posts", [])
+        return self.read_by("posts", [], row_to_post)
 
     def read_posts_by_user(self, user):
-        return self.read_by("posts", [MatchSelector("user", "'" + user + "'")])
+        return self.read_by("posts", [MatchSelector("user", "'" + user + "'")], row_to_post)
 
     def read_posts_by_source(self, source):
-        return self.read_by("posts", [MatchSelector("source", "'" + source + "'")])
+        return self.read_by("posts", [MatchSelector("source", "'" + source + "'")], row_to_post)
 
     def read_posts_by_interaction(self, low, high):
-        return self.read_by("posts", [RangeSelector("interaction", low, high)])
+        return self.read_by("posts", [RangeSelector("interaction", low, high)], row_to_post)
 
     def read_posts_by_time(self, low, high):
-        return self.read_by("posts", [RangeSelector("time", low, high)])
+        return self.read_by("posts", [RangeSelector("time", low, high)], row_to_post)
 
     def read_prices(self):
-        return self.read_by("prices", [])
+        return self.read_by("prices", [], row_to_price)
 
     def read_prices_by_time(self, low, high):
-        return self.read_by("prices", [RangeSelector("time", low, high)])
+        return self.read_by("prices", [RangeSelector("time", low, high)], row_to_price)
