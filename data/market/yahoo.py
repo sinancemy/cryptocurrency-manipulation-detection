@@ -89,9 +89,9 @@ def _example_pull_request():
 
 
 # Testing
-cr = YahooPriceCrawler()
-prices = cr.collect_prices(CoinType.ETH, TimeRange(time.time() - 100, time.time()), "1m")
-db = Database()
-db.create_prices(prices)
-prices_ = db.read_prices()
-print(prices_)
+# cr = YahooPriceCrawler()
+# prices = cr.collect_prices(CoinType.ETH, TimeRange(time.time() - 100, time.time()), "1m")
+# db = Database()
+# db.create_prices(prices)
+# prices_ = db.read_prices()
+# print(prices_)

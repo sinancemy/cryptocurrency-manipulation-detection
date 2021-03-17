@@ -14,8 +14,8 @@ def time_to_str(timestamp):
 
 class TimeRange(object):
     def __init__(self, low, high):
-        self.low = low
-        self.high = high
+        self.low = int(low)
+        self.high = int(high)
 
     def in_range(self, timestamp):
         return self.low <= timestamp <= self.high

@@ -44,7 +44,7 @@ class Database(object):
 
     def create_cached_ranges(self, ranges):
         insert_sql = generate_insert_query("cached_ranges", ["low", "high", "type"])
-        self.conn.executemany(insert_sql, map(lambda r: [r.low, r.high, r.range_type], ranges))
+        self.conn.executemany(insert_sql, map(lambda r: [r.range.low, r.range.high, r.range_type], ranges))
         self.conn.commit()
 
     # Generic reading method.
@@ -74,12 +74,13 @@ class Database(object):
     def read_posts_by_time(self, low, high):
         return self.read_by("posts", [RangeSelector("time", low, high)], row_to_post)
 
-    def read_posts_by_time_and_coin_type(self, low, high, coin_type: CoinType):
-        return self.read_by("posts", [RangeSelector("time", low, high),
-                                      MatchSelector('coin_type', "'" + coin_type.value + "'")], row_to_post)
-
     def read_prices(self):
         return self.read_by("prices", [], row_to_price)
 
     def read_prices_by_time(self, low, high):
         return self.read_by("prices", [RangeSelector("time", low, high)], row_to_price)
+
+    def read_prices_by_time_and_coin_type(self, low, high, coin_type: CoinType):
+        return self.read_by("prices", [RangeSelector("time", low, high),
+                                       MatchSelector('coin_type', "'" + coin_type.value + "'")], row_to_post)
+

@@ -1,6 +1,9 @@
 from data.database.database import Database
+from data.database.models import CachedRange
+from data.market.yahoo import YahooPriceCrawler
 from data.misc.misc import CoinType, TimeRange
 from itertools import accumulate
+import time
 
 
 class DataCollector:
@@ -10,9 +13,9 @@ class DataCollector:
         self.social_media_crawlers = social_media_crawlers
         self.price_crawlers = price_crawlers
 
-    def collect_from_crawlers(self, coin: CoinType, time_range: TimeRange):
-        return accumulate(map(lambda c: c.collect_posts(coin, time_range), self.social_media_crawlers),
-                          lambda a, b: a + b)
+    def collect_price_from_crawlers(self, coin: CoinType, time_range: TimeRange):
+        return list(accumulate(map(lambda c: c.collect_prices(coin, time_range, "1m"), self.price_crawlers),
+                          lambda a, b: a + b))[0]
 
     def find_ranges(self, cached_ranges: list, requested_range: TimeRange):
         overlapping_cached_ranges = []
@@ -43,13 +46,15 @@ class DataCollector:
         found_ranges = self.find_ranges(cached_ranges, time_range)
         db_ranges = found_ranges[0]
         crawler_ranges = found_ranges[1]
-        posts = []
+        prices = []
         for db_range in db_ranges:
-            posts += self.db.read_posts_by_time_and_coin_type(db_range.low, db_range.high, coin)
+            prices += self.db.read_prices_by_time_and_coin_type(db_range.low, db_range.high, coin)
         for cr_range in crawler_ranges:
-            posts += self.collect_from_crawlers(coin, cr_range)
-            self.db.create_posts(posts)
-        return sorted(posts, key=lambda p: p.time)
+            prices += self.collect_price_from_crawlers(coin, cr_range)
+            self.db.create_prices(prices)
+        if len(crawler_ranges) > 0:
+            self.db.create_cached_ranges(map(lambda cr: CachedRange(cr.low, cr.high, cached_range_type), crawler_ranges))
+        return sorted(prices, key=lambda p: p.time)
 
     def get_posts(self, coin: CoinType, time_range: TimeRange):
         pass
@@ -58,12 +63,15 @@ class DataCollector:
         pass
 
 
+dc = DataCollector([], [YahooPriceCrawler()])
+prices = dc.get_prices(CoinType.BTC, TimeRange(time.time()-100, time.time()))
+print(prices)
 # Cached range test.
-dc = DataCollector([], [])
-cached_ranges = [
-    TimeRange(0, 3),
-    TimeRange(5, 8),
-    TimeRange(10, 13),
-]
-res = dc.find_ranges(cached_ranges, TimeRange(-1, 15))
-print(res)
+# dc = DataCollector([], [])
+# cached_ranges = [
+#     TimeRange(0, 3),
+#     TimeRange(5, 8),
+#     TimeRange(10, 13),
+# ]
+# res = dc.find_ranges(cached_ranges, TimeRange(-1, 15))
+# print(res)
