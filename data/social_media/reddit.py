@@ -1,48 +1,52 @@
 import praw
 from praw.models import MoreComments
-import datetime
+import time
 
 from data.crawler import SocialMediaCrawler
 from data.database.models import Post
+from data.misc.misc import *
 
 # bunlari sonra acariz
 # coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
-from data.misc.misc import TimeRange
 
-coins = ["Bitcoin", "Doge"]
-client_id = '7PKSFWfDqgf_lA'
-client_secret = '5BLHdTaIJQT680-ZwXo1jo3xIbLOJw'
-user_agent = 'Crawler for Cryptocurrency Analysis'
+# Maps a coin type to the subreddits to look for.
+COIN_SUBREDDITS = {
+    CoinType.BTC: ["Bitcoin", "BTC", "btc"],
+    CoinType.ETH: ["Ethereum", "ETH", "eth"],
+    CoinType.DOGE: ["Dogecoin", "DOGE", "doge"]
+}
 
-
-def get_date(submission):
-    time = submission.created
-    return datetime.datetime.fromtimestamp(time)
+CLIENT_ID = '7PKSFWfDqgf_lA'
+CLIENT_SECRET = '5BLHdTaIJQT680-ZwXo1jo3xIbLOJw'
+USER_AGENT = 'Crawler for Cryptocurrency Analysis'
+DEFAULT_LIMIT = 1000
 
 
 def calculate_interaction_score(num_comments, score):
     return num_comments + score
 
 
-DEFAULT_LIMIT = 1000
-
-
 class RedditCrawler(SocialMediaCrawler):
 
     def __init__(self):
-        self.spider = praw.Reddit(client_id=client_id, client_secret=client_secret,
-                                  user_agent=user_agent)
+        self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
+                                  user_agent=USER_AGENT)
 
-    def collect_posts(self, coin, subgroup, time_range: TimeRange, limit=DEFAULT_LIMIT):
+    def collect_posts_from_subreddit(self, subreddit: str, time_range: TimeRange, limit: int = DEFAULT_LIMIT):
+        print("RedditCrawler:", "Collecting from", subreddit, "with time range", time_range)
         posts = []
-        coin_subreddit = self.spider.subreddit(coin)
-        for submission in coin_subreddit.get_new(limit=limit):
+        coin_subreddit = self.spider.subreddit(subreddit)
+        for submission in coin_subreddit.new(limit=limit):
             created_time = int(submission.created_utc)
-            #if time_range.is_lower()
+            if time_range.is_higher(created_time):
+                continue
+            if time_range.is_lower(created_time):
+                break
+            print("RedditCrawler:", "Found post", submission.title, "with time", time_to_str(created_time))
             interaction_score = calculate_interaction_score(submission.num_comments, submission.score)
             subreddit_source = "reddit/" + submission.subreddit.display_name
-            # Either use the title or the contents of the post.
-            submission_text = submission.title if submission.selftext.strip() == '' else submission.selftext
+            # Concatenate the title and the contents of the post.
+            submission_text = submission.title + submission.selftext
             submission_model = Post("rs" + submission.id, submission.author.name, submission_text,
                                     interaction_score,
                                     subreddit_source, created_time)
@@ -62,3 +66,16 @@ class RedditCrawler(SocialMediaCrawler):
                                      comment_interaction_score,
                                      subreddit_source, top_comment.created_utc)
                 posts.append(comment_model)
+        return posts
+
+    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = DEFAULT_LIMIT):
+        posts = []
+        for subreddit in COIN_SUBREDDITS[coin]:
+            posts += self.collect_posts_from_subreddit(subreddit, time_range, limit)
+        return posts
+
+
+
+# Testing
+rc = RedditCrawler()
+rc.collect_posts(CoinType.BTC, TimeRange(int(time.time() - 60 * 60 * 5), int(time.time() - 60 * 60 * 2)))
