@@ -1,3 +1,8 @@
-import data.crawlers.reddit as reddit
+class SocialMediaCrawler(object):
+    def collect_posts(self, coin, subgroup, time_range, limit):
+        pass
 
-reddit.getReddit()  # gibi
+
+class MarketPriceCrawler(object):
+    def collect_prices(self, coin, time_range):
+        pass

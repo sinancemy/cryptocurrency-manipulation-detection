@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
-from database.models import MarketPrice
+from data.database.models import MarketPrice
 
 
 def pull_coin_prices_as_models(coin, start, end, resolution):

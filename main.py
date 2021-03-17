@@ -1,6 +1,6 @@
-from database.database import Database, recreate_database
-import data.crawlers.reddit as rd_crawler
-import data.crawlers.twitter as tw_crawler
+from data.database.database import Database
+import data.social_media.reddit as rd_crawler
+import data.social_media.twitter as tw_crawler
 import data.market as mrk_crawler
 import time
 

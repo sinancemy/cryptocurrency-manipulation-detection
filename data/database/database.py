@@ -1,6 +1,6 @@
 import sqlite3
-from database.sql_generator import *
-from database.models import *
+from data.database.sql_generator import *
+from data.database.models import *
 import os
 
 DATABASE_FILE = "database.db"
