@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 
 
-class SentimentDataset(Dataset):
+class CryptoSpeculationDataset(Dataset):
     def __init__(self, name):
         self.name = name
 
