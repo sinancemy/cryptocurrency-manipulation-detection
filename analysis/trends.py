@@ -1,10 +1,7 @@
 import pandas as pd
 from data.market.yahoo import *
 import matplotlib.pyplot as plt
-from data.misc.misc import TimeRange
 from data.datacollector import *
-from data.social_media.reddit import RedditCrawler
-from data.social_media.twitter import TwitterCrawler
 
 
 def _simple_moving_average(df, avg_time):
@@ -58,6 +55,4 @@ def _example():
     plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 21 * 24))
     plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 55 * 24))
     plt.show()
-
-
-_example()
+# _example()
