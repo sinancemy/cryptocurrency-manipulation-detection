@@ -71,29 +71,20 @@ class DataCollector(object):
         # Sort the posts by time and return.
         return sorted(filter(lambda p: time_range.in_range(p.time), collected_posts), key=lambda p: p.time)
 
-    def collect(self, coin: CoinType, time_range: TimeRange, price_window: int):
+    def collect(self, coin: CoinType, time_range: TimeRange, price_window: int) -> (list, list):
         print("DataCollector: Invoked for", coin.value, "within", time_range)
-        posts = self.collect_posts(coin, time_range)
+        collected_posts = self.collect_posts(coin, time_range)
         # First collect all the possible prices according to the window.
-        min_price_time = posts[0].time - price_window
-        max_price_time = posts[-1].time + price_window
+        min_price_time = collected_posts[0].time - price_window
+        max_price_time = collected_posts[-1].time + price_window
         collected_prices = self.collect_prices(coin, TimeRange(min_price_time, max_price_time), "1h")
-        # For each post in the time range, get the associated prices.
-        data_points = []
-        for post in posts:
-            # Dynamically filter the associated prices.
-            assoc_prices = list(
-                filter(lambda price: TimeRange(post.time - price_window, post.time + price_window).in_range(price.time),
-                       collected_prices))
-            data_points.append(DataPoint(post, assoc_prices))
-        return data_points
+        return collected_posts, collected_prices
 
 
 # recreate_database()
 dc = DataCollector([RedditCrawler(), TwitterCrawler()], YahooPriceCrawler())
-# Collect posts within a range with associated price window of 55 days.
-dp = dc.collect(CoinType.BTC, TimeRange(1616053072 - 10 * 60 * 60, 1616053072), price_window=60 * 60 * 24 * 55)
-print(dp)
+# Collect posts within a range with price window of 55 days.
+posts, prices = dc.collect(CoinType.BTC, TimeRange(1616053072 - 10 * 60 * 60, 1616053072), price_window=60 * 60 * 24 * 55)
 # Cached range test.
 # dc = DataCollector([], [])
 # cached_ranges = [

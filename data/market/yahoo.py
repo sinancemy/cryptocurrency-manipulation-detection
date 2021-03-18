@@ -8,11 +8,12 @@ from data.crawler import MarketPriceCrawler
 from data.database.database import Database
 from data.database.models import MarketPrice
 
-from data.misc.misc import TimeRange
+from data.misc.misc import TimeRange, CoinType
+
 
 class YahooPriceCrawler(MarketPriceCrawler):
     def collect_prices(self, coin: CoinType, time_range: TimeRange, resolution: str):
-        return pull_coin_history_as_models(coin, time_range.low, time_range.high, resolution)
+        return pull_coin_history_as_models(coin, time_range, resolution)
 
 
 def pull_coin_history_as_models(coin, time_range, resolution):
@@ -46,8 +47,8 @@ def pull_coin_history(coin, time_range, resolution):
     start -= timedelta(days=1)
     end += timedelta(days=1)
 
-    # Pull data with yfinance.
-    hist = yf.Ticker("%s-USD" % coin.value).history(interval=resolution,
+    # Pull data with yfinance. IMPORTANT: The coin identity is the uppercase value of the enum.
+    hist = yf.Ticker("%s-USD" % coin.value.upper()).history(interval=resolution,
                                                     start=start.strftime("%Y-%m-%d"),
                                                     end=end.strftime("%Y-%m-%d"))
 
@@ -68,7 +69,7 @@ def _example_pull_request():
     """
     An example pull request for reference and debugging purposes.
     """
-    plt.plot(list(pull_coin_history("DOGE", TimeRange(1497398400, 1615075200), "1d")["Price"]))
+    plt.plot(list(pull_coin_history(CoinType.DOGE, TimeRange(1497398400, 1615075200), "1d")["Price"]))
     plt.show()
 
 
