@@ -2,6 +2,9 @@ import pandas as pd
 from data.market.yahoo import *
 import matplotlib.pyplot as plt
 from data.misc.misc import TimeRange
+from data.datacollector import *
+from data.social_media.reddit import RedditCrawler
+from data.social_media.twitter import TwitterCrawler
 
 
 def _simple_moving_average(df, avg_time):
@@ -23,22 +26,37 @@ def _slope(df, time_range):
 
 # TODO: Implement: 8EMA, 13SMA, 21SMA, 55SMA
 def analyze_trends(price_list):
-    ema8, sma13, sma21, sma55 = None
+    coin = price_list[0].coin_type
+    df = pd.DataFrame([price.price for price in price_list], index=[price.time for price in price_list])
+
+    ema8 = _slope(_exponential_moving_average(moving_average_time(df, 8), 8), slope_time(df, 8))
+    sma13 = _slope(_simple_moving_average(moving_average_time(df, 13), 13), slope_time(df, 13))
+    sma21 = _slope(_simple_moving_average(moving_average_time(df, 21), 21), slope_time(df, 21))
+    sma55 = _slope(_simple_moving_average(moving_average_time(df, 55), 55), slope_time(df, 55))
+
     return ema8, sma13, sma21, sma55
 
 
+def moving_average_time(df, time_range):
+    start = round(((df.index[0] + df.index[-1])/2)/(60 * 60)) * (60 * 60) - time_range * 60 * 60 * 24
+    end = round(((df.index[0] + df.index[-1])/2)/(60 * 60)) * (60 * 60) + time_range * 60 * 60 * 24
+    return df.loc[start:end]
+
+
+def slope_time(df, time_range):
+    middle = round(((df.index[0] + df.index[-1])/2)/(60 * 60)) * (60 * 60)
+    end = middle + time_range * 60 * 60 * 24
+    return TimeRange(middle, end)
+
+
 def _example():
-    print("30SMA slope: ", _slope(_simple_moving_average(
-        pull_coin_history("BTC", TimeRange(1609459200, 1614556800), "1h")[["Price"]], 30 * 24),  # 30 * 24 for 30 DAY
-        TimeRange(1612008000, 1614556800)))
-    print("10EMA slope: ", _slope(_exponential_moving_average(
-        pull_coin_history("BTC", TimeRange(1611187200, 1612828800), "1h")[["Price"]], 10 * 24),  # 10 * 24 for 30 DAY
-        TimeRange(1612008000, 1612828800)))
-
-    plt.plot(pull_coin_history("BTC", TimeRange(1609459200, 1614556800), "1h")[["Price"]])
-    plt.plot(_simple_moving_average(pull_coin_history("BTC", TimeRange(1609459200, 1614556800), "1h"), 30 * 24))
-    plt.plot(_exponential_moving_average(pull_coin_history("BTC", TimeRange(1611187200, 1612828800), "1h"), 10 * 24))
-
+    print(analyze_trends(pull_coin_history_as_models(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h")))
+    plt.plot(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h")[["Price"]])
+    plt.plot(
+        _exponential_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 8 * 24))
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 13 * 24))
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 21 * 24))
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 55 * 24))
     plt.show()
 
 

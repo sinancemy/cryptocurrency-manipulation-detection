@@ -34,7 +34,6 @@ class MarketPrice(object):
     def __init__(self, coin_type: CoinType, price: float, time: int, volume: float):
         self.coin_type = coin_type
         self.price = price
-        self.volume = volume
         self.time = time
         self.volume = volume
 
