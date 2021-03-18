@@ -1,16 +1,16 @@
 from data.cachehandler import CacheHandler
 from data.crawler import MarketPriceCrawler
-from data.database.database import Database
+from data.database.database import Database, recreate_database
 from data.database.models import CachedRange
 from data.market.yahoo import YahooPriceCrawler
 from data.misc.misc import CoinType, TimeRange
 from functools import reduce
-import time
 
 from data.social_media.reddit import RedditCrawler
 from data.social_media.twitter import TwitterCrawler
 
 
+# Represents a single data point.
 class DataPoint(object):
     def __init__(self, post, associated_prices):
         self.post = post
@@ -31,7 +31,7 @@ class DataCollector(object):
     def __collect_all_posts(self, coin: CoinType, time_range: TimeRange):
         return reduce(list.__add__, map(lambda c: c.collect_posts(coin, time_range), self.social_media_crawlers))
 
-    def collect_prices(self, coin: CoinType, time_range: TimeRange, resolution: str = "1m"):
+    def collect_prices(self, coin: CoinType, time_range: TimeRange, resolution: str):
         range_type = "price_" + coin.value
         # Get the price ranges that are already in the database and the ones that are not.
         db_ranges, crawler_ranges = self.db_cache.find_ranges(range_type, time_range)
@@ -71,18 +71,28 @@ class DataCollector(object):
         # Sort the posts by time and return.
         return sorted(filter(lambda p: time_range.in_range(p.time), collected_posts), key=lambda p: p.time)
 
-    def collect(self, coin: CoinType, time_range: TimeRange):
+    def collect(self, coin: CoinType, time_range: TimeRange, price_window: int):
+        print("DataCollector: Invoked for", coin.value, "within", time_range)
         posts = self.collect_posts(coin, time_range)
+        # First collect all the possible prices according to the window.
+        min_price_time = posts[0].time - price_window
+        max_price_time = posts[-1].time + price_window
+        collected_prices = self.collect_prices(coin, TimeRange(min_price_time, max_price_time), "1h")
         # For each post in the time range, get the associated prices.
-        data_points = [
-            DataPoint(post, self.collect_prices(post.coin_type,
-                                                TimeRange(post.time - 60*60*24*55, post.time + 60*60*24*55), "1h"))
-            for post in posts]
+        data_points = []
+        for post in posts:
+            # Dynamically filter the associated prices.
+            assoc_prices = list(
+                filter(lambda price: TimeRange(post.time - price_window, post.time + price_window).in_range(price.time),
+                       collected_prices))
+            data_points.append(DataPoint(post, assoc_prices))
         return data_points
 
 
+# recreate_database()
 dc = DataCollector([RedditCrawler(), TwitterCrawler()], YahooPriceCrawler())
-dp = dc.collect(CoinType.BTC, TimeRange(time.time() - 60*60, time.time()))
+# Collect posts within a range with associated price window of 55 days.
+dp = dc.collect(CoinType.BTC, TimeRange(1616053072 - 10 * 60 * 60, 1616053072), price_window=60 * 60 * 24 * 55)
 print(dp)
 # Cached range test.
 # dc = DataCollector([], [])
