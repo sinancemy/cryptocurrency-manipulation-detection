@@ -1,13 +1,9 @@
 from data.cachehandler import CacheHandler
 from data.crawler import MarketPriceCrawler
-from data.database.database import Database, recreate_database
+from data.database.database import Database
 from data.database.models import CachedRange
-from data.market.yahoo import YahooPriceCrawler
 from data.misc.misc import CoinType, TimeRange
 from functools import reduce
-
-from data.social_media.reddit import RedditCrawler
-from data.social_media.twitter import TwitterCrawler
 
 
 # Represents a single data point.
@@ -81,10 +77,6 @@ class DataCollector(object):
         return collected_posts, collected_prices
 
 
-# recreate_database()
-dc = DataCollector([RedditCrawler(), TwitterCrawler()], YahooPriceCrawler())
-# Collect posts within a range with price window of 55 days.
-posts, prices = dc.collect(CoinType.BTC, TimeRange(1616053072 - 10 * 60 * 60, 1616053072), price_window=60 * 60 * 24 * 55)
 # Cached range test.
 # dc = DataCollector([], [])
 # cached_ranges = [
