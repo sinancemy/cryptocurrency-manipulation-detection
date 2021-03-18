@@ -30,7 +30,7 @@ class TimeRange(object):
         return other.low == self.low and self.high == other.high
 
     def __repr__(self):
-        return "[" + str(self.low) + ", " + str(self.high) + "]"
+        return "[" + time_to_str(self.low) + ", " + time_to_str(self.high) + "]"
 
 
 
