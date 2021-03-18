@@ -6,13 +6,6 @@ from data.misc.misc import CoinType, TimeRange
 from functools import reduce
 
 
-# Represents a single data point.
-class DataPoint(object):
-    def __init__(self, post, associated_prices):
-        self.post = post
-        self.associated_prices = associated_prices
-
-
 # Either collects from the database or from the crawlers.
 class DataCollector(object):
     def __init__(self, social_media_crawlers: list, price_crawler: MarketPriceCrawler):
@@ -69,11 +62,14 @@ class DataCollector(object):
 
     def collect(self, coin: CoinType, time_range: TimeRange, price_window: int) -> (list, list):
         print("DataCollector: Invoked for", coin.value, "within", time_range)
+        # Collect all the posts within the time range.
         collected_posts = self.collect_posts(coin, time_range)
-        # First collect all the possible prices according to the window.
-        min_price_time = collected_posts[0].time - price_window
-        max_price_time = collected_posts[-1].time + price_window
-        collected_prices = self.collect_prices(coin, TimeRange(min_price_time, max_price_time), "1h")
+        # Collect all the possible prices according to the window.
+        collected_prices = []
+        if len(collected_posts) > 0:
+            min_price_time = collected_posts[0].time - price_window
+            max_price_time = collected_posts[-1].time + price_window
+            collected_prices = self.collect_prices(coin, TimeRange(min_price_time, max_price_time), "1h")
         return collected_posts, collected_prices
 
 
