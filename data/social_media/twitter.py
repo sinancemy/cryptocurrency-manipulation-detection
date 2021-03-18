@@ -4,17 +4,17 @@ from data.database.models import Post
 from data.crawler import SocialMediaCrawler
 from data.misc.misc import TimeRange, CoinType
 
-# usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "rogerkver", "aantonop", "ErikVoorhees",
-#             "NickSzabo4", "CryptoYoda1338", "bgarlinghouse", "WhalePanda", "cryptoSqueeze", "ZeusZissou",
-#             "Beastlyorion", "bitcoin_dad", "jebus911", "Sicarious", "CryptoMessiah", "APompliano", "nic__carter",
-#             "CarpeNoctom", "Melt_Dem", "100trillionUSD", "MessariCrypto", "TuurDemeester", "MartyBent", "elonmusk"]
+usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "rogerkver", "aantonop", "ErikVoorhees",
+             "NickSzabo4", "CryptoYoda1338", "bgarlinghouse", "WhalePanda", "cryptoSqueeze", "ZeusZissou",
+             "Beastlyorion", "bitcoin_dad", "jebus911", "Sicarious", "CryptoMessiah", "APompliano", "nic__carter",
+             "CarpeNoctom", "Melt_Dem", "100trillionUSD", "MessariCrypto", "TuurDemeester", "MartyBent", "elonmusk"]
 
 # coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
 
-usernames = ["elonmusk", "SatoshiLite"]
+# usernames = ["elonmusk", "SatoshiLite"]
 # coins = ["Bitcoin", "Doge"]
 
-COIN_SUBREDDITS = {
+COIN_KEYWORDS = {
     CoinType.BTC: ["Bitcoin", "BTC", "btc"],
     CoinType.ETH: ["Ethereum", "ETH", "eth"],
     CoinType.DOGE: ["Dogecoin", "DOGE", "doge"]
@@ -42,11 +42,11 @@ class TwitterCrawler(SocialMediaCrawler):
     def collect_posts(self, coin: CoinType, time_range: TimeRange, limit=None):
         posts = []
         for username in usernames:
-            print("TwitterCrawler:", "Collecting from @", username, "with time range", time_range)
+            print("TwitterCrawler:", "Collecting from @" + username, "with time range", time_range)
             tweets = []
             self.config.Username = username
             self.config.Store_object_tweets_list = tweets
-            for keyword in COIN_SUBREDDITS[coin]:
+            for keyword in COIN_KEYWORDS[coin]:
                 self.config.Search = keyword
                 twint.run.Search(self.config)
                 for tweet in tweets:
@@ -67,7 +67,6 @@ class TwitterCrawler(SocialMediaCrawler):
                                          coin_type=coin)
                     posts.append(comment_model)
         return posts
-
 
 # For Testing
 # TwitterCrawler().collect_posts(CoinType.BTC, TimeRange(int(datetime.datetime.now().timestamp()) - 86400 * 10,

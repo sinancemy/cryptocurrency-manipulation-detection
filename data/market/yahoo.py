@@ -2,10 +2,8 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
-import time
 
 from data.crawler import MarketPriceCrawler
-from data.database.database import Database
 from data.database.models import MarketPrice
 
 from data.misc.misc import TimeRange, CoinType
