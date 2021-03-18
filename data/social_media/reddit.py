@@ -75,12 +75,3 @@ class RedditCrawler(SocialMediaCrawler):
         for subreddit in COIN_SUBREDDITS[coin]:
             posts += self.collect_posts_from_subreddit(subreddit, coin, time_range, limit)
         return posts
-
-
-# Testing
-rc = RedditCrawler()
-posts = rc.collect_posts(CoinType.BTC, TimeRange(int(time.time() - 60 * 60 * 3), int(time.time() - 60 * 60 * 2)))
-db = Database()
-db.create_posts(posts)
-posts_ = db.read_posts()
-print(posts_)

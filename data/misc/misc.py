@@ -29,32 +29,8 @@ class TimeRange(object):
     def equals(self, other):
         return other.low == self.low and self.high == other.high
 
-    # Returns the remaining
-    def subtract(self, other):
-        if other.high <= self.low or self.high <= other.low:
-            return [other]
-        if self.low <= other.low and other.high <= self.high:
-            return []
-        if other.low < self.low and other.high <= self.high:
-            return [TimeRange(other.low, self.low)]
-        if self.low <= other.low and other.high > self.high:
-            return [TimeRange(self.high, other.high)]
-        # Split into two
-        if self.low > other.low and self.high < other.high:
-            return [TimeRange(other.low, self.low), TimeRange(self.high, other.high)]
-
     def __repr__(self):
         return "[" + str(self.low) + ", " + str(self.high) + "]"
-
-
-# Testing
-r1 = TimeRange(0, 5)
-print(r1.subtract(TimeRange(2, 3)))
-print(r1.subtract(TimeRange(-1, 3)))
-print(r1.subtract(TimeRange(2, 7)))
-print(r1.subtract(TimeRange(-1, 7)))
-print(r1.subtract(TimeRange(-8, -5)))
-print(r1.subtract(TimeRange(6, 7)))
 
 
 
