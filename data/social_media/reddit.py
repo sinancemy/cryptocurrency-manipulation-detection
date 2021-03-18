@@ -3,6 +3,7 @@ from praw.models import MoreComments
 import time
 
 from data.crawler import SocialMediaCrawler
+from data.database.database import Database
 from data.database.models import Post
 from data.misc.misc import *
 
@@ -32,7 +33,8 @@ class RedditCrawler(SocialMediaCrawler):
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
 
-    def collect_posts_from_subreddit(self, subreddit: str, time_range: TimeRange, limit: int = DEFAULT_LIMIT):
+    def collect_posts_from_subreddit(self, subreddit: str, coin: CoinType, time_range: TimeRange,
+                                     limit: int = DEFAULT_LIMIT):
         print("RedditCrawler:", "Collecting from", subreddit, "with time range", time_range)
         posts = []
         coin_subreddit = self.spider.subreddit(subreddit)
@@ -47,9 +49,9 @@ class RedditCrawler(SocialMediaCrawler):
             subreddit_source = "reddit/" + submission.subreddit.display_name
             # Concatenate the title and the contents of the post.
             submission_text = submission.title + submission.selftext
-            submission_model = Post("rs" + submission.id, submission.author.name, submission_text,
-                                    interaction_score,
-                                    subreddit_source, created_time)
+            submission_model = Post(unique_id="rs" + submission.id, user=submission.author.name,
+                                    content=submission_text, interaction=interaction_score, source=subreddit_source,
+                                    time=created_time, coin_type=coin)
             posts.append(submission_model)
             submission = self.spider.submission(id=submission.id)
             # Expand the comments once.
@@ -62,20 +64,14 @@ class RedditCrawler(SocialMediaCrawler):
                 if top_comment.body is None or top_comment.author is None or top_comment.body.strip() == '':
                     continue
                 comment_interaction_score = calculate_interaction_score(len(top_comment.replies), top_comment.score)
-                comment_model = Post("rc" + top_comment.id, top_comment.author.name, top_comment.body,
-                                     comment_interaction_score,
-                                     subreddit_source, top_comment.created_utc)
+                comment_model = Post(unique_id="rc" + top_comment.id, user=top_comment.author.name,
+                                     content=top_comment.body, interaction=comment_interaction_score,
+                                     source=subreddit_source, time=top_comment.created_utc, coin_type=coin)
                 posts.append(comment_model)
         return posts
 
     def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = DEFAULT_LIMIT):
         posts = []
         for subreddit in COIN_SUBREDDITS[coin]:
-            posts += self.collect_posts_from_subreddit(subreddit, time_range, limit)
+            posts += self.collect_posts_from_subreddit(subreddit, coin, time_range, limit)
         return posts
-
-
-
-# Testing
-rc = RedditCrawler()
-rc.collect_posts(CoinType.BTC, TimeRange(int(time.time() - 60 * 60 * 5), int(time.time() - 60 * 60 * 2)))

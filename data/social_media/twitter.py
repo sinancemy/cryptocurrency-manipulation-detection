@@ -62,8 +62,9 @@ class TwitterCrawler(SocialMediaCrawler):
                     tweet_body = tweet.tweet
                     interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count,
                                                                     tweet.retweets_count)
-                    comment_model = Post("tw" + str(tweet_id), username, tweet_body, interaction_score, "twitter",
-                                         unix_timestamp)
+                    comment_model = Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
+                                         interaction=interaction_score, source="twitter", time=unix_timestamp,
+                                         coin_type=coin)
                     posts.append(comment_model)
         return posts
 
