@@ -1,5 +1,3 @@
-from torch.utils.data import Dataset
-
 from data.database.database import recreate_database
 from data.datacollector import DataCollector
 from data.market.yahoo import YahooPriceCrawler
@@ -8,7 +6,7 @@ from data.social_media.reddit import RedditCrawler
 from data.social_media.twitter import TwitterCrawler
 
 
-class CryptoSpeculationDataset(Dataset):
+class CryptoSpeculationDataset(object):
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
         recreate_database()
@@ -27,5 +25,6 @@ class CryptoSpeculationDataset(Dataset):
         pass
 
 
+recreate_database()
 dataset = CryptoSpeculationDataset("2020-2021", [RedditCrawler(), TwitterCrawler()], YahooPriceCrawler(),
                                    [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1575072000, 1606694400))

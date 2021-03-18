@@ -48,15 +48,20 @@ class TwitterCrawler(SocialMediaCrawler):
             self.config.Store_object_tweets_list = tweets
             for keyword in COIN_KEYWORDS[coin]:
                 self.config.Search = keyword
-                twint.run.Search(self.config)
+                try:
+                    twint.run.Search(self.config)
+                except Exception as e:
+                    print("TwitterCrawler: An occurred, skipping the keyword...")
+                    print(e)
+                    continue
                 for tweet in tweets:
                     unix_timestamp = convert_to_unix(tweet.datestamp, tweet.timestamp)
                     if time_range.is_higher(unix_timestamp):
                         continue
                     elif time_range.is_lower(unix_timestamp):
                         break
-                    print("TwitterCrawler:", "Found tweet that includes", keyword, "with date", tweet.datestamp,
-                          tweet.timestamp)
+                    # print("TwitterCrawler:", "Found tweet that includes", keyword, "with date", tweet.datestamp,
+                    #       tweet.timestamp)
                     tweet_id = tweet.id
                     username = tweet.username
                     tweet_body = tweet.tweet

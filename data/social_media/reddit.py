@@ -49,13 +49,14 @@ class RedditCrawler(SocialMediaCrawler):
             subreddit_source = "reddit/" + submission.subreddit.display_name
             # Concatenate the title and the contents of the post.
             submission_text = submission.title + submission.selftext
-            submission_model = Post(unique_id="rs" + submission.id, user=submission.author.name,
+            submission_model = Post(unique_id="rs" + submission.id,
+                                    user=(submission.author.name if submission.author is not None else "deleted"),
                                     content=submission_text, interaction=interaction_score, source=subreddit_source,
                                     time=created_time, coin_type=coin)
             posts.append(submission_model)
             submission = self.spider.submission(id=submission.id)
-            # Expand the comments once.
-            submission.comments.replace_more(limit=1)
+            # Expand the comments.
+            submission.comments.replace_more(limit=3)
             # Iterate over all the comments.
             for top_comment in submission.comments.list():
                 if isinstance(top_comment, MoreComments):
@@ -64,7 +65,8 @@ class RedditCrawler(SocialMediaCrawler):
                 if top_comment.body is None or top_comment.author is None or top_comment.body.strip() == '':
                     continue
                 comment_interaction_score = calculate_interaction_score(len(top_comment.replies), top_comment.score)
-                comment_model = Post(unique_id="rc" + top_comment.id, user=top_comment.author.name,
+                comment_model = Post(unique_id="rc" + top_comment.id,
+                                     user=(top_comment.author.name if top_comment.author is not None else "deleted"),
                                      content=top_comment.body, interaction=comment_interaction_score,
                                      source=subreddit_source, time=top_comment.created_utc, coin_type=coin)
                 posts.append(comment_model)
