@@ -41,8 +41,17 @@ def _exponential_moving_average(df, avg_time):
 
 
 def _slope(df, time_range):
-    return (df.loc[time_range.high, :][0] - df.loc[time_range.low, :][0]) \
-           / (time_range.high - time_range.low) * (df.index[1] - df.index[0])
+    try:
+        x2 = df.loc[time_range.high, :][0]
+    except KeyError:
+        time_range.high -= 60*60
+        return _slope(df, time_range)
+    try:
+        x1 = df.loc[time_range.low, :][0]
+    except KeyError:
+        time_range.low -= 60*60
+        return _slope(df, time_range)
+    return (x2 - x1) / (time_range.high - time_range.low) * (df.index[1] - df.index[0])
 
 
 def _select_time_range(df, time_range):
