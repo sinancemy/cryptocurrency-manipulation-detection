@@ -5,7 +5,7 @@ from data.database.database import recreate_database
 from data.datacollector import DataCollector
 from data.market.yahoo import YahooPriceCrawler
 from data.misc.misc import CoinType, TimeRange
-from data.social_media.reddit import RedditCrawler
+from data.social_media.reddit import RealtimeRedditCrawler, ArchivedRedditCrawler
 from data.social_media.twitter import TwitterCrawler
 
 
@@ -13,7 +13,7 @@ class CryptoSpeculationDataset(Dataset):
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
 
-        # recreate_database()
+        recreate_database()
         self.data_collector = DataCollector(social_media_crawlers=social_media_crawlers,
                                             price_crawler=price_crawler)
         self.data_points = list()
@@ -64,7 +64,8 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-dataset = CryptoSpeculationDataset("2020-2021", [RedditCrawler()], YahooPriceCrawler(),
+# 1 ocak 2020'den 2021'e
+dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler()], YahooPriceCrawler(),
                                    [CoinType.ETH], TimeRange(1577836800, 1609459200))
 
 print(dataset.__len__())
