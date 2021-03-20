@@ -1,12 +1,40 @@
+from data.crawler import Crawler
+from data.database.database import Database
+from data.database.models import CachedRange
 from misc.misc import TimeRange
 
 
-class CacheHandler(object):
-    def __init__(self, cached_ranges_generator):
-        self.generator = cached_ranges_generator
+def cached_range_reader(db: Database, range_type):
+    return map(lambda cr: cr.range, db.read_cached_ranges_by_type(range_type))
 
+
+class CachedReader(object):
+    def __init__(self, crawler: Crawler, db: Database, table: str, row_converter, db_inserter):
+        self.db = db
+        self.crawler = crawler
+        self.table = table
+        self.row_converter = row_converter
+        self.db_inserter = db_inserter
+
+    def read_cached(self, time_range: TimeRange, selectors: list):
+        range_type = self.crawler.state()
+        db_ranges, crawler_ranges = self.find_ranges(range_type, time_range)
+        print("CachedReader: Cache hits for", range_type, db_ranges)
+        print("CachedReader: Cache misses for", range_type, crawler_ranges)
+        # First, handle the ranges that should be read from the crawlers.
+        for r in crawler_ranges:
+            collected = self.crawler.collect(r)
+            self.db_inserter(collected)
+        # Save the cached range information into the database.
+        if len(crawler_ranges) > 0:
+            self.db.create_cached_ranges(map(lambda r: CachedRange(r.low, r.high, range_type), crawler_ranges))
+        # Now, read the data from the database.
+        return self.db.read_by(self.table, selectors, self.row_converter)
+
+    # Returns overlapping ranges, excluded ranges
     def find_ranges(self, range_type: str, requested_range: TimeRange) -> tuple:
-        return self.__find_ranges_aux(self.generator(range_type), requested_range)
+        cached_ranges = [*cached_range_reader(self.db, range_type)]
+        return self.__find_ranges_aux(cached_ranges, requested_range)
 
     def __find_ranges_aux(self, cached_ranges: list, requested_range: TimeRange) -> tuple:
         overlapping_cached_ranges = []

@@ -1,4 +1,4 @@
-from data.cachehandler import CacheHandler
+from data.reader.cachedreader import CachedReader
 from data.crawler import MarketPriceCrawler
 from data.database.database import Database
 from data.database.models import CachedRange
@@ -12,7 +12,7 @@ class DataCollector(object):
         # Connect to the database
         self.db = Database()
         # Crate a database cache handler.
-        self.db_cache = CacheHandler(lambda range_type:
+        self.db_cache = CachedReader(lambda range_type:
                                      list(map(lambda cr: cr.range, self.db.read_cached_ranges_by_type(range_type))))
         self.social_media_crawlers = social_media_crawlers
         self.price_crawler = price_crawler
