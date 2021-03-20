@@ -1,7 +1,7 @@
 import twint
 import datetime
 from data.database.models import Post
-from data.crawler import Crawler
+from data.collector import Collector
 from misc import TimeRange, CoinType
 
 usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite"]
@@ -36,9 +36,9 @@ def convert_to_unix(datestamp, timestamp):
     return int(date_time.timestamp())
 
 
-class TwitterCrawler(Crawler):
-    def __init__(self):
-        super().__init__()
+class TwitterCrawler(Collector):
+    def __init__(self, coin: CoinType = CoinType.BTC):
+        super().__init__(coin=coin)
         self.config = twint.Config()
         self.config.Limit = 1
         self.config.Store_object = True

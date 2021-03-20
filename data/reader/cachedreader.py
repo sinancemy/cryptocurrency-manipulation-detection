@@ -1,7 +1,6 @@
 import functools
-import itertools
 
-from data.crawler import Crawler
+from data.collector import Collector
 from data.database import Database, RangeSelector, MatchSelector
 from data.database.models import CachedRange
 from misc import TimeRange, CoinType, interval_to_time_range
@@ -13,31 +12,32 @@ def cached_range_reader(db: Database, range_type: str):
 
 
 class CachedReader(object):
-    def __init__(self, crawler: Crawler, db: Database, table: str, row_converter, db_inserter):
+    def __init__(self, collector: Collector, db: Database, table: str, row_converter):
         self.db = db
-        self.crawler = crawler
+        self.collector = collector
         self.table = table
         self.row_converter = row_converter
-        self.db_inserter = db_inserter
 
-    def read_cached(self, coin: CoinType, time_range: TimeRange):
-        # Set the crawler's coin type.
-        self.crawler.settings.coin = coin
-        range_type = self.crawler.state()
-        db_ranges, crawler_ranges = self.find_ranges(range_type, time_range)
-        print("CachedReader: Cache hits for", range_type, db_ranges)
-        print("CachedReader: Cache misses for", range_type, crawler_ranges)
+    def read_cached(self, time_range: TimeRange):
+        operation = self.collector.state()
+        db_ranges, collector_ranges = self.find_ranges(operation, time_range)
+        print("CachedReader: Cache hits for", operation, db_ranges)
+        print("CachedReader: Cache misses for", operation, collector_ranges)
         # First, handle the ranges that should be read from the crawlers.
-        for r in crawler_ranges:
-            collected = self.crawler.collect(r)
-            self.db_inserter(collected)
+        for r in collector_ranges:
+            collected = self.collector.collect(r)
+            # Set the type of the model to the operation description.
+            for c in collected:
+                c.type = operation
+            self.db.create(self.table, collected)
         # Save the cached range information into the database.
-        if len(crawler_ranges) > 0:
+        if len(collector_ranges) > 0:
             print("CachedReader: Caching...")
-            self.db.create_cached_ranges(map(lambda r: CachedRange(r.low, r.high, range_type), crawler_ranges))
+            self.db.create("cached_ranges",
+                           list(map(lambda r: CachedRange(r.low, r.high, operation), collector_ranges)), ignore=False)
         # Now, read the data from the database.
         return self.db.read_by(self.table, [RangeSelector("time", time_range.low, time_range.high),
-                                            MatchSelector("coin_type", coin.value)], self.row_converter)
+                                            MatchSelector("type", operation)], self.row_converter)
 
     # Returns overlapping ranges, excluded ranges
     def find_ranges(self, range_type: str, requested_range: TimeRange) -> (list, list):
@@ -47,7 +47,7 @@ class CachedReader(object):
         requested_interval = P.closed(requested_range.low, requested_range.high)
         # Get the union of all the cached ranges as a nonatomic interval.
         cached_interval = functools.reduce(P.Interval.union, (P.closed(r.low, r.high) for r in cached_ranges))
-        to_crawl = requested_interval.difference(cached_interval)
+        to_collect = requested_interval.difference(cached_interval)
         to_read = requested_interval.intersection(cached_interval)
         return list(filter(lambda x: x is not None, map(interval_to_time_range, to_read))), \
-               list(filter(lambda x: x is not None, map(interval_to_time_range, to_crawl)))
+               list(filter(lambda x: x is not None, map(interval_to_time_range, to_collect)))

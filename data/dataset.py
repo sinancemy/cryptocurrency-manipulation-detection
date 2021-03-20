@@ -1,9 +1,10 @@
 from torch.utils.data import Dataset
 
 from analysis.trends import analyze_trends
+from data.collector.twitter import TwitterCrawler
 from data.reader.datareader import DataReader
-from data.crawler.yahoo import YahooPriceCrawler
-from data.crawler.reddit import ArchivedRedditCrawler
+from data.collector.yahoo import YahooPriceCrawler
+from data.collector.reddit import ArchivedRedditCrawler
 
 from data.database import *
 
@@ -18,7 +19,10 @@ class CryptoSpeculationDataset(Dataset):
 
         self.data_points = list()
         for coin_type in coin_types:
-            posts, prices = self.data_reader.read(coin_type, time_range, price_window=60 * 60 * 24 * 60)
+            # Update the coin type of each collector.
+            self.data_reader.update_coin_type(coin=coin_type)
+            # Collect or read from the database.
+            posts, prices = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 60)
             for post in posts:
                 self.data_points.append(CryptoSpeculationDataPoint(post, prices))
 
@@ -65,10 +69,11 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(interval=60*60*24*30,
-                                                                       api_settings={'limit': 100})],
+dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(interval=60*60*24*7,
+                                                                       api_settings={'limit': 100}),
+                                                 TwitterCrawler()],
                                    YahooPriceCrawler(resolution="1h"),
-                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836600, 1578837950))
+                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1609456250, 1609459250))
 
 print(dataset.__len__())
 print(dataset.__getitem__(69))

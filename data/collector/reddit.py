@@ -2,7 +2,7 @@ import praw
 from praw.models import MoreComments
 from psaw import PushshiftAPI
 
-from data.crawler import Crawler
+from data.collector import Collector
 from data.database.models import Post
 from misc import *
 
@@ -30,10 +30,10 @@ def calculate_interaction_score(num_comments, score):
     return num_comments + score
 
 
-class RealtimeRedditCrawler(Crawler):
+class RealtimeRedditCrawler(Collector):
 
-    def __init__(self, limit: int):
-        super().__init__(limit=limit)
+    def __init__(self, coin: CoinType, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT):
+        super().__init__(coin=coin, limit=limit)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
 
@@ -43,8 +43,7 @@ class RealtimeRedditCrawler(Crawler):
             posts += self.collect_posts_from_subreddit(subreddit, self.settings.coin, time_range, self.settings.limit)
         return posts
 
-    def collect_posts_from_subreddit(self, subreddit: str, coin: CoinType, time_range: TimeRange,
-                                     limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT):
+    def collect_posts_from_subreddit(self, subreddit: str, coin: CoinType, time_range: TimeRange, limit: int):
         print("RedditCrawler:", "Collecting from", subreddit, "with time range", time_range)
         posts = []
         coin_subreddit = self.spider.subreddit(subreddit)
@@ -83,10 +82,10 @@ class RealtimeRedditCrawler(Crawler):
         return posts
 
 
-class ArchivedRedditCrawler(Crawler):
+class ArchivedRedditCrawler(Collector):
 
-    def __init__(self, interval, api_settings):
-        super().__init__(api_settings=api_settings, interval=interval)
+    def __init__(self, interval, api_settings, coin: CoinType = CoinType.BTC):
+        super().__init__(coin=coin, api_settings=api_settings, interval=interval)
         self.api = PushshiftAPI()
 
     def collect(self, time_range: TimeRange):

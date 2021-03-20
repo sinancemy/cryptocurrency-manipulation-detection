@@ -2,7 +2,7 @@ from misc import TimeRange
 from types import SimpleNamespace
 
 
-class Crawler(object):
+class Collector(object):
 
     def __init__(self, **settings):
         self.settings = SimpleNamespace(**settings)

@@ -28,24 +28,15 @@ class Database(object):
         except Exception as e:
             print("Could not connect to the database", e)
 
-    def create_posts(self, posts):
-        insert_sql = generate_insert_with_ignore_query("posts",
-                                                       ["coin_type", "user", "content", "source", "interaction",
-                                                        "time", "unique_id"])
+    def create(self, table, models: list, ignore=False):
+        if len(models) == 0:
+            return
+        model_keys = list(models[0].__dict__.keys())
+        model_values = list(map(lambda p: list(p.__dict__.values()), models))
+        insert_sql = generate_insert_with_ignore_query(table, model_keys) if ignore else \
+            generate_insert_query(table, models[0].__dict__.keys())
         # Batch insert the given posts.
-        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.user, p.content, p.source, p.interaction,
-                                                         p.time, p.unique_id], posts))
-        self.conn.commit()
-
-    def create_prices(self, prices):
-        insert_sql = generate_insert_query("prices", ["coin_type", "price", "time", "volume"])
-        # Batch insert the given prices.
-        self.conn.executemany(insert_sql, map(lambda p: [p.coin_type.value, p.price, p.time, p.volume], prices))
-        self.conn.commit()
-
-    def create_cached_ranges(self, ranges):
-        insert_sql = generate_insert_query("cached_ranges", ["low", "high", "type"])
-        self.conn.executemany(insert_sql, map(lambda r: [r.range.low, r.range.high, r.range_type], ranges))
+        self.conn.executemany(insert_sql, model_values)
         self.conn.commit()
 
     # Generic reading method.

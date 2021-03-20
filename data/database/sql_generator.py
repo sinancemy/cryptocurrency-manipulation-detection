@@ -8,15 +8,17 @@ CREATE TABLE "posts" (
     "interaction"	INTEGER DEFAULT 0,
     "time"	INTEGER NOT NULL,
     "unique_id"	TEXT NOT NULL UNIQUE,
+    "type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
-CREATE TABLE "prices" (
+    CREATE TABLE "prices" (
     "id"	INTEGER NOT NULL UNIQUE,
     "coin_type"	TEXT NOT NULL,
     "price"	REAL NOT NULL,
-    "time"	BLOB NOT NULL,
+    "time"	INTEGER NOT NULL,
     "volume"	REAL NOT NULL,
+    "type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """

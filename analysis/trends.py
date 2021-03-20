@@ -1,5 +1,5 @@
 import pandas as pd
-from data.crawler.yahoo import *
+from data.collector.yahoo import *
 from data.reader.datareader import *
 
 
