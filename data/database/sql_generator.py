@@ -65,7 +65,7 @@ def generate_select_query(table_name, selectors) -> (str, list):
     conds = []
     for (i, selector) in enumerate(selectors):
         if isinstance(selector, RangeSelector):
-            cond = "(" + selector.high + " <= ? AND " + selector.low + " >= ?)"
+            cond = "(" + selector.col + " <= ? AND " + selector.col + " >= ?)"
             conds.append(cond)
             params += [selector.high, selector.low]
         elif isinstance(selector, MatchSelector):

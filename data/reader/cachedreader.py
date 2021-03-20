@@ -27,6 +27,7 @@ class CachedReader(object):
             self.db_inserter(collected)
         # Save the cached range information into the database.
         if len(crawler_ranges) > 0:
+            print("CachedReader: Caching...")
             self.db.create_cached_ranges(map(lambda r: CachedRange(r.low, r.high, range_type), crawler_ranges))
         # Now, read the data from the database.
         return self.db.read_by(self.table, [RangeSelector("time", time_range.low, time_range.high)], self.row_converter)

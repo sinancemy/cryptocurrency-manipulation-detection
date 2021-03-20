@@ -57,17 +57,17 @@ class Database(object):
         # Convert using the given converter.
         return [row_converter(r) for r in rows]
 
-    def read_cached_ranges_by_type(self, type):
-        return self.read_by("cached_ranges", [MatchSelector("type", str(type))], row_to_cached_range)
+    def read_cached_ranges_by_type(self, range_type):
+        return self.read_by("cached_ranges", [MatchSelector("type", range_type)], row_to_cached_range)
 
     def read_posts(self):
         return self.read_by("posts", [], row_to_post)
 
     def read_posts_by_user(self, user):
-        return self.read_by("posts", [MatchSelector("user", "'" + user + "'")], row_to_post)
+        return self.read_by("posts", [MatchSelector("user", user)], row_to_post)
 
     def read_posts_by_source(self, source):
-        return self.read_by("posts", [MatchSelector("source", "'" + source + "'")], row_to_post)
+        return self.read_by("posts", [MatchSelector("source", source)], row_to_post)
 
     def read_posts_by_interaction(self, low, high):
         return self.read_by("posts", [RangeSelector("interaction", low, high)], row_to_post)
@@ -77,7 +77,7 @@ class Database(object):
 
     def read_posts_by_time_and_coin_type(self, low, high, coin_type: CoinType):
         return self.read_by("posts", [RangeSelector("time", low, high),
-                                      MatchSelector('coin_type', "'" + coin_type.value + "'")], row_to_post)
+                                      MatchSelector('coin_type', coin_type.value)], row_to_post)
 
     def read_prices(self):
         return self.read_by("prices", [], row_to_price)
@@ -87,4 +87,4 @@ class Database(object):
 
     def read_prices_by_time_and_coin_type(self, low, high, coin_type: CoinType):
         return self.read_by("prices", [RangeSelector("time", low, high),
-                                       MatchSelector('coin_type', "'" + coin_type.value + "'")], row_to_price)
+                                       MatchSelector('coin_type', coin_type.value)], row_to_price)
