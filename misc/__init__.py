@@ -1,6 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
+import portion as P
+
 
 class CoinType(str, Enum):
     BTC = "btc"
@@ -10,6 +12,14 @@ class CoinType(str, Enum):
 
 def time_to_str(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def interval_to_time_range(p: P.Interval):
+    if p.empty:
+        return None
+    # low = p.lower + 1 if p.left == P.OPEN else p.lower
+    # high = p.upper - 1 if p.right == P.OPEN else p.upper
+    return TimeRange(p.lower, p.upper)
 
 
 class TimeRange(object):
@@ -31,8 +41,3 @@ class TimeRange(object):
 
     def __repr__(self):
         return "[" + time_to_str(self.low) + ", " + time_to_str(self.high) + "]"
-
-
-
-
-

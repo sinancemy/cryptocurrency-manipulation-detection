@@ -19,16 +19,13 @@ class DataReader(object):
 
     def read(self, coin: CoinType, time_range: TimeRange, price_window: int) -> (list, list):
         print("DataCollector: Invoked for", coin.value, "within", time_range)
-        # Set the coin setting of all crawlers.
-        # TODO: Make it more elegant.
-        for c in itertools.chain([self.cached_price_reader], self.cached_post_readers):
-            c.crawler.settings.coin = coin
         # Collect all the posts within the time range.
-        posts = reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers))
+        posts = reduce(list.__add__, map(lambda c: c.read_cached(coin, time_range), self.cached_post_readers))
         # Collect all the possible prices according to the window.
         prices = []
         if len(posts) > 0:
             min_price_time = posts[0].time - price_window
             max_price_time = posts[-1].time + price_window
-            prices = self.cached_price_reader.read_cached(TimeRange(min_price_time, max_price_time))
-        return posts, prices
+            prices = self.cached_price_reader.read_cached(coin, TimeRange(min_price_time, max_price_time))
+        # Sort and return.
+        return sorted(posts, key=lambda x: x.time), sorted(prices, key=lambda x: x.time)
