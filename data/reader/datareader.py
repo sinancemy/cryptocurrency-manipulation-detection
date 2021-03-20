@@ -1,3 +1,5 @@
+import itertools
+
 from data.crawler import Crawler
 from data.database import Database, row_to_post, row_to_price
 from data.reader.cachedreader import CachedReader
@@ -17,8 +19,12 @@ class DataReader(object):
 
     def read(self, coin: CoinType, time_range: TimeRange, price_window: int) -> (list, list):
         print("DataCollector: Invoked for", coin.value, "within", time_range)
+        # Set the coin setting of all crawlers.
+        # TODO: Make it more elegant.
+        for c in itertools.chain([self.cached_price_reader], self.cached_post_readers):
+            c.crawler.settings.coin = coin
         # Collect all the posts within the time range.
-        posts = reduce(list.__add__, map(lambda c: c.read_cached(coin, time_range), self.cached_post_readers))
+        posts = reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers))
         # Collect all the possible prices according to the window.
         prices = []
         if len(posts) > 0:

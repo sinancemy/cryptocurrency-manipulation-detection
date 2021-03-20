@@ -36,8 +36,8 @@ def convert_to_unix(datestamp, timestamp):
 
 
 class TwitterCrawler(Crawler):
-    def __init__(self, coin: CoinType):
-        super().__init__(coin=coin)
+    def __init__(self):
+        super().__init__()
         self.config = twint.Config()
         self.config.Limit = 1
         self.config.Store_object = True
@@ -50,7 +50,7 @@ class TwitterCrawler(Crawler):
             tweets = []
             self.config.Username = username
             self.config.Store_object_tweets_list = tweets
-            for keyword in COIN_KEYWORDS[self.coin]:
+            for keyword in COIN_KEYWORDS[self.settings.coin]:
                 self.config.Search = keyword
                 try:
                     twint.run.Search(self.config)
@@ -73,7 +73,7 @@ class TwitterCrawler(Crawler):
                                                                     tweet.retweets_count)
                     comment_model = Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
                                          interaction=interaction_score, source="twitter", time=unix_timestamp,
-                                         coin_type=self.coin)
+                                         coin_type=self.settings.coin)
                     posts.append(comment_model)
         return posts
 

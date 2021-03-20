@@ -32,15 +32,15 @@ def calculate_interaction_score(num_comments, score):
 
 class RealtimeRedditCrawler(Crawler):
 
-    def __init__(self, coin: CoinType, limit: int):
-        super().__init__(coin=coin, limit=limit)
+    def __init__(self, limit: int):
+        super().__init__(limit=limit)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
 
     def collect(self, time_range: TimeRange) -> list:
         posts = []
-        for subreddit in COIN_SUBREDDITS[self.coin]:
-            posts += self.collect_posts_from_subreddit(subreddit, self.coin, time_range, self.limit)
+        for subreddit in COIN_SUBREDDITS[self.settings.coin]:
+            posts += self.collect_posts_from_subreddit(subreddit, self.settings.coin, time_range, self.settings.limit)
         return posts
 
     def collect_posts_from_subreddit(self, subreddit: str, coin: CoinType, time_range: TimeRange,
@@ -85,29 +85,29 @@ class RealtimeRedditCrawler(Crawler):
 
 class ArchivedRedditCrawler(Crawler):
 
-    def __init__(self, coin: CoinType, api_settings, interval=60 * 60 * 24 * 30):
-        super().__init__(coin=coin, api_settings=api_settings, interval=interval)
+    def __init__(self, interval, api_settings):
+        super().__init__(api_settings=api_settings, interval=interval)
         self.api = PushshiftAPI()
 
     def collect(self, time_range: TimeRange):
         posts = []
-        for t in range(time_range.low, time_range.high + 1, self.interval):
-            tr = TimeRange(t, min(t + self.interval, time_range.high))
+        for t in range(time_range.low, time_range.high + 1, self.settings.interval):
+            tr = TimeRange(t, min(t + self.settings.interval, time_range.high))
             print("ArchivedRedditCrawler: Reading within", tr)
-            for subreddit in COIN_SUBREDDITS[self.coin.value]:
+            for subreddit in COIN_SUBREDDITS[self.settings.coin.value]:
                 sbm = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
-                                                  **self.api_settings)
+                                                  **self.settings.api_settings)
                 cmt = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low,
-                                               **self.api_settings)
+                                               **self.settings.api_settings)
                 for p in sbm:
-                    content = p.title + ("" if (p.selftext is None) else " " + p.selftext)
-                    posts.append(Post(self.coin, p.author,
+                    content = p.title + (" " + p.selftext if hasattr(p, 'selftext') else "")
+                    posts.append(Post(self.settings.coin, p.author,
                                       content,
                                       "reddit/" + subreddit,
                                       calculate_interaction_score(p.num_comments, p.score),
                                       p.created_utc, p.id))
                 for p in cmt:
-                    posts.append(Post(self.coin, p.author,
+                    posts.append(Post(self.settings.coin, p.author,
                                       p.body,
                                       "reddit/" + subreddit,
                                       calculate_interaction_score(0, p.score),

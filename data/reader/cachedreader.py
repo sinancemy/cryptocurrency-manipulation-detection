@@ -4,7 +4,7 @@ from data.database.models import CachedRange
 from misc import TimeRange
 
 
-def cached_range_reader(db: Database, range_type):
+def cached_range_reader(db: Database, range_type: str):
     return map(lambda cr: cr.range, db.read_cached_ranges_by_type(range_type))
 
 

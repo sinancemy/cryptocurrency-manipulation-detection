@@ -2,6 +2,7 @@ import sqlite3
 from data.database.sql_generator import *
 from data.database.models import *
 import os
+import itertools
 
 DATABASE_FILE = "database.db"
 
@@ -49,15 +50,15 @@ class Database(object):
 
     # Generic reading method.
     def read_by(self, table, selectors, row_converter):
-        select_sql = generate_select_query(table, selectors)
+        select_sql, params = generate_select_query(table, selectors)
         cur = self.conn.cursor()
-        cur.execute(select_sql)
+        cur.execute(select_sql, params)
         rows = cur.fetchall()
         # Convert using the given converter.
         return [row_converter(r) for r in rows]
 
     def read_cached_ranges_by_type(self, type):
-        return self.read_by("cached_ranges", [MatchSelector("type", "'" + type + "'")], row_to_cached_range)
+        return self.read_by("cached_ranges", [MatchSelector("type", str(type))], row_to_cached_range)
 
     def read_posts(self):
         return self.read_by("posts", [], row_to_post)

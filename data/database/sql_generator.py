@@ -59,16 +59,19 @@ def generate_insert_with_ignore_query(table_name, cols):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors):
+def generate_select_query(table_name, selectors) -> (str, list):
     sql = "SELECT * FROM " + table_name
+    params = []
     conds = []
-    for selector in selectors:
+    for (i, selector) in enumerate(selectors):
         if isinstance(selector, RangeSelector):
-            cond = selector.col + "<=" + str(selector.high) + " AND " + selector.col + ">=" + str(selector.low)
+            cond = "(" + selector.high + " <= ? AND " + selector.low + " >= ?)"
             conds.append(cond)
+            params += [selector.high, selector.low]
         elif isinstance(selector, MatchSelector):
-            cond = selector.col + "=" + selector.needle
+            cond = "(" + selector.col + " = ?)"
             conds.append(cond)
+            params += [selector.needle]
     if len(conds) > 0:
         sql += " WHERE " + " AND ".join(conds)
-    return sql
+    return sql, params
