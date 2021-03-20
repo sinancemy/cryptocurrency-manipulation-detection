@@ -1,4 +1,4 @@
-from misc.misc import TimeRange
+from misc import TimeRange
 
 
 class Crawler(object):

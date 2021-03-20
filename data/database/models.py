@@ -1,5 +1,4 @@
-# Represent a generic social media post.
-from misc.misc import CoinType, TimeRange
+from misc import CoinType, TimeRange
 
 
 # Converts a row from 'posts' table into a Post.

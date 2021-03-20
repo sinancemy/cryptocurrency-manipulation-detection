@@ -1,20 +1,21 @@
 from torch.utils.data import Dataset
 
 from analysis.trends import analyze_trends
-from data.datacollector import DataCollector
+from data.reader.datareader import DataReader
 from data.crawler.yahoo import YahooPriceCrawler
 from data.crawler.reddit import ArchivedRedditCrawler
 from data.crawler.twitter import TwitterCrawler
 
-from data.database.database import *
+from data.database import *
+
 
 class CryptoSpeculationDataset(Dataset):
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
 
         # recreate_database()
-        self.data_collector = DataCollector(social_media_crawlers=social_media_crawlers,
-                                            price_crawler=price_crawler)
+        self.data_collector = DataReader(social_media_crawlers=social_media_crawlers,
+                                         price_crawler=price_crawler)
 
         self.data_points = list()
         for coin_type in coin_types:
@@ -67,7 +68,6 @@ class CryptoSpeculationY:
 db = Database()
 posts = db.read_cached_ranges_by_type()
 print(len(posts))
-
 
 dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(1500), TwitterCrawler()], YahooPriceCrawler(),
                                    [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836800, 1609459200))

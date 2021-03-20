@@ -2,7 +2,7 @@ import twint
 import datetime
 from data.database.models import Post
 from data.crawler import Crawler
-from misc.misc import TimeRange, CoinType
+from misc import TimeRange, CoinType
 
 usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "rogerkver", "aantonop", "ErikVoorhees",
              "NickSzabo4", "CryptoYoda1338", "bgarlinghouse", "WhalePanda", "cryptoSqueeze", "ZeusZissou",

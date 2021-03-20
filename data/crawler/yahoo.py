@@ -6,7 +6,7 @@ import numpy as np
 from data.crawler import Crawler
 from data.database.models import MarketPrice
 
-from misc.misc import TimeRange, CoinType
+from misc import TimeRange, CoinType
 
 
 class YahooPriceCrawler(Crawler):

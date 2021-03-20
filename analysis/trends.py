@@ -1,6 +1,6 @@
 import pandas as pd
 from data.crawler.yahoo import *
-from data.datacollector import *
+from data.reader.datareader import *
 
 
 def analyze_trends(price_list):

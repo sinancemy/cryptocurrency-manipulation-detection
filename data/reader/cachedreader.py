@@ -1,7 +1,7 @@
 from data.crawler import Crawler
-from data.database.database import Database
+from data.database import Database, RangeSelector
 from data.database.models import CachedRange
-from misc.misc import TimeRange
+from misc import TimeRange
 
 
 def cached_range_reader(db: Database, range_type):
@@ -16,7 +16,7 @@ class CachedReader(object):
         self.row_converter = row_converter
         self.db_inserter = db_inserter
 
-    def read_cached(self, time_range: TimeRange, selectors: list):
+    def read_cached(self, time_range: TimeRange):
         range_type = self.crawler.state()
         db_ranges, crawler_ranges = self.find_ranges(range_type, time_range)
         print("CachedReader: Cache hits for", range_type, db_ranges)
@@ -29,7 +29,7 @@ class CachedReader(object):
         if len(crawler_ranges) > 0:
             self.db.create_cached_ranges(map(lambda r: CachedRange(r.low, r.high, range_type), crawler_ranges))
         # Now, read the data from the database.
-        return self.db.read_by(self.table, selectors, self.row_converter)
+        return self.db.read_by(self.table, [RangeSelector("time", time_range.low, time_range.high)], self.row_converter)
 
     # Returns overlapping ranges, excluded ranges
     def find_ranges(self, range_type: str, requested_range: TimeRange) -> tuple:

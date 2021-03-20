@@ -4,7 +4,7 @@ from psaw import PushshiftAPI
 
 from data.crawler import Crawler
 from data.database.models import Post
-from misc.misc import *
+from misc import *
 
 # coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge",
 # "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb",
