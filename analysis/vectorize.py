@@ -3,7 +3,6 @@ import re
 import numpy as np
 
 
-# TODO: Add padding and adapt to NumPy.
 class DiscreteDomain:
     def __init__(self, discrete_list, min_count_to_include, max_size, neg_list=[]):
         self.NEG = "<neg>"  # "Negligible" token
