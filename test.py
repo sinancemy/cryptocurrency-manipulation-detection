@@ -1,9 +1,9 @@
-from data.database.database import recreate_database, CoinType
+from data.database.database import CoinType
 from data.datacollector import DataCollector
-from data.market.yahoo import YahooPriceCrawler
-from data.misc.misc import TimeRange
-from data.social_media.reddit import RealtimeRedditCrawler
-from data.social_media.twitter import TwitterCrawler
+from data.crawler.yahoo import YahooPriceCrawler
+from misc.misc import TimeRange
+from data.crawler.reddit import RealtimeRedditCrawler
+from data.crawler.twitter import TwitterCrawler
 
 #recreate_database()
 

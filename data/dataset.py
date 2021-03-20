@@ -1,12 +1,10 @@
 from torch.utils.data import Dataset
 
 from analysis.trends import analyze_trends
-from data.database.database import recreate_database
 from data.datacollector import DataCollector
-from data.market.yahoo import YahooPriceCrawler
-from data.misc.misc import CoinType, TimeRange
-from data.social_media.reddit import RealtimeRedditCrawler, ArchivedRedditCrawler
-from data.social_media.twitter import TwitterCrawler
+from data.crawler.yahoo import YahooPriceCrawler
+from data.crawler.reddit import ArchivedRedditCrawler
+from data.crawler.twitter import TwitterCrawler
 
 from data.database.database import *
 

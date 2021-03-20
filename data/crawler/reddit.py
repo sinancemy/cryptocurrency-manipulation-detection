@@ -1,17 +1,16 @@
 import praw
 from praw.models import MoreComments
-import time
-import psaw
 from psaw import PushshiftAPI
 
-from data.crawler import SocialMediaCrawler
-from data.database.database import Database
+from data.crawler import Crawler
 from data.database.models import Post
-from data.misc.misc import *
-import itertools
+from misc.misc import *
 
-# bunlari sonra acariz
-# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
+# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge",
+# "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb",
+# "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm",
+# "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR",
+# "mkr", "Chiliz", "CHZ", "chz"]
 
 # Maps a coin type to the subreddits to look for.
 COIN_SUBREDDITS = {
@@ -31,20 +30,26 @@ def calculate_interaction_score(num_comments, score):
     return num_comments + score
 
 
-class RealtimeRedditCrawler(SocialMediaCrawler):
+class RealtimeRedditCrawler(Crawler):
 
-    def __init__(self):
+    def __init__(self, coin: CoinType, limit: int):
+        super().__init__(coin=coin, limit=limit)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
+
+    def collect(self, time_range: TimeRange) -> list:
+        posts = []
+        for subreddit in COIN_SUBREDDITS[self.coin]:
+            posts += self.collect_posts_from_subreddit(subreddit, self.coin, time_range, self.limit)
+        return posts
 
     def collect_posts_from_subreddit(self, subreddit: str, coin: CoinType, time_range: TimeRange,
                                      limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT):
         print("RedditCrawler:", "Collecting from", subreddit, "with time range", time_range)
         posts = []
         coin_subreddit = self.spider.subreddit(subreddit)
-        for i, submission in enumerate(coin_subreddit.new(limit=limit)):
+        for submission in coin_subreddit.new(limit=limit):
             created_time = int(submission.created_utc)
-            print(i, created_time)
             if time_range.is_higher(created_time):
                 continue
             if time_range.is_lower(created_time):
@@ -77,41 +82,34 @@ class RealtimeRedditCrawler(SocialMediaCrawler):
                 posts.append(comment_model)
         return posts
 
-    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT):
-        posts = []
-        for subreddit in COIN_SUBREDDITS[coin]:
-            posts += self.collect_posts_from_subreddit(subreddit, coin, time_range, limit)
-        return posts
 
+class ArchivedRedditCrawler(Crawler):
 
-class ArchivedRedditCrawler(SocialMediaCrawler):
-    def __init__(self, limit_per_month=750):
+    def __init__(self, coin: CoinType, api_settings, interval=60 * 60 * 24 * 30):
+        super().__init__(coin=coin, api_settings=api_settings, interval=interval)
         self.api = PushshiftAPI()
-        self.limit_per_month = limit_per_month
 
-    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = -1):
-        # One month interval.
-        interval = 60 * 60 * 24 * 30
-        # Use the limit-per-month defined in the constructor (if not explicitly specified)
-        if limit == -1:
-            limit = self.limit_per_month
-
+    def collect(self, time_range: TimeRange):
         posts = []
-        for t in range(time_range.low, time_range.high + 1, interval):
-            tr = TimeRange(t, min(t + interval, time_range.high))
+        for t in range(time_range.low, time_range.high + 1, self.interval):
+            tr = TimeRange(t, min(t + self.interval, time_range.high))
             print("ArchivedRedditCrawler: Reading within", tr)
-            for subreddit in COIN_SUBREDDITS[coin.value]:
-                submissions = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
-                                                          limit=limit)
-                comments = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low, limit=limit)
-                posts += [*itertools.chain(map(lambda p: Post(coin, p.author,
-                                                              p.title,
-                                                              "reddit/" + subreddit,
-                                                              calculate_interaction_score(p.num_comments, p.score),
-                                                              p.created_utc, p.id), submissions),
-                                           map(lambda p: Post(coin, p.author,
-                                                              p.body,
-                                                              "reddit/" + subreddit,
-                                                              calculate_interaction_score(0, p.score),
-                                                              p.created_utc, p.id), comments))]
+            for subreddit in COIN_SUBREDDITS[self.coin.value]:
+                sbm = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
+                                                  **self.api_settings)
+                cmt = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low,
+                                               **self.api_settings)
+                for p in sbm:
+                    content = p.title + ("" if (p.selftext is None) else " " + p.selftext)
+                    posts.append(Post(self.coin, p.author,
+                                      content,
+                                      "reddit/" + subreddit,
+                                      calculate_interaction_score(p.num_comments, p.score),
+                                      p.created_utc, p.id))
+                for p in cmt:
+                    posts.append(Post(self.coin, p.author,
+                                      p.body,
+                                      "reddit/" + subreddit,
+                                      calculate_interaction_score(0, p.score),
+                                      p.created_utc, p.id))
         return posts

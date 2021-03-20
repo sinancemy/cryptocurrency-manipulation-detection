@@ -2,7 +2,7 @@ from data.cachehandler import CacheHandler
 from data.crawler import MarketPriceCrawler
 from data.database.database import Database
 from data.database.models import CachedRange
-from data.misc.misc import CoinType, TimeRange
+from misc.misc import CoinType, TimeRange
 from functools import reduce
 
 

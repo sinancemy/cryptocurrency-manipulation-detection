@@ -1,23 +1,26 @@
 import twint
 import datetime
 from data.database.models import Post
-from data.crawler import SocialMediaCrawler
-from data.misc.misc import TimeRange, CoinType
+from data.crawler import Crawler
+from misc.misc import TimeRange, CoinType
 
 usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "rogerkver", "aantonop", "ErikVoorhees",
              "NickSzabo4", "CryptoYoda1338", "bgarlinghouse", "WhalePanda", "cryptoSqueeze", "ZeusZissou",
              "Beastlyorion", "bitcoin_dad", "jebus911", "Sicarious", "CryptoMessiah", "APompliano", "nic__carter",
              "CarpeNoctom", "Melt_Dem", "100trillionUSD", "MessariCrypto", "TuurDemeester", "MartyBent", "elonmusk"]
 
-# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT", "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
+# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada",
+# "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp",
+# "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT",
+# "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
 
 # usernames = ["elonmusk", "SatoshiLite"]
 # coins = ["Bitcoin", "Doge"]
 
 COIN_KEYWORDS = {
-    CoinType.BTC: ["Bitcoin", "BTC", "btc"],
-    CoinType.ETH: ["Ethereum", "ETH", "eth"],
-    CoinType.DOGE: ["Dogecoin", "DOGE", "doge"]
+    CoinType.BTC: ["Bitcoin", "BTC"],
+    CoinType.ETH: ["Ethereum", "ETH"],
+    CoinType.DOGE: ["Dogecoin"]
 }
 
 
@@ -32,21 +35,22 @@ def convert_to_unix(datestamp, timestamp):
     return int(date_time.timestamp())
 
 
-class TwitterCrawler(SocialMediaCrawler):
-    def __init__(self):
+class TwitterCrawler(Crawler):
+    def __init__(self, coin: CoinType):
+        super().__init__(coin=coin)
         self.config = twint.Config()
         self.config.Limit = 1
         self.config.Store_object = True
         self.config.Hide_output = True
 
-    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit=None):
+    def collect(self, time_range: TimeRange):
         posts = []
         for username in usernames:
             print("TwitterCrawler:", "Collecting from @" + username, "with time range", time_range)
             tweets = []
             self.config.Username = username
             self.config.Store_object_tweets_list = tweets
-            for keyword in COIN_KEYWORDS[coin]:
+            for keyword in COIN_KEYWORDS[self.coin]:
                 self.config.Search = keyword
                 try:
                     twint.run.Search(self.config)
@@ -69,7 +73,7 @@ class TwitterCrawler(SocialMediaCrawler):
                                                                     tweet.retweets_count)
                     comment_model = Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
                                          interaction=interaction_score, source="twitter", time=unix_timestamp,
-                                         coin_type=coin)
+                                         coin_type=self.coin)
                     posts.append(comment_model)
         return posts
 

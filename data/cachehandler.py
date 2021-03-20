@@ -1,4 +1,4 @@
-from data.misc.misc import TimeRange
+from misc.misc import TimeRange
 
 
 class CacheHandler(object):

@@ -3,15 +3,18 @@ import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
 
-from data.crawler import MarketPriceCrawler
+from data.crawler import Crawler
 from data.database.models import MarketPrice
 
-from data.misc.misc import TimeRange, CoinType
+from misc.misc import TimeRange, CoinType
 
 
-class YahooPriceCrawler(MarketPriceCrawler):
-    def collect_prices(self, coin: CoinType, time_range: TimeRange, resolution: str):
-        return pull_coin_history_as_models(coin, time_range, resolution)
+class YahooPriceCrawler(Crawler):
+    def __init__(self, coin: CoinType, resolution: str):
+        super().__init__(resolution=resolution, coin=coin)
+
+    def collect(self, time_range: TimeRange):
+        return pull_coin_history_as_models(self.coin, time_range, self.resolution)
 
 
 def pull_coin_history_as_models(coin, time_range, resolution):
