@@ -15,9 +15,9 @@ import itertools
 
 # Maps a coin type to the subreddits to look for.
 COIN_SUBREDDITS = {
-    CoinType.BTC: ["Bitcoin", "BTC", "btc"],
-    CoinType.ETH: ["Ethereum", "ETH", "eth"],
-    CoinType.DOGE: ["Dogecoin", "DOGE", "doge"]
+    CoinType.BTC: ["Bitcoin", "BTC"],
+    CoinType.ETH: ["Ethereum", "ETH"],
+    CoinType.DOGE: ["Dogecoin"]
 }
 
 # PRAW STUFF
@@ -85,12 +85,17 @@ class RealtimeRedditCrawler(SocialMediaCrawler):
 
 
 class ArchivedRedditCrawler(SocialMediaCrawler):
-    def __init__(self):
+    def __init__(self, limit_per_month=750):
         self.api = PushshiftAPI()
+        self.limit_per_month = limit_per_month
 
-    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = 1):
+    def collect_posts(self, coin: CoinType, time_range: TimeRange, limit: int = -1):
         # One month interval.
         interval = 60 * 60 * 24 * 30
+        # Use the limit-per-month defined in the constructor (if not explicitly specified)
+        if limit == -1:
+            limit = self.limit_per_month
+
         posts = []
         for t in range(time_range.low, time_range.high + 1, interval):
             tr = TimeRange(t, min(t + interval, time_range.high))
