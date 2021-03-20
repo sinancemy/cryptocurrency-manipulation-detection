@@ -1,28 +1,37 @@
 from torch.utils.data import Dataset
-
 from analysis.trends import analyze_trends
-from data.database.database import recreate_database
-from data.datacollector import DataCollector
 from data.market.yahoo import YahooPriceCrawler
-from data.misc.misc import CoinType, TimeRange
-from data.social_media.reddit import RealtimeRedditCrawler, ArchivedRedditCrawler
+from data.social_media.reddit import ArchivedRedditCrawler
 from data.social_media.twitter import TwitterCrawler
-
 from data.database.database import *
+from analysis.vectorize import Vocabulary, DiscreteDomain
+
 
 class CryptoSpeculationDataset(Dataset):
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
 
         # recreate_database()
-        self.data_collector = DataCollector(social_media_crawlers=social_media_crawlers,
-                                            price_crawler=price_crawler)
+        # self.data_collector = DataCollector(social_media_crawlers=social_media_crawlers,
+        #                                     price_crawler=price_crawler)
 
         self.data_points = list()
-        for coin_type in coin_types:
-            posts, prices = self.data_collector.collect(coin_type, time_range, price_window=60 * 60 * 24 * 60)
-            for post in posts:
-                self.data_points.append(CryptoSpeculationDataPoint(post, prices))
+        # for coin_type in coin_types:
+        #     posts, prices = self.data_collector.collect(coin_type, time_range, price_window=60 * 60 * 24 * 60)
+        #
+        #     for post in posts:
+        #         self.data_points.append(CryptoSpeculationDataPoint(post, prices))
+
+        # TEMPORARY UNTIL DataCollector DEBUG:
+        db = Database()
+        posts = db.read_posts()
+        prices = db.read_prices()
+
+        self.content_vocab = Vocabulary([post.content for post in posts])
+        self.user_domain = DiscreteDomain([post.user for post in posts], 5, 100000, ["[deleted]", "AutoModerator"])
+        self.source_domain = DiscreteDomain([post.source for post in posts], 1, 100)
+
+        # TODO: Fill data_points list with vectorized data
 
     def __len__(self):
         return len(self.data_points)
@@ -66,13 +75,13 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-db = Database()
-posts = db.read_cached_ranges_by_type()
-print(len(posts))
+# db = Database()
+# posts = db.read_cached_ranges_by_type()
+# print(len(posts))
 
 
 dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(1500), TwitterCrawler()], YahooPriceCrawler(),
                                    [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836800, 1609459200))
 
-print(dataset.__len__())
-print(dataset.__getitem__(69))
+# print(dataset.__len__())
+# print(dataset.__getitem__(69))
