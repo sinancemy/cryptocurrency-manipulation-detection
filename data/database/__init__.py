@@ -28,7 +28,7 @@ class Database(object):
         except Exception as e:
             print("Could not connect to the database", e)
 
-    def create(self, table, models: list, ignore=False):
+    def create(self, table, models: list, ignore=True):
         if len(models) == 0:
             return
         model_keys = list(models[0].__dict__.keys())
