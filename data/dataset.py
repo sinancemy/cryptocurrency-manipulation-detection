@@ -4,7 +4,8 @@ from data.market.yahoo import YahooPriceCrawler
 from data.social_media.reddit import ArchivedRedditCrawler
 from data.social_media.twitter import TwitterCrawler
 from data.database.database import *
-from analysis.vectorize import Vocabulary, DiscreteDomain
+from analysis.vectorize import Vocabulary, DiscreteDomain, PostVectorizer
+from tqdm import tqdm
 
 
 class CryptoSpeculationDataset(Dataset):
@@ -25,13 +26,17 @@ class CryptoSpeculationDataset(Dataset):
         # TEMPORARY UNTIL DataCollector DEBUG:
         db = Database()
         posts = db.read_posts()
-        prices = db.read_prices()
+        prices = db.read_prices_by_time_and_coin_type(1577836800-60*60*24*60, 1609459200+60*60*24*60, CoinType.BTC)
 
-        self.content_vocab = Vocabulary([post.content for post in posts])
-        self.user_domain = DiscreteDomain([post.user for post in posts], 5, 100000, ["[deleted]", "AutoModerator"])
-        self.source_domain = DiscreteDomain([post.source for post in posts], 1, 100)
+        print("Generating discrete domains")
+        content_vocab = Vocabulary([post.content for post in posts], 8192, 20)
+        user_domain = DiscreteDomain([post.user for post in posts], 1024, 10, ["[deleted]", "AutoModerator"])
+        source_domain = DiscreteDomain([post.source for post in posts], 1, 128)
+        self.post_vectorizer = PostVectorizer(content_vocab, user_domain, source_domain)
 
-        # TODO: Fill data_points list with vectorized data
+        # self.data_points = [CryptoSpeculationDataPoint(post, prices, post_vectorizer) for post in posts]
+        for post in tqdm(posts):
+            self.data_points.append(CryptoSpeculationDataPoint(post, prices, self.post_vectorizer))
 
     def __len__(self):
         return len(self.data_points)
@@ -41,8 +46,8 @@ class CryptoSpeculationDataset(Dataset):
 
 
 class CryptoSpeculationDataPoint:
-    def __init__(self, post, prices):
-        self.X = CryptoSpeculationX(post)
+    def __init__(self, post, prices, post_vectorizer):
+        self.X = CryptoSpeculationX(post, post_vectorizer)
         self.y = CryptoSpeculationY(list(filter(
             lambda price: TimeRange(post.time - 60 * 60 * 24 * 60, post.time + 60 * 60 * 24 * 60).in_range(price.time),
             prices)))
@@ -62,11 +67,8 @@ class CryptoSpeculationDataPoint:
 
 
 class CryptoSpeculationX:
-    def __init__(self, post):
-        self.content = post.content
-        self.user = post.user
-        self.source = post.source
-        self.interaction = post.interaction
+    def __init__(self, post, vectorizer):
+        self.content, self.user, self.source, self.interaction = vectorizer.vectorize(post)
         # self.coin_type = post.coin_type
 
 

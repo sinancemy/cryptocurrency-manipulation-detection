@@ -3,8 +3,19 @@ import re
 import numpy as np
 
 
+class PostVectorizer:
+    def __init__(self, vocabulary, user_domain, source_domain):
+        self.v = vocabulary
+        self.u = user_domain
+        self.s = source_domain
+
+    def vectorize(self, post):
+        return self.v.vectorize(post.content), self.u.vectorize(post.user),\
+               self.s.vectorize(post.source), post.interaction
+
+
 class DiscreteDomain:
-    def __init__(self, discrete_list, min_count_to_include, max_size, neg_list=[]):
+    def __init__(self, discrete_list, max_size, min_count_to_include, neg_list=[]):
         self.NEG = "<neg>"  # "Negligible" token
 
         counts = dict()
@@ -26,16 +37,16 @@ class DiscreteDomain:
     def __len__(self):
         return len(self.d2i)
 
-    def one_hot_encode(self, discrete):
+    def vectorize(self, discrete):
         oh = np.zeros((len(self)))
-        oh[self.d2i[discrete]] = 1
+        oh[self.d2i.get(discrete, 0)] = 1
         return oh
 
-    def one_hot_decode(self, oh):
+    def unvectorize(self, oh):
         return self.i2d[oh.argmax()]
 
 
-class Vocabulary:
+class Vocabulary(DiscreteDomain):
     def __init__(self, sentences, max_vocab_size=10000, min_count_to_include=15, max_word_length=25):
         self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
         self.UNK = "<unk>"
@@ -61,10 +72,11 @@ class Vocabulary:
     def __len__(self):
         return len(self.w2i)
 
-    def translate_encode(self, sentence_w):
-        return np.array([self.w2i.get(word, 0) for word in tokenize(sentence_w, max_token_length=self.max_word_length)])
+    def vectorize(self, sentence_w):
+        return np.array([self.w2i.get(word, 0) for word in tokenize(sentence_w, self.ALLOWED_CHAR_SET,
+                                                                    max_token_length=self.max_word_length)])
 
-    def translate_decode(self, sentence_i):
+    def unvectorize(self, sentence_i):
         return np.array([self.i2w[idx] for idx in sentence_i])
 
 
