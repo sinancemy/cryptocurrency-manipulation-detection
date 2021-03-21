@@ -32,27 +32,28 @@ class DiscreteDomain:
         self.NEG = "<neg>"  # "Negligible" token
 
         counts = dict()
-        for d in discrete_list:
-            if d not in counts:
-                counts[d] = 1
+        for w in discrete_list:
+            if w not in counts:
+                counts[w] = 1
             else:
-                counts[d] += 1
+                counts[w] += 1
 
-        self.w2i = {self.NEG: 0}
+        self.w2i = {self.NEG: 1}
         self.i2w = [self.NEG]
-        for i, d in enumerate(sorted(counts, key=counts.get, reverse=True)):
-            if d not in neg_list and counts[d] >= min_count_to_include:
-                self.w2i[d] = i + 1
-                self.i2w.append(d)
-            if len(self.w2i) == max_size:
+        for i, w in enumerate(sorted(counts, key=counts.get, reverse=True)):
+            if w not in neg_list and counts[w] >= min_count_to_include:
+                self.w2i[w] = len(self.i2w) + 1
+                self.i2w.append(w)  # [0] reserved for NEG -> 1, [1] -> 2
+            if len(self) == max_size:
                 break
+        print(self.w2i)
 
     def __len__(self):
-        return len(self.w2i)
+        return len(self.i2w)
 
     def vectorize(self, discrete):
         oh = np.zeros((len(self)))
-        oh[self.w2i.get(discrete, 0)] = 1
+        oh[self.w2i.get(discrete, 1) - 1] = 1
         return oh
 
     def devectorize(self, oh):
@@ -83,11 +84,11 @@ class Vocabulary(DiscreteDomain):
                 else:
                     word_counts[word] += 1
 
-        self.w2i = {self.UNK: 0}
+        self.w2i = {self.UNK: 1}
         self.i2w = [self.UNK]
         for i, w in enumerate(sorted(word_counts, key=word_counts.get, reverse=True)):
             if word_counts[w] >= min_count_to_include:
-                self.w2i[w] = i + 1
+                self.w2i[w] = len(self) + 1
                 self.i2w.append(w)
             if len(self.w2i) == max_vocab_size:
                 break
@@ -103,7 +104,7 @@ class Vocabulary(DiscreteDomain):
         for i, word in enumerate(tok):
             if i == self.max_sentence_length:
                 break
-            vec[i] = self.w2i.get(word, 0)
+            vec[i] = self.w2i.get(word, 1)
         return vec
 
     def devectorize(self, sentence_i):
