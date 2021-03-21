@@ -14,6 +14,7 @@ from data.database import *
 
 
 class CryptoSpeculationDataset(Dataset):
+
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
 
@@ -40,6 +41,22 @@ class CryptoSpeculationDataset(Dataset):
             if point.X.content is not None:
                 self.data_points.append(point)
         print(self)
+
+    def __len__(self):
+        return len(self.data_points)
+
+    def __getitem__(self, item):
+        return self.data_points[item]
+
+    def __repr__(self):
+        return "CryptoSpeculationDataset: %s\n" \
+               "\t- Number of data points: %d\n" \
+               "\t- Vocab size: %d\n" \
+               "\t- Sentence length: %d\n" \
+               "\t- User domain size: %d\n" \
+               "\t- Source domain size: %d\n" \
+               % (self.name, len(self.data_points), len(self.post_vectorizer.v),
+                  self.post_vectorizer.v.max_sentence_length, len(self.post_vectorizer.u), len(self.post_vectorizer.s))
 
     def save(self, save_dir):
         pass
@@ -81,12 +98,10 @@ class CryptoSpeculationY:
 
 
 recreate_database()
-dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(interval=60*60*24*7,
-                                                                       api_settings={'limit': 50,
-                                                                                     'score': '>5'}),
-                                                 TwitterCrawler()],
+dataset = CryptoSpeculationDataset("2020-2021", [
+    ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 100, 'score': '>5'}), TwitterCrawler()],
                                    YahooPriceCrawler(resolution="1h"),
-                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1608456250, 1609459250))
+                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836800, 1580083200))
 
 print(dataset.__len__())
-print(dataset.__getitem__(69))
+print(dataset.__getitem__(70))
