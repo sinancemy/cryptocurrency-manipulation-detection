@@ -35,7 +35,6 @@ class DiscreteDomain:
         return self.i2d[oh.argmax()]
 
 
-# TODO: Add padding and adapt to NumPy.
 class Vocabulary:
     def __init__(self, sentences, max_vocab_size=10000, min_count_to_include=15, max_word_length=25):
         self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
@@ -63,10 +62,10 @@ class Vocabulary:
         return len(self.w2i)
 
     def translate_encode(self, sentence_w):
-        return [self.w2i.get(word, 0) for word in tokenize(sentence_w, max_token_length=self.max_word_length)]
+        return np.array([self.w2i.get(word, 0) for word in tokenize(sentence_w, max_token_length=self.max_word_length)])
 
     def translate_decode(self, sentence_i):
-        return [self.i2w[idx] for idx in sentence_i]
+        return np.array([self.i2w[idx] for idx in sentence_i])
 
 
 def tokenize(sentence, allowed_char_set, max_token_length=25):
