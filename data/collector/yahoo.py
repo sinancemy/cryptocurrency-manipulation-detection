@@ -23,19 +23,6 @@ def pull_coin_history_as_models(coin, time_range, resolution):
             for row in pull_coin_history(coin, time_range, resolution).iterrows())
 
 
-def resolution_as_seconds(resolution):
-    if "mo" in resolution:
-        return int(resolution.replace("mo", "")) * 60 * 60 * 24 * 30
-    elif "wk" in resolution:
-        return int(resolution.replace("wk", "")) * 60 * 60 * 24 * 7
-    elif "d" in resolution:
-        return int(resolution.replace("d", "")) * 60 * 60 * 24
-    elif "h" in resolution:
-        return int(resolution.replace("h", "")) * 60 * 60
-    elif "m" in resolution:
-        return int(resolution.replace("m", "")) * 60
-
-
 def pull_coin_history(coin, time_range, resolution):
     """
     :param coin: The common abbreviation of the requested coin as a string.
@@ -80,6 +67,19 @@ def pull_coin_history(coin, time_range, resolution):
     hist.index.name = "Timestamp"
 
     return hist[["Open", "Volume"]].rename(columns={"Open": "Price"})
+
+
+def resolution_as_seconds(resolution):
+    if "mo" in resolution:
+        return int(resolution.replace("mo", "")) * 60 * 60 * 24 * 30
+    elif "wk" in resolution:
+        return int(resolution.replace("wk", "")) * 60 * 60 * 24 * 7
+    elif "d" in resolution:
+        return int(resolution.replace("d", "")) * 60 * 60 * 24
+    elif "h" in resolution:
+        return int(resolution.replace("h", "")) * 60 * 60
+    elif "m" in resolution:
+        return int(resolution.replace("m", "")) * 60
 
 
 def _example_pull_request():
