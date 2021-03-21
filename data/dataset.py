@@ -97,11 +97,10 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-# recreate_database()
+recreate_database()
 dataset = CryptoSpeculationDataset("2020-2021",
-                                   [ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 100}),
+                                   [ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 500}),
                                     TwitterCrawler()], YahooPriceCrawler(resolution="1h"),
-                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1609456250, 1609459250))
+                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577840461, 1609462861))
 
 print(dataset.__len__())
-print(dataset.__getitem__(69))

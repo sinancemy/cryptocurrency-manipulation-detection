@@ -42,11 +42,11 @@ class DiscreteDomain:
         self.i2w = [self.NEG]
         for i, w in enumerate(sorted(counts, key=counts.get, reverse=True)):
             if w not in neg_list and counts[w] >= min_count_to_include:
-                self.w2i[w] = i + 2
+                self.w2i[w] = len(self.i2w) + 1
                 self.i2w.append(w)  # [0] reserved for NEG -> 1, [1] -> 2
             if len(self) == max_size:
-                print(len(self.i2w))
                 break
+        print(self.w2i)
 
     def __len__(self):
         return len(self.i2w)
@@ -84,11 +84,11 @@ class Vocabulary(DiscreteDomain):
                 else:
                     word_counts[word] += 1
 
-        self.w2i = {self.UNK: 0}
+        self.w2i = {self.UNK: 1}
         self.i2w = [self.UNK]
         for i, w in enumerate(sorted(word_counts, key=word_counts.get, reverse=True)):
             if word_counts[w] >= min_count_to_include:
-                self.w2i[w] = i + 1
+                self.w2i[w] = len(self) + 1
                 self.i2w.append(w)
             if len(self.w2i) == max_vocab_size:
                 break
@@ -104,7 +104,7 @@ class Vocabulary(DiscreteDomain):
         for i, word in enumerate(tok):
             if i == self.max_sentence_length:
                 break
-            vec[i] = self.w2i.get(word, 0)
+            vec[i] = self.w2i.get(word, 1)
         return vec
 
     def devectorize(self, sentence_i):
