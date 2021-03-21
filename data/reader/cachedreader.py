@@ -3,8 +3,9 @@ import functools
 from data.collector import Collector
 from data.database import Database, RangeSelector, MatchSelector
 from data.database.models import CachedRange
-from misc import TimeRange, CoinType, interval_to_time_range
+from misc import TimeRange, interval_to_time_range
 import portion as P
+from tqdm import tqdm
 
 
 def cached_range_reader(db: Database, range_type: str):
@@ -23,18 +24,19 @@ class CachedReader(object):
     def read_cached(self, time_range: TimeRange):
         collector_state = self.collector.state()
         db_ranges, collector_ranges = self.find_ranges(collector_state, time_range)
-        print("CachedReader: Cache hits for", collector_state, db_ranges)
-        print("CachedReader: Cache misses for", collector_state, collector_ranges)
+        if len(collector_ranges) > 0:
+            print("CachedReader: Cache misses occurred for", collector_state, collector_ranges)
         # First, handle the ranges that should be read from the crawlers.
         for r in collector_ranges:
-            collected = self.collector.collect(r)
+            collected = list(tqdm(self.collector.collect(r), "CachedReader: Collecting from "
+                                  + self.collector.__class__.__name__))
             # Set the type of the model to the operation description/collector state.
             for c in collected:
                 c.type = collector_state
             self.db.create(self.table, collected)
         # Save the cached range information into the database.
         if len(collector_ranges) > 0:
-            print("CachedReader: Caching...")
+            # print("CachedReader: Caching...")
             self.db.create("cached_ranges",
                            list(map(lambda r: CachedRange(r.low, r.high, collector_state), collector_ranges)))
         # Now, read the data from the database.

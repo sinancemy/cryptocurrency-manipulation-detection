@@ -13,5 +13,5 @@ class Collector(object):
                "&".join((str(i[0]) + "=" + str(i[1])
                          for i in sorted_state))
 
-    def collect(self, time_range: TimeRange) -> list:
+    def collect(self, time_range: TimeRange) -> iter:
         raise NotImplementedError()

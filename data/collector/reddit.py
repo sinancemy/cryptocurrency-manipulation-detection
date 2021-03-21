@@ -89,10 +89,9 @@ class ArchivedRedditCrawler(Collector):
         self.api = PushshiftAPI()
 
     def collect(self, time_range: TimeRange):
-        posts = []
         for t in range(time_range.low, time_range.high + 1, self.settings.interval):
             tr = TimeRange(t, min(t + self.settings.interval, time_range.high))
-            print("ArchivedRedditCrawler: Reading within", tr)
+            # print("ArchivedRedditCrawler: Reading within", tr)
             for subreddit in COIN_SUBREDDITS[self.settings.coin.value]:
                 sbm = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
                                                   **self.settings.api_settings)
@@ -100,15 +99,14 @@ class ArchivedRedditCrawler(Collector):
                                                **self.settings.api_settings)
                 for p in sbm:
                     content = p.title + (" " + p.selftext if hasattr(p, 'selftext') else "")
-                    posts.append(Post(self.settings.coin, p.author,
+                    yield Post(self.settings.coin, p.author,
                                       content,
                                       "reddit/" + subreddit,
                                       calculate_interaction_score(p.num_comments, p.score),
-                                      p.created_utc, p.id))
+                                      p.created_utc, p.id)
                 for p in cmt:
-                    posts.append(Post(self.settings.coin, p.author,
+                    yield Post(self.settings.coin, p.author,
                                       p.body,
                                       "reddit/" + subreddit,
                                       calculate_interaction_score(0, p.score),
-                                      p.created_utc, p.id))
-        return posts
+                                      p.created_utc, p.id)

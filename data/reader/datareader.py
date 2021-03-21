@@ -1,5 +1,7 @@
 import itertools
 
+from tqdm import tqdm
+
 from data.collector import Collector
 from data.database import Database, row_to_post, row_to_price
 from data.reader.cachedreader import CachedReader
@@ -24,7 +26,7 @@ class DataReader(object):
             cr.collector.settings.coin = coin
 
     def read(self, time_range: TimeRange, price_window: int) -> (list, list):
-        print("DataCollector: Invoked to run within", time_range)
+        print("DataReader: Invoked to run within", time_range)
         # Collect all the posts within the time range.
         posts = reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers))
         # Collect all the possible prices according to the window.

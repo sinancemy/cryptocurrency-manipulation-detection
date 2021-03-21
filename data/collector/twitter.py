@@ -45,9 +45,8 @@ class TwitterCrawler(Collector):
         self.config.Hide_output = True
 
     def collect(self, time_range: TimeRange):
-        posts = []
         for username in usernames:
-            print("TwitterCrawler:", "Collecting from @" + username, "with time range", time_range)
+            # print("TwitterCrawler:", "Collecting from @" + username, "with time range", time_range)
             tweets = []
             self.config.Username = username
             self.config.Store_object_tweets_list = tweets
@@ -72,11 +71,9 @@ class TwitterCrawler(Collector):
                     tweet_body = tweet.tweet
                     interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count,
                                                                     tweet.retweets_count)
-                    comment_model = Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
+                    yield Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
                                          interaction=interaction_score, source="twitter", time=unix_timestamp,
                                          coin_type=self.settings.coin)
-                    posts.append(comment_model)
-        return posts
 
 # For Testing
 # TwitterCrawler().collect_posts(CoinType.BTC, TimeRange(int(datetime.datetime.now().timestamp()) - 86400 * 10,

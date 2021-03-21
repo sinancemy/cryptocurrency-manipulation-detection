@@ -18,8 +18,8 @@ class YahooPriceCrawler(Collector):
 
 
 def pull_coin_history_as_models(coin, time_range, resolution):
-    return [MarketPrice(coin_type=coin, price=row[1].Price, volume=row[1].Volume, time=row[0])
-            for row in pull_coin_history(coin, time_range, resolution).iterrows()]
+    return (MarketPrice(coin_type=coin, price=row[1].Price, volume=row[1].Volume, time=row[0])
+            for row in pull_coin_history(coin, time_range, resolution).iterrows())
 
 
 def pull_coin_history(coin, time_range, resolution):
