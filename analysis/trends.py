@@ -15,13 +15,13 @@ def analyze_trends(price_list):
     """
     df = pd.DataFrame([price.price for price in price_list], index=[price.time for price in price_list])
 
-    ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 8, False)), 8),
+    ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 8, False)), 8 * 24),
                   _get_time_window_range(df, 8, True))
-    sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 13, False)), 13),
+    sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 13, False)), 13 * 24),
                    _get_time_window_range(df, 13, True))
-    sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 21, False)), 21),
+    sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 21, False)), 21 * 24),
                    _get_time_window_range(df, 21, True))
-    sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 55, False)), 55),
+    sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 55, False)), 55 * 24),
                    _get_time_window_range(df, 55, True))
 
     return ema8, sma13, sma21, sma55
@@ -40,8 +40,11 @@ def _exponential_moving_average(df, avg_time):
 
 
 def _slope(df, time_range):
-    return (df.loc[time_range.high, :][0] - df.loc[time_range.low, :][0]) /\
+    try:
+        return (df.loc[time_range.high, :][0] - df.loc[time_range.low, :][0]) /\
            (time_range.high - time_range.low) * (df.index[1] - df.index[0])
+    except KeyError:
+        return _slope(df, TimeRange(time_range.low + 60*60, time_range.high - 60*60))
 
 
 def _select_time_range(df, time_range):
@@ -49,10 +52,13 @@ def _select_time_range(df, time_range):
 
 
 def _get_time_window_range(df, time_window, start_from_middle=False):
-    start = round(((df.index[0] + df.index[-1]) / 2) / (60 * 60)) * (60 * 60) - time_window * 60 * 60 * 24 \
-        if not start_from_middle else round(((df.index[0] + df.index[-1]) / 2) / (60 * 60)) * (60 * 60)
-    end = round(((df.index[0] + df.index[-1]) / 2) / (60 * 60)) * (60 * 60) + time_window * 60 * 60 * 24
-    return TimeRange(start, end)
+    middle = round(((df.index[0] + df.index[-1]) / 2) / (60 * 60)) * (60 * 60)
+    start = middle - 60 * 60 * 24 * time_window
+    end = middle + 60 * 60 * 24 * time_window
+    if start_from_middle:
+        return TimeRange(middle, end)
+    else:
+        return TimeRange(start, end)
 
 
 def _example():

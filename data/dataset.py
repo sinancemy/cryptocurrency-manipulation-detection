@@ -26,7 +26,7 @@ class CryptoSpeculationDataset(Dataset):
             # Update the coin type of each collector.
             self.data_reader.update_coin_type(coin=coin_type)
             # Collect or read from the database.
-            new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 80)
+            new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 56)
             posts += new_posts
 
         self.data_points = list()
@@ -68,7 +68,7 @@ class CryptoSpeculationDataPoint:
     def __init__(self, post, prices, post_vectorizer):
         self.X = CryptoSpeculationX(post, post_vectorizer)
         self.y = CryptoSpeculationY(list(filter(
-            lambda price: TimeRange(post.time - 60 * 60 * 24 * 80, post.time + 60 * 60 * 24 * 80).in_range(price.time),
+            lambda price: TimeRange(post.time - 60 * 60 * 24 * 56, post.time + 60 * 60 * 24 * 56).in_range(price.time),
             prices)))
 
     def __repr__(self):
@@ -97,9 +97,9 @@ class CryptoSpeculationY:
 
 
 recreate_database()
-dataset = CryptoSpeculationDataset("2020-2021", [TwitterCrawler()],
-                                   YahooPriceCrawler(resolution="1h"),
-                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1601510400, 1609459200))
-
+dataset = CryptoSpeculationDataset("2020-2021", [
+    ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>14'}), TwitterCrawler()],
+                                   YahooPriceCrawler(resolution="1h"), [CoinType.BTC, CoinType.ETH, CoinType.DOGE],
+                                   TimeRange(1577836800, 1609459200))
 
 print(dataset)

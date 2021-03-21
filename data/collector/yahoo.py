@@ -20,27 +20,7 @@ class YahooPriceCrawler(Collector):
         super().__init__(coin=coin, resolution=resolution)
 
     def collect(self, time_range: TimeRange):
-        d = {p.time: p for p in collect_history(self.settings.coin, time_range, self.settings.resolution)}
-        interval = 60 * 60
-        complete_slots = {}
-        for t in P.iterate(P.closed(min(d.keys()), time_range.high), interval):
-            if t in d:
-                complete_slots[t] = d[t]
-            else:
-                complete_slots[t] = 'descartes'
-        for time in complete_slots:
-            if complete_slots[time] != 'descartes':
-                fill_slots(complete_slots, time, complete_slots[time], interval)
-                fill_slots(complete_slots, time, complete_slots[time], -interval)
-        return sorted(complete_slots.values(), key=lambda x: x.time)
-
-
-def fill_slots(dct, slot, p, interval):
-    if slot + interval not in dct:
-        return
-    if dct[slot + interval] == 'descartes':
-        dct[slot + interval] = p
-        fill_slots(dct, slot + interval, p, interval)
+        return collect_history(self.settings.coin, time_range, self.settings.resolution)
 
 
 def collect_history(coin, time_range, resolution):
@@ -116,10 +96,28 @@ def _example_pull_request():
 
 # print(pull_coin_history(CoinType.BTC, TimeRange(1609459200, 1614556800), "1h"))
 
-# Testing
-# cr = YahooPriceCrawler()
-# prices = cr.collect_prices(CoinType.ETH, TimeRange(time.time() - 100, time.time()), "1m")
-# db = Database()
-# db.create_prices(prices)
-# prices_ = db.read_prices()
-# print(prices_)
+
+# Code to fill holes in price data, if necessary
+
+    # def collect(self, time_range: TimeRange):
+    #     print("TIMERANGE FROM COLLECT CALL:", time_range)
+    #     d = {p.time: p for p in collect_history(self.settings.coin, time_range, self.settings.resolution)}
+    #     interval = 60 * 60
+    #     complete_slots = {}
+    #     for t in P.iterate(P.closed(min(d.keys()), time_range.high), interval):
+    #         if t in d:
+    #             complete_slots[t] = d[t]
+    #         else:
+    #             complete_slots[t] = 'descartes'
+    #     for time in complete_slots:
+    #         if complete_slots[time] != 'descartes':
+    #             fill_slots(complete_slots, time, complete_slots[time], interval)
+    #             fill_slots(complete_slots, time, complete_slots[time], -interval)
+    #     return sorted(complete_slots.values(), key=lambda x: x.time)
+
+# def fill_slots(dct, slot, p, interval):
+#     if slot + interval not in dct:
+#         return
+#     if dct[slot + interval] == 'descartes':
+#         dct[slot + interval] = p
+#         fill_slots(dct, slot + interval, p, interval)
