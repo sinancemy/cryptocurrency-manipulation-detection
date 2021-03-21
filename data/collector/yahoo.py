@@ -94,6 +94,19 @@ def pull_coin_history(coin, time_range, resolution):
     return hist[["Open", "Volume"]].rename(columns={"Open": "Price"})
 
 
+def resolution_as_seconds(resolution):
+    if "mo" in resolution:
+        return int(resolution.replace("mo", "")) * 60 * 60 * 24 * 30
+    elif "wk" in resolution:
+        return int(resolution.replace("wk", "")) * 60 * 60 * 24 * 7
+    elif "d" in resolution:
+        return int(resolution.replace("d", "")) * 60 * 60 * 24
+    elif "h" in resolution:
+        return int(resolution.replace("h", "")) * 60 * 60
+    elif "m" in resolution:
+        return int(resolution.replace("m", "")) * 60
+
+
 def _example_pull_request():
     """
     An example pull request for reference and debugging purposes.
