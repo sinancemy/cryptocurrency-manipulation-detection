@@ -60,7 +60,7 @@ def _example():
     An example analyze_trends call for reference and debugging purposes.
     """
     ema8, sma13, sma21, sma55 = analyze_trends(
-        pull_coin_history_as_models(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"))
+        collect_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"))
     print("EMA8  Slope: ", ema8)
     print("SMA13 Slope: ", sma13)
     print("SMA21 Slope: ", sma21)

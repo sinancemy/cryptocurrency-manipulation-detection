@@ -1,13 +1,18 @@
+from collections import Set
+
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
 import time
 
+from tqdm import tqdm
+
 from data.collector import Collector
 from data.database.models import MarketPrice
 
 from misc import TimeRange, CoinType
+import portion as P
 
 
 class YahooPriceCrawler(Collector):
@@ -15,10 +20,30 @@ class YahooPriceCrawler(Collector):
         super().__init__(coin=coin, resolution=resolution)
 
     def collect(self, time_range: TimeRange):
-        return pull_coin_history_as_models(self.settings.coin, time_range, self.settings.resolution)
+        d = {p.time: p for p in collect_history(self.settings.coin, time_range, self.settings.resolution)}
+        interval = 60 * 60
+        complete_slots = {}
+        for t in P.iterate(P.closed(min(d.keys()), time_range.high), interval):
+            if t in d:
+                complete_slots[t] = d[t]
+            else:
+                complete_slots[t] = 'descartes'
+        for time in complete_slots:
+            if complete_slots[time] != 'descartes':
+                fill_slots(complete_slots, time, complete_slots[time], interval)
+                fill_slots(complete_slots, time, complete_slots[time], -interval)
+        return sorted(complete_slots.values(), key=lambda x: x.time)
 
 
-def pull_coin_history_as_models(coin, time_range, resolution):
+def fill_slots(dct, slot, p, interval):
+    if slot + interval not in dct:
+        return
+    if dct[slot + interval] == 'descartes':
+        dct[slot + interval] = p
+        fill_slots(dct, slot + interval, p, interval)
+
+
+def collect_history(coin, time_range, resolution):
     return (MarketPrice(coin_type=coin, price=row[1].Price, volume=row[1].Volume, time=row[0])
             for row in pull_coin_history(coin, time_range, resolution).iterrows())
 
@@ -51,12 +76,12 @@ def pull_coin_history(coin, time_range, resolution):
 
     # Pull data with yfinance. IMPORTANT: The coin identity is the uppercase value of the enum.
     hist = yf.Ticker("%s-USD" % coin.value.upper()).history(interval=resolution,
-                                                    start=start.strftime("%Y-%m-%d"),
-                                                    end=end.strftime("%Y-%m-%d"))
+                                                            start=start.strftime("%Y-%m-%d"),
+                                                            end=end.strftime("%Y-%m-%d"))
 
     # Select only the required time-price points and zero out the GMT offsets if needed.
-    start += timedelta(hours=24+(time.timezone/3600))
-    end -= timedelta(hours=24-(time.timezone/3600))
+    start += timedelta(hours=24 + (time.timezone / 3600))
+    end -= timedelta(hours=24 - (time.timezone / 3600))
     try:
         hist = hist.tz_convert(None)[start:end]
     except TypeError:
@@ -75,7 +100,6 @@ def _example_pull_request():
     """
     plt.plot(list(pull_coin_history(CoinType.DOGE, TimeRange(1497398400, 1614556800), "1d")["Price"]))
     plt.show()
-
 
 # print(pull_coin_history(CoinType.BTC, TimeRange(1609459200, 1614556800), "1h"))
 
