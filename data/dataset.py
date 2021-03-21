@@ -1,3 +1,5 @@
+from time import sleep
+
 from torch.utils.data import Dataset
 from analysis.trends import analyze_trends
 from data.market.yahoo import YahooPriceCrawler
@@ -11,7 +13,6 @@ from tqdm import tqdm
 class CryptoSpeculationDataset(Dataset):
     def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
         self.name = name
-
         # recreate_database()
         # self.data_collector = DataCollector(social_media_crawlers=social_media_crawlers,
         #                                     price_crawler=price_crawler)
@@ -29,20 +30,38 @@ class CryptoSpeculationDataset(Dataset):
         prices = db.read_prices_by_time_and_coin_type(1577836800-60*60*24*60, 1609459200+60*60*24*60, CoinType.BTC)
 
         print("Generating discrete domains")
-        content_vocab = Vocabulary([post.content for post in posts], 8192, 20)
-        user_domain = DiscreteDomain([post.user for post in posts], 1024, 10, ["[deleted]", "AutoModerator"])
-        source_domain = DiscreteDomain([post.source for post in posts], 1, 128)
+        content_vocab = Vocabulary([post.content for post in posts], 8192, 20, (4, 128), 20)
+        user_domain = DiscreteDomain([post.user for post in posts], 256, 10, ["[deleted]", "AutoModerator"])
+        source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
         self.post_vectorizer = PostVectorizer(content_vocab, user_domain, source_domain)
+        for post in tqdm(posts, desc="Vectorizing Data"):
+            point = CryptoSpeculationDataPoint(post, prices, self.post_vectorizer)  # TODO: Input "prices" should match coin, should be changed in DataCollector integration.
+            if point.X.content is not None:
+                self.data_points.append(point)
 
-        # self.data_points = [CryptoSpeculationDataPoint(post, prices, post_vectorizer) for post in posts]
-        for post in tqdm(posts):
-            self.data_points.append(CryptoSpeculationDataPoint(post, prices, self.post_vectorizer))
+        print(self)
 
     def __len__(self):
         return len(self.data_points)
 
     def __getitem__(self, item):
         return self.data_points[item]
+
+    def __repr__(self):
+        return "CryptoSpeculationDataset: %s\n" \
+               "\t- Number of data points: %d\n" \
+               "\t- Vocab size: %d\n" \
+               "\t- Sentence length: %d\n" \
+               "\t- User domain size: %d\n" \
+               "\t- Source domain size: %d\n" \
+               % (self.name, len(self.data_points), len(self.post_vectorizer.v),
+                  self.post_vectorizer.v.max_sentence_length, len(self.post_vectorizer.u), len(self.post_vectorizer.s))
+
+    def save(self, save_dir):
+        pass
+
+    def load(self, load_dir):
+        pass
 
 
 class CryptoSpeculationDataPoint:
@@ -77,13 +96,6 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-# db = Database()
-# posts = db.read_cached_ranges_by_type()
-# print(len(posts))
-
-
+# 2020 - 2021 dataset generator
 dataset = CryptoSpeculationDataset("2020-2021", [ArchivedRedditCrawler(1500), TwitterCrawler()], YahooPriceCrawler(),
                                    [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836800, 1609459200))
-
-# print(dataset.__len__())
-# print(dataset.__getitem__(69))
