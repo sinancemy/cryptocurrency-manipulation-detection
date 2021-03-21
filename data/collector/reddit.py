@@ -6,6 +6,9 @@ from data.collector import Collector
 from data.database.models import Post
 from misc import *
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge",
 # "Cardano", "ADA", "ada", "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb",
 # "Ripple", "XRP", "xrp", "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm",

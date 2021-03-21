@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
+import time
 
 from data.collector import Collector
 from data.database.models import MarketPrice
@@ -54,6 +55,8 @@ def pull_coin_history(coin, time_range, resolution):
                                                     end=end.strftime("%Y-%m-%d"))
 
     # Select only the required time-price points and zero out the GMT offsets if needed.
+    start += timedelta(hours=24+(time.timezone/3600))
+    end -= timedelta(hours=24-(time.timezone/3600))
     try:
         hist = hist.tz_convert(None)[start:end]
     except TypeError:
@@ -70,9 +73,11 @@ def _example_pull_request():
     """
     An example pull request for reference and debugging purposes.
     """
-    plt.plot(list(pull_coin_history(CoinType.DOGE, TimeRange(1497398400, 1615075200), "1d")["Price"]))
+    plt.plot(list(pull_coin_history(CoinType.DOGE, TimeRange(1497398400, 1614556800), "1d")["Price"]))
     plt.show()
 
+
+# print(pull_coin_history(CoinType.BTC, TimeRange(1609459200, 1614556800), "1h"))
 
 # Testing
 # cr = YahooPriceCrawler()

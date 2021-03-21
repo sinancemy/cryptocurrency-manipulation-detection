@@ -40,7 +40,6 @@ class CryptoSpeculationDataset(Dataset):
                                                self.post_vectorizer)
             if point.X.content is not None:
                 self.data_points.append(point)
-        print(self)
 
     def __len__(self):
         return len(self.data_points)
@@ -74,16 +73,16 @@ class CryptoSpeculationDataPoint:
 
     def __repr__(self):
         return "X:\n" \
-               "Content: %s\n" \
-               "Author: %s\n" \
-               "Source: %s\n" \
-               "Interaction Score: %d\n" \
+               "\t- Content: %s\n" \
+               "\t- Author: %s\n" \
+               "\t- Source: %s\n" \
+               "\t- Interaction Score: %d\n" \
                "y:\n" \
-               "EMA8: %f\n" \
-               "SMA13: %f\n" \
-               "SMA21: %f\n" \
-               "SMA55: %f" % (self.X.content, self.X.user, self.X.source, self.X.interaction,
-                              self.y.ema8, self.y.sma13, self.y.sma21, self.y.sma55)
+               "\t- EMA8: %f\n" \
+               "\t- SMA13: %f\n" \
+               "\t- SMA21: %f\n" \
+               "\t- SMA55: %f" % (self.X.content, self.X.user, self.X.source, self.X.interaction,
+                                  self.y.ema8, self.y.sma13, self.y.sma21, self.y.sma55)
 
 
 class CryptoSpeculationX:
@@ -97,11 +96,11 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-recreate_database()
+# recreate_database()
 dataset = CryptoSpeculationDataset("2020-2021", [
-    ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 100, 'score': '>5'}), TwitterCrawler()],
+    ArchivedRedditCrawler(interval=60 * 60 * 24 * 30, api_settings={'limit': 10, 'score': '>5'}), TwitterCrawler()],
                                    YahooPriceCrawler(resolution="1h"),
-                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1577836800, 1580083200))
+                                   [CoinType.BTC, CoinType.ETH, CoinType.DOGE], TimeRange(1601510400, 1609459200))
 
-print(dataset.__len__())
-print(dataset.__getitem__(70))
+
+print(dataset)
