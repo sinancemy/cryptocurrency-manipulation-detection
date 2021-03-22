@@ -3,22 +3,19 @@ from pathlib import Path
 
 from torch.utils.data import Dataset
 import numpy as np
-
-from analysis.trends import analyze_trends
-from data.collector.twitter import TwitterCrawler
-from data.reader.datareader import DataReader
-from data.collector.yahoo import YahooPriceCrawler
-from data.collector.reddit import ArchivedRedditCrawler
-from analysis.vectorize import Vocabulary, DiscreteDomain, Vectorizer
 from tqdm import tqdm
 
-from data.database import *
+from data.reader.datareader import DataReader
+from analysis.trends import analyze_trends
+from analysis.vectorize import Vocabulary, DiscreteDomain, Vectorizer
+from misc import TimeRange, CoinType
 
-DATASETS_DIR = "datasets"
+# TODO: Documentation
+
+DATASETS_DIR = "../data/datasets"
 
 
 class CryptoSpeculationDataset(Dataset):
-
     def __init__(self, name, **create_args):
         self.name = name
 
@@ -113,6 +110,10 @@ class CryptoSpeculationDataPoint:
             self.y = CryptoSpeculationY(impact=kwargs["impact"])
 
     def __repr__(self):
+        def format_array_repr(a):
+            return np.array_repr(a).replace('\n', '').replace(' ', '').replace("array(", "").replace(")", "").replace(
+                ",", " ")
+
         return "X:\n" \
                "\t- Content: %s\n" \
                "\t- Author: %s\n" \
@@ -122,7 +123,8 @@ class CryptoSpeculationDataPoint:
                "\t- EMA8: %f\n" \
                "\t- SMA13: %f\n" \
                "\t- SMA21: %f\n" \
-               "\t- SMA55: %f" % (self.X.content, self.X.user, self.X.source, self.X.interaction,
+               "\t- SMA55: %f" % (format_array_repr(self.X.content), format_array_repr(self.X.user),
+                                  format_array_repr(self.X.source), self.X.interaction,
                                   self.y.impact[0], self.y.impact[1], self.y.impact[2], self.y.impact[3])
 
 
@@ -148,13 +150,17 @@ class CryptoSpeculationY:
             self.impact = np.array(analyze_trends(kwargs["prices"]))
 
 
-# dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
-#     ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}), TwitterCrawler()],
-#                                    price_crawler=YahooPriceCrawler(resolution="1h"),
-#                                    coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
-#                                    time_range=TimeRange(1577836800, 1609459200))
-# dataset.save()
+def _example():
+    from data.collector.yahoo import YahooPriceCrawler
+    from data.collector.reddit import ArchivedRedditCrawler
+    from data.collector.twitter import TwitterCrawler
 
-dataset = CryptoSpeculationDataset("sample_set_2020_2021")
+    dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}),
+        TwitterCrawler()],
+                                       price_crawler=YahooPriceCrawler(resolution="1h"),
+                                       coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
+                                       time_range=TimeRange(1577836800, 1609459200))
+    dataset.save()
 
-print(dataset)
+# _example()

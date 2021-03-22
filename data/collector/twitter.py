@@ -72,8 +72,8 @@ class TwitterCrawler(Collector):
                     interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count,
                                                                     tweet.retweets_count)
                     yield Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
-                                         interaction=interaction_score, source="twitter", time=unix_timestamp,
-                                         coin_type=self.settings.coin)
+                               interaction=interaction_score, source="twitter", time=unix_timestamp,
+                               coin_type=self.settings.coin)
 
 # For Testing
 # TwitterCrawler().collect_posts(CoinType.BTC, TimeRange(int(datetime.datetime.now().timestamp()) - 86400 * 10,

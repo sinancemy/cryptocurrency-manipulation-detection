@@ -2,7 +2,9 @@ import string
 import re
 import numpy as np
 import zlib
-import os.path
+
+
+# TODO: Documentation
 
 
 class DiscreteDomain:
@@ -47,7 +49,8 @@ class DiscreteDomain:
 class Vocabulary(DiscreteDomain):
     def __init__(self, sentences, max_vocab_size=10000, min_count_to_include=15,
                  sentence_length_range=(4, 128), max_word_length=25):
-        self.init_vocab()
+        self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
+        self.UNK = "<unk>"
         self.min_sentence_length = sentence_length_range[0]
         self.max_sentence_length = sentence_length_range[1]
         self.max_word_length = max_word_length
@@ -85,17 +88,11 @@ class Vocabulary(DiscreteDomain):
     def devectorize(self, sentence_i):
         return np.array([self.i2w[idx] for idx in sentence_i])
 
-    def init_vocab(self):
-        self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
-        self.UNK = "<unk>"
-
     def serialize(self):
         return super().serialize() + [self.min_sentence_length, self.max_sentence_length, self.max_word_length]
 
     def deserialize(self, serial):
-        self.init_vocab()
-        self.w2i = serial[0]
-        self.i2w = serial[1]
+        super().deserialize(serial[0:2])
         self.min_sentence_length = serial[2]
         self.max_sentence_length = serial[3]
         self.max_word_length = serial[4]
@@ -120,7 +117,7 @@ class Vectorizer:
 
     def save(self, save_dir):
         data = zlib.compress(
-            [domain.serialize()+[domain.__class__.__name__] for domain in self.domains].__repr__().encode())
+            [domain.serialize() + [domain.__class__.__name__] for domain in self.domains].__repr__().encode())
         save_file = open(save_dir, "wb")
         save_file.write(data)
 
