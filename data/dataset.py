@@ -1,45 +1,59 @@
-from time import sleep
+import os.path
+from pathlib import Path
 
 from torch.utils.data import Dataset
+import numpy as np
 
 from analysis.trends import analyze_trends
 from data.collector.twitter import TwitterCrawler
 from data.reader.datareader import DataReader
 from data.collector.yahoo import YahooPriceCrawler
 from data.collector.reddit import ArchivedRedditCrawler
-from analysis.vectorize import Vocabulary, DiscreteDomain, PostVectorizer
+from analysis.vectorize import Vocabulary, DiscreteDomain, Vectorizer
 from tqdm import tqdm
 
 from data.database import *
 
+DATASETS_DIR = "datasets"
+
 
 class CryptoSpeculationDataset(Dataset):
 
-    def __init__(self, name, social_media_crawlers, price_crawler, coin_types, time_range):
+    def __init__(self, name, **create_args):
         self.name = name
 
-        self.data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
+        if len(create_args) == 0:
+            self.load()
+        elif len(create_args) == 4:
+            social_media_crawlers = create_args["social_media_crawlers"]
+            price_crawler = create_args["price_crawler"]
+            coin_types = create_args["coin_types"]
+            time_range = create_args["time_range"]
 
-        posts = list()
-        prices = dict()
-        for coin_type in coin_types:
-            # Update the coin type of each collector.
-            self.data_reader.update_coin_type(coin=coin_type)
-            # Collect or read from the database.
-            new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 56)
-            posts += new_posts
+            self.data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
 
-        self.data_points = list()
-        print("Generating discrete domains")
-        content_vocab = Vocabulary([post.content for post in posts], 8192, 24, (4, 128), 10)
-        user_domain = DiscreteDomain([post.user for post in posts], 128, 1, ["[deleted]", "AutoModerator"])
-        source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
-        self.post_vectorizer = PostVectorizer(content_vocab, user_domain, source_domain)
-        for post in tqdm(posts, desc="Vectorizing Data"):
-            point = CryptoSpeculationDataPoint(post, prices[post.coin_type],
-                                               self.post_vectorizer)
-            if point.X.content is not None:
-                self.data_points.append(point)
+            posts = list()
+            prices = dict()
+            for coin_type in coin_types:
+                # Update the coin type of each collector.
+                self.data_reader.update_coin_type(coin=coin_type)
+                # Collect or read from the database.
+                new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 56)
+                posts += new_posts
+
+            self.data_points = list()
+            print("Generating discrete domains")
+            content_vocab = Vocabulary([post.content for post in posts], 4096, 24, (4, 128), 16)
+            user_domain = DiscreteDomain([post.user for post in posts], 256, 8, ["[deleted]", "AutoModerator"])
+            source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
+            self.vectorizer = Vectorizer(content_vocab, user_domain, source_domain)
+            for post in tqdm(posts, desc="Vectorizing Data"):
+                point = CryptoSpeculationDataPoint(post=post, prices=prices[post.coin_type],
+                                                   vectorizer=self.vectorizer)
+                if point.X.content is not None:
+                    self.data_points.append(point)
+        else:
+            raise Exception("Can't initialize CryptoSpeculationDataset from %d create_args." % len(create_args))
 
     def __len__(self):
         return len(self.data_points)
@@ -54,22 +68,49 @@ class CryptoSpeculationDataset(Dataset):
                "\t- Sentence length: %d\n" \
                "\t- User domain size: %d\n" \
                "\t- Source domain size: %d\n" \
-               % (self.name, len(self.data_points), len(self.post_vectorizer.v),
-                  self.post_vectorizer.v.max_sentence_length, len(self.post_vectorizer.u), len(self.post_vectorizer.s))
+               % (self.name, len(self.data_points), len(self.vectorizer.domains[0]),
+                  self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
+                  len(self.vectorizer.domains[2]))
 
-    def save(self, save_dir):
-        pass
+    def save(self):
+        meta = [self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
+                len(self.vectorizer.domains[2]), 1, 4]
+        data = np.vstack(
+            [np.hstack((point.X.content, point.X.user, point.X.source, point.X.interaction, point.y.impact))
+             for point in self.data_points])
+        Path(os.path.join(DATASETS_DIR, self.name)).mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(os.path.join(DATASETS_DIR, self.name, "data.npz"), data=data, meta=meta)
+        self.vectorizer.save(os.path.join(DATASETS_DIR, self.name, "mappings.vectorizer"))
 
-    def load(self, load_dir):
-        pass
+    def load(self):
+        data = np.load(os.path.join(DATASETS_DIR, self.name, "data.npz"))
+        meta = data["meta"]
+        data = data["data"]
+        self.data_points = list()
+        for point in data:
+            self.data_points.append(CryptoSpeculationDataPoint(
+                content=point[0:sum(meta[0:1])], user=point[sum(meta[0:1]):sum(meta[0:2])],
+                source=point[sum(meta[0:2]):sum(meta[0:3])], interaction=point[sum(meta[0:3]):sum(meta[0:4])],
+                impact=point[sum(meta[0:4]):sum(meta[0:5])]
+            ))
+        self.vectorizer = Vectorizer()
+        self.vectorizer.load(os.path.join(DATASETS_DIR, self.name, "mappings.vectorizer"))
 
 
 class CryptoSpeculationDataPoint:
-    def __init__(self, post, prices, post_vectorizer):
-        self.X = CryptoSpeculationX(post, post_vectorizer)
-        self.y = CryptoSpeculationY(list(filter(
-            lambda price: TimeRange(post.time - 60 * 60 * 24 * 56, post.time + 60 * 60 * 24 * 56).in_range(price.time),
-            prices)))
+    def __init__(self, **kwargs):
+        if len(kwargs) == 3:
+            post = kwargs["post"]
+            prices = kwargs["prices"]
+            vectorizer = kwargs["vectorizer"]
+            self.X = CryptoSpeculationX(post=post, vectorizer=vectorizer)
+            self.y = CryptoSpeculationY(prices=list(filter(
+                lambda price: TimeRange(post.time - 60 * 60 * 24 * 56, post.time + 60 * 60 * 24 * 56).in_range(
+                    price.time), prices)))
+        elif len(kwargs) == 5:
+            self.X = CryptoSpeculationX(content=kwargs["content"], user=kwargs["user"],
+                                        source=kwargs["source"], interaction=kwargs["interaction"])
+            self.y = CryptoSpeculationY(impact=kwargs["impact"])
 
     def __repr__(self):
         return "X:\n" \
@@ -82,26 +123,38 @@ class CryptoSpeculationDataPoint:
                "\t- SMA13: %f\n" \
                "\t- SMA21: %f\n" \
                "\t- SMA55: %f" % (self.X.content, self.X.user, self.X.source, self.X.interaction,
-                                  self.y.ema8, self.y.sma13, self.y.sma21, self.y.sma55)
+                                  self.y.impact[0], self.y.impact[1], self.y.impact[2], self.y.impact[3])
 
 
 class CryptoSpeculationX:
-    def __init__(self, post, vectorizer):
-        self.content, self.user, self.source, self.interaction = vectorizer.vectorize(post)
-        # self.coin_type = post.coin_type
+    def __init__(self, **kwargs):
+        if len(kwargs) == 2:
+            post = kwargs["post"]
+            vectorizer = kwargs["vectorizer"]
+            self.content, self.user, self.source = vectorizer.vectorize(post.content, post.user, post.source)
+            self.interaction = post.interaction
+        elif len(kwargs) == 4:
+            self.content = np.array(kwargs["content"], dtype=int)
+            self.user = np.array(kwargs["user"], dtype=int)
+            self.source = np.array(kwargs["source"], dtype=int)
+            self.interaction = int(kwargs["interaction"][0])
 
 
 class CryptoSpeculationY:
-    def __init__(self, price):
-        self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
+    def __init__(self, **kwargs):
+        if "impact" in kwargs:
+            self.impact = kwargs["impact"]
+        elif "prices" in kwargs:
+            self.impact = np.array(analyze_trends(kwargs["prices"]))
 
 
-# recreate_database()
-dataset = CryptoSpeculationDataset("2020-2021", [
-    ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>14'}), TwitterCrawler()],
-                                   YahooPriceCrawler(resolution="1h"), [CoinType.BTC, CoinType.ETH, CoinType.DOGE],
-                                   TimeRange(1577836800, 1609459200))
+# dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
+#     ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}), TwitterCrawler()],
+#                                    price_crawler=YahooPriceCrawler(resolution="1h"),
+#                                    coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
+#                                    time_range=TimeRange(1577836800, 1609459200))
+# dataset.save()
+
+dataset = CryptoSpeculationDataset("sample_set_2020_2021")
 
 print(dataset)
-for point in dataset.data_points:
-    print(point)

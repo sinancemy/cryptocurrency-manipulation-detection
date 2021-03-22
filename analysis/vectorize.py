@@ -1,30 +1,8 @@
 import string
 import re
 import numpy as np
-
-
-class PostVectorizer:
-    def __init__(self, vocabulary, user_domain, source_domain):
-        self.v = vocabulary
-        self.u = user_domain
-        self.s = source_domain
-
-    def vectorize(self, post):
-        return self.v.vectorize(post.content), self.u.vectorize(post.user), \
-               self.s.vectorize(post.source), post.interaction
-
-    def save(self, save_dir):
-        self.v.save(save_dir)
-        self.u.save(save_dir)
-        self.s.save(save_dir)
-
-    def load(self, load_dir):
-        self.v = Vocabulary([])
-        self.u = DiscreteDomain([])
-        self.s = DiscreteDomain([])
-        self.v.load(load_dir)
-        self.u.load(load_dir)
-        self.s.load(load_dir)
+import zlib
+import os.path
 
 
 class DiscreteDomain:
@@ -58,20 +36,18 @@ class DiscreteDomain:
     def devectorize(self, oh):
         return self.i2w[oh.argmax()]
 
-    def save(self, save_dir):
-        # TODO: Save w2i dictionary and i2w array
-        pass
+    def serialize(self):
+        return [self.w2i, self.i2w]
 
-    def load(self, load_dir):
-        # TODO: Load w2i dictionary and i2w array
-        pass
+    def deserialize(self, serial):
+        self.w2i = serial[0]
+        self.i2w = serial[1]
 
 
 class Vocabulary(DiscreteDomain):
     def __init__(self, sentences, max_vocab_size=10000, min_count_to_include=15,
                  sentence_length_range=(4, 128), max_word_length=25):
-        self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
-        self.UNK = "<unk>"
+        self.init_vocab()
         self.min_sentence_length = sentence_length_range[0]
         self.max_sentence_length = sentence_length_range[1]
         self.max_word_length = max_word_length
@@ -109,6 +85,21 @@ class Vocabulary(DiscreteDomain):
     def devectorize(self, sentence_i):
         return np.array([self.i2w[idx] for idx in sentence_i])
 
+    def init_vocab(self):
+        self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
+        self.UNK = "<unk>"
+
+    def serialize(self):
+        return super().serialize() + [self.min_sentence_length, self.max_sentence_length, self.max_word_length]
+
+    def deserialize(self, serial):
+        self.init_vocab()
+        self.w2i = serial[0]
+        self.i2w = serial[1]
+        self.min_sentence_length = serial[2]
+        self.max_sentence_length = serial[3]
+        self.max_word_length = serial[4]
+
 
 def tokenize(sentence, allowed_char_set, max_token_length=25):
     tokens = list()
@@ -118,3 +109,27 @@ def tokenize(sentence, allowed_char_set, max_token_length=25):
                 and ((token != "") and ("\\" not in token) and ("http" not in token)):
             tokens.append(token)
     return tokens
+
+
+class Vectorizer:
+    def __init__(self, *domains: DiscreteDomain):
+        self.domains = domains
+
+    def vectorize(self, *objs):
+        return [domain.vectorize(objs[i]) for i, domain in enumerate(self.domains)]
+
+    def save(self, save_dir):
+        data = zlib.compress(
+            [domain.serialize()+[domain.__class__.__name__] for domain in self.domains].__repr__().encode())
+        save_file = open(save_dir, "wb")
+        save_file.write(data)
+
+    def load(self, load_dir):
+        load_file = open(load_dir, "rb")
+        data = load_file.read()
+        data = eval(zlib.decompress(data).decode())
+        self.domains = list()
+        for domain_data in data:
+            domain = globals()[domain_data[-1]]([])
+            domain.deserialize(domain_data[0:-1])
+            self.domains.append(domain)
