@@ -7,12 +7,13 @@ from tqdm import tqdm
 
 from data.reader.datareader import DataReader
 from analysis.trends import analyze_trends
-from analysis.vectorize import Vocabulary, DiscreteDomain, Vectorizer
-from misc import TimeRange, CoinType
+from data.vectorize import Vocabulary, DiscreteDomain, Vectorizer
+from misc import TimeRange, CoinType, chdir_to_main
 
 # TODO: Documentation
 
-DATASETS_DIR = "../data/datasets"
+chdir_to_main()
+DATASETS_DIR = "data/datasets"
 
 
 class CryptoSpeculationDataset(Dataset):

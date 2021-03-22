@@ -18,7 +18,6 @@ class CryptoSpeculationModel(torch.nn.Module):
 
 
 dataset = CryptoSpeculationDataset("sample_set_2020_2021")
-
-for p in dataset.data_points[0:5]:
+for p in dataset.data_points[0:20000:4000]:
     print(p, "\n")
 print(dataset)
