@@ -51,7 +51,7 @@ class DiscreteDomain:
         return len(self.i2w)
 
     def vectorize(self, discrete):
-        oh = np.zeros((len(self)))
+        oh = np.zeros((len(self)), dtype=int)
         oh[self.w2i.get(discrete, 1) - 1] = 1
         return oh
 
@@ -96,7 +96,7 @@ class Vocabulary(DiscreteDomain):
         return len(self.w2i)
 
     def vectorize(self, sentence_w):
-        vec = np.zeros(self.max_sentence_length)
+        vec = np.zeros(self.max_sentence_length, dtype=int)
         tok = tokenize(sentence_w, self.ALLOWED_CHAR_SET, self.max_word_length)
         if len(tok) < self.min_sentence_length:
             return None

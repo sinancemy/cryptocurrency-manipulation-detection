@@ -31,8 +31,8 @@ class CryptoSpeculationDataset(Dataset):
 
         self.data_points = list()
         print("Generating discrete domains")
-        content_vocab = Vocabulary([post.content for post in posts], 8192, 20, (4, 128), 20)
-        user_domain = DiscreteDomain([post.user for post in posts], 256, 1, ["[deleted]", "AutoModerator"])
+        content_vocab = Vocabulary([post.content for post in posts], 8192, 24, (4, 128), 10)
+        user_domain = DiscreteDomain([post.user for post in posts], 128, 1, ["[deleted]", "AutoModerator"])
         source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
         self.post_vectorizer = PostVectorizer(content_vocab, user_domain, source_domain)
         for post in tqdm(posts, desc="Vectorizing Data"):
@@ -96,10 +96,12 @@ class CryptoSpeculationY:
         self.ema8, self.sma13, self.sma21, self.sma55 = analyze_trends(price)
 
 
-recreate_database()
+# recreate_database()
 dataset = CryptoSpeculationDataset("2020-2021", [
     ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>14'}), TwitterCrawler()],
                                    YahooPriceCrawler(resolution="1h"), [CoinType.BTC, CoinType.ETH, CoinType.DOGE],
                                    TimeRange(1577836800, 1609459200))
 
 print(dataset)
+for point in dataset.data_points:
+    print(point)

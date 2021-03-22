@@ -29,20 +29,23 @@ def analyze_trends(price_list):
 
 def _simple_moving_average(df, avg_time):
     sma = pd.DataFrame()
-    sma[str(avg_time) + "SMA"] = df.iloc[:, 0].rolling(window=avg_time).mean()
+    sma[str(avg_time/24) + "SMA"] = df.iloc[:, 0].rolling(window=avg_time).mean()
     return sma
 
 
 def _exponential_moving_average(df, avg_time):
     ema = pd.DataFrame()
-    ema[str(avg_time) + "EMA"] = df.iloc[:, 0].ewm(span=avg_time, adjust=False).mean()
+    ema[str(avg_time/24) + "EMA"] = df.iloc[:, 0].ewm(span=avg_time, adjust=False).mean()
     return ema
 
 
 def _slope(df, time_range):
     try:
-        return (df.loc[time_range.high, :][0] - df.loc[time_range.low, :][0]) /\
-           (time_range.high - time_range.low) * (df.index[1] - df.index[0])
+        x2 = df.loc[time_range.high, :][0]
+        x1 = df.loc[time_range.low, :][0]
+        if np.isnan(x1):
+            return _slope(df, TimeRange(time_range.low + 60*60, time_range.high))
+        return (x2 - x1) / (time_range.high - time_range.low) * (df.index[1] - df.index[0])
     except KeyError:
         return _slope(df, TimeRange(time_range.low + 60*60, time_range.high - 60*60))
 
