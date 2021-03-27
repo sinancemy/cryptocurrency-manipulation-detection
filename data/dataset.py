@@ -1,4 +1,5 @@
 import os.path
+import random
 from pathlib import Path
 
 from torch.utils.data import Dataset
@@ -22,6 +23,9 @@ class CryptoSpeculationDataset(Dataset):
 
         if len(create_args) == 0:
             self.load()
+        elif len(create_args) == 2:
+            self.data_points = create_args["data_points"]
+            self.vectorizer = create_args["vectorizer"]
         elif len(create_args) == 4:
             social_media_crawlers = create_args["social_media_crawlers"]
             price_crawler = create_args["price_crawler"]
@@ -50,6 +54,8 @@ class CryptoSpeculationDataset(Dataset):
                                                    vectorizer=self.vectorizer)
                 if point.X.content is not None:
                     self.data_points.append(point)
+
+            random.shuffle(self.data_points)
         else:
             raise Exception("Can't initialize CryptoSpeculationDataset from %d create_args." % len(create_args))
 
@@ -69,6 +75,15 @@ class CryptoSpeculationDataset(Dataset):
                % (self.name, len(self.data_points), len(self.vectorizer.domains[0]),
                   self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
                   len(self.vectorizer.domains[2]))
+
+    def partition(self, coefficient):
+        partition_index = int(len(self) * coefficient)
+        return (CryptoSpeculationDataset("%s_train" % self.name,
+                                         data_points=self.data_points[0:partition_index],
+                                         vectorizer=self.vectorizer),
+                CryptoSpeculationDataset("%s_test" % self.name,
+                                         data_points=self.data_points[partition_index:len(self.data_points)],
+                                         vectorizer=self.vectorizer))
 
     def save(self):
         meta = [self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),

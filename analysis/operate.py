@@ -1,9 +1,22 @@
+import torch.optim as optim
+import torch.nn as nn
+
 from data.dataset import CryptoSpeculationDataset
 from analysis.model import CryptoSpeculationModel
+from torch.utils.data import DataLoader
+from torch.autograd import Variable
 
 
 def train(model, dataset, epochs, batch_size, lr):
-    pass
+    train_set, test_set = dataset.partition(0.9)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
+
+    optimizer = optim.SGD(model.parameters(), lr=lr)
+    loss_function = nn.CrossEntropyLoss()
+
+    for epoch in range(epochs):
+        pass
 
 
 EPOCHS = 8
