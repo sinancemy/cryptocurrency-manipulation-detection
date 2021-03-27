@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 
 from torch.utils.data import Dataset
+from torch import ShortTensor, FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
@@ -62,8 +63,11 @@ class CryptoSpeculationDataset(Dataset):
     def __len__(self):
         return len(self.data_points)
 
-    def __getitem__(self, item):
-        return self.data_points[item]
+    def __getitem__(self, index):
+        item = self.data_points[index]
+        return (IntTensor(item.X.content), ShortTensor(item.X.user),
+                ShortTensor(item.X.source), ShortTensor([item.X.interaction]),
+                FloatTensor(item.y.impact))
 
     def __repr__(self):
         return "CryptoSpeculationDataset: %s\n" \
