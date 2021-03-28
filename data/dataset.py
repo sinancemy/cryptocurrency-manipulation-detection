@@ -65,8 +65,8 @@ class CryptoSpeculationDataset(Dataset):
 
     def __getitem__(self, index):
         item = self.data_points[index]
-        return (IntTensor(item.X.content), ShortTensor(item.X.user),
-                ShortTensor(item.X.source), ShortTensor([item.X.interaction]),
+        return (IntTensor(item.X.content), FloatTensor(item.X.user),
+                FloatTensor(item.X.source), FloatTensor([item.X.interaction]),
                 FloatTensor(item.y.impact))
 
     def __repr__(self):
