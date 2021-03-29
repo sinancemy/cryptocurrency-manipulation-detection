@@ -19,7 +19,14 @@ warnings.filterwarnings("ignore")
 COIN_SUBREDDITS = {
     CoinType.BTC: ["Bitcoin", "BTC"],
     CoinType.ETH: ["Ethereum", "ETH"],
-    CoinType.DOGE: ["Dogecoin"]
+    CoinType.DOGE: ["Dogecoin"],
+    CoinType.ADA: ["cardano"],
+    CoinType.LINK: ["chainlink"],
+    CoinType.DOT: ["polkadot"],
+    CoinType.XRP: ["ripple", "xrp"],
+    CoinType.LTC: ["litecoin", "ltc"],
+    CoinType.XLM: ["stellar", "xlm"],
+    CoinType.OMG: ["omise_go", "omgnetwork"],
 }
 
 # PRAW STUFF

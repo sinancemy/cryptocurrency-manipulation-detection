@@ -8,7 +8,7 @@ import zlib
 
 
 class DiscreteDomain:
-    def __init__(self, discrete_list, max_size=100, min_count_to_include=1, neg_list=[]):
+    def __init__(self, discrete_list, max_size=100, min_count_to_include=1, include_list=[], neg_list=[]):
         self.NEG = "<neg>"  # "Negligible" token
 
         counts = dict()
@@ -17,10 +17,14 @@ class DiscreteDomain:
                 counts[w] = 1
             else:
                 counts[w] += 1
-
         self.w2i = {self.NEG: 1}
         self.i2w = [self.NEG]
-        for i, w in enumerate(sorted(counts, key=counts.get, reverse=True)):
+
+        for w in include_list:
+            self.w2i[w] = len(self.i2w) + 1
+            self.i2w.append(w)
+            counts.pop(w)
+        for w in sorted(counts, key=counts.get, reverse=True):
             if w not in neg_list and counts[w] >= min_count_to_include:
                 self.w2i[w] = len(self.i2w) + 1
                 self.i2w.append(w)  # [0] reserved for NEG -> 1, [1] -> 2

@@ -39,6 +39,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
             optimizer.step()
 
             training_loss += loss.item()
+
         training_loss /= i
 
         # for p in zip(prediction, true):
@@ -72,19 +73,19 @@ else:
     device = torch.device("cpu")
 
 EPOCHS = 100
-BATCH_SIZE = 512
-LR = 2e-3
+BATCH_SIZE = 2048
+LR = 1e-3
 
-dataset = CryptoSpeculationDataset("sample_set_2020_2021")
+dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
 
 DOMAIN_SIZES = [len(dataset.vectorizer.domains[0]) + 1, len(dataset.vectorizer.domains[1]), len(dataset.vectorizer.domains[2])]  # TODO: Add <pad> token for padding sentences.
-EMBED_DIMS = [128, 32, 4]
+EMBED_DIMS = [64, 16, 8]
 LSTM_LENGTH = dataset.vectorizer.domains[0].max_sentence_length
-LSTM_HIDDEN_DIM = 64
-LSTM_LAYERS = 4
-FC_DIMS = [512, 256, 64]
+LSTM_HIDDEN_DIM = 16
+LSTM_LAYERS = 2
+FC_DIMS = [512, 128, 32]
 OUT_DIM = 4
 
-model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, FC_DIMS, OUT_DIM, BATCH_SIZE,dropout=0.1)
+model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, FC_DIMS, OUT_DIM, BATCH_SIZE,dropout=0.5)
 
 train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)

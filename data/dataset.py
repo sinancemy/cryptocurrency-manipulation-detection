@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 
 from torch.utils.data import Dataset
-from torch import ShortTensor, FloatTensor, IntTensor
+from torch import FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
@@ -46,8 +46,9 @@ class CryptoSpeculationDataset(Dataset):
 
             self.data_points = list()
             print("Generating discrete domains")
-            content_vocab = Vocabulary([post.content for post in posts], 4096, 24, (4, 128), 16)
-            user_domain = DiscreteDomain([post.user for post in posts], 256, 8, ["[deleted]", "AutoModerator"])
+            content_vocab = Vocabulary([post.content for post in posts], 8192, 16, (4, 128), 24)
+            user_domain = DiscreteDomain([post.user for post in posts], 1024, 10, ["elonmusk"],
+                                         ["[deleted]", "AutoModerator"])
             source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
             self.vectorizer = Vectorizer(content_vocab, user_domain, source_domain)
             for post in tqdm(posts, desc="Vectorizing Data"):
@@ -183,4 +184,22 @@ def _example():
                                        time_range=TimeRange(1577836800, 1609459200))
     dataset.save()
 
+
 # _example()
+
+
+def collect_dataset():
+    from data.collector.yahoo import YahooPriceCrawler
+    from data.collector.reddit import ArchivedRedditCrawler
+    from data.collector.twitter import TwitterCrawler
+    from data.database import recreate_database
+
+    dataset = CryptoSpeculationDataset("Jun19_Feb21_Big", social_media_crawlers=[
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 2000, 'score': '>4'}),
+        TwitterCrawler()],
+                                       price_crawler=YahooPriceCrawler(resolution="1h"),
+                                       coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE, CoinType.ADA,
+                                                   CoinType.DOT, CoinType.LINK, CoinType.LTC, CoinType.OMG,
+                                                   CoinType.XLM, CoinType.XRP],
+                                       time_range=TimeRange(1559347200, 1612137600))
+    dataset.save()
