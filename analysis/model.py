@@ -22,11 +22,11 @@ class CryptoSpeculationModel(nn.Module):
         self.lstm_layers = lstm_layers
 
         self.embed = nn.Embedding(domain_sizes[0], embed_dims[0])  # TODO: Initialize with pre-trained embeddings.
-        self.lstm = nn.LSTM(embed_dims[0], self.lstm_hidden_dim, num_layers=lstm_layers, bidirectional=False,
-                            dropout=dropout, batch_first=True)  # TODO: Try Convs.
-        lstm_out_dim = int(lstm_hidden_dim * lstm_length / 8)
+        self.lstm = nn.LSTM(embed_dims[0], self.lstm_hidden_dim, num_layers=lstm_layers, bidirectional=True,
+                            dropout=dropout, batch_first=True)
+        lstm_out_dim = int(lstm_hidden_dim * lstm_length / 4)
         print(lstm_out_dim)
-        self.reduce = nn.Sequential(*[nn.Linear(lstm_hidden_dim * lstm_length * 1, lstm_out_dim), nn.ReLU()])
+        self.reduce = nn.Sequential(*[nn.Linear(lstm_hidden_dim * lstm_length * 2, lstm_out_dim), nn.ReLU()])
 
         self.user_embed = nn.Sequential(*[nn.Linear(domain_sizes[1], embed_dims[1]), nn.ReLU()])
         self.source_embed = nn.Sequential(*[nn.Linear(domain_sizes[2], embed_dims[2]), nn.ReLU()])
@@ -34,10 +34,11 @@ class CryptoSpeculationModel(nn.Module):
         fc_dims.insert(0, lstm_out_dim + embed_dims[1] + embed_dims[2] + 1)
         fc_layers = []
         for i in range(0, len(fc_dims) - 1):
-            fc_layers += [nn.BatchNorm1d(fc_dims[i]),
-                          nn.Linear(fc_dims[i], fc_dims[i + 1]),
-                          nn.Dropout(dropout),
-                          nn.ReLU()]
+            fc_layers += [
+                nn.LayerNorm(fc_dims[i]),
+                nn.Linear(fc_dims[i], fc_dims[i + 1]),
+                nn.Dropout(dropout),
+                nn.ReLU()]
 
         self.fc = nn.Sequential(*fc_layers)
         self.out = nn.Linear(fc_dims[-1], out_dim)
@@ -47,9 +48,9 @@ class CryptoSpeculationModel(nn.Module):
 
     def reset_lstm_inputs(self):
         self.lstm_hidden = Variable(
-            torch.zeros(self.lstm_layers * 1, self.batch_size, self.lstm_hidden_dim).to(self.device))
+            torch.zeros(self.lstm_layers * 2, self.batch_size, self.lstm_hidden_dim).to(self.device))
         self.lstm_cell = Variable(
-            torch.zeros(self.lstm_layers * 1, self.batch_size, self.lstm_hidden_dim).to(self.device))
+            torch.zeros(self.lstm_layers * 2, self.batch_size, self.lstm_hidden_dim).to(self.device))
 
     def forward(self, x_content, x_user, x_source, x_interaction):
         x_embed = self.embed(x_content)

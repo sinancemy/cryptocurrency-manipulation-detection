@@ -23,6 +23,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
     for epoch in range(epochs):
         model.train()
         training_loss = 0
+        training_acc = 0
         for i, batch in enumerate(train_loader):
             content, user, source, interaction, impact = batch
 
@@ -39,7 +40,6 @@ def train(model, dataset, device, epochs, batch_size, lr):
             optimizer.step()
 
             training_loss += loss.item()
-
         training_loss /= i
 
         # for p in zip(prediction, true):
@@ -48,7 +48,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
         #     print("True:", p[1].cpu().detach().numpy())
 
         model.eval()
-        eval_loss = 0
+        test_loss = 0
         with torch.no_grad():
             for i, batch in enumerate(test_loader):
                 content, user, source, interaction, impact = batch
@@ -61,10 +61,15 @@ def train(model, dataset, device, epochs, batch_size, lr):
                 true = Variable(impact).to(device)
                 loss = loss_function(prediction, true)
 
-                eval_loss += loss.item()
-            eval_loss /= i
+                test_loss += loss.item()
+            test_loss /= i
 
-        print(f'Epoch {epoch+1}: Training Loss: {training_loss:.4f}, Eval Loss: {eval_loss: .4f}')
+        for p in zip(prediction, true):
+            print("____________________")
+            print("Pred:", p[0].cpu().detach().numpy())
+            print("True:", p[1].cpu().detach().numpy())
+
+        print(f'Epoch {epoch+1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
 
 
 if torch.cuda.is_available():
@@ -72,20 +77,20 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-EPOCHS = 100
+EPOCHS = 200
 BATCH_SIZE = 2048
-LR = 1e-3
+LR = 2e-3
 
 dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
 
 DOMAIN_SIZES = [len(dataset.vectorizer.domains[0]) + 1, len(dataset.vectorizer.domains[1]), len(dataset.vectorizer.domains[2])]  # TODO: Add <pad> token for padding sentences.
-EMBED_DIMS = [64, 16, 8]
+EMBED_DIMS = [72, 32, 8]
 LSTM_LENGTH = dataset.vectorizer.domains[0].max_sentence_length
-LSTM_HIDDEN_DIM = 16
+LSTM_HIDDEN_DIM = 32
 LSTM_LAYERS = 2
 FC_DIMS = [512, 128, 32]
 OUT_DIM = 4
 
-model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, FC_DIMS, OUT_DIM, BATCH_SIZE,dropout=0.5)
+model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, FC_DIMS, OUT_DIM, BATCH_SIZE, dropout=0.65)
 
 train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
