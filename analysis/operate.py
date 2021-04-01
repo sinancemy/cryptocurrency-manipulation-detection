@@ -96,9 +96,10 @@ EMBED_DIMS = [72, 32, 8, 4]
 LSTM_LENGTH = dataset.vectorizer.domains[0].max_sentence_length
 LSTM_HIDDEN_DIM = 32
 LSTM_LAYERS = 4
+LSTM_OUT_DIM = 1024
 FC_DIMS = [512, 128, 32]
 OUT_DIM = 4
 
-model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, FC_DIMS, OUT_DIM, BATCH_SIZE, dropout=0.65)
+model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, LSTM_OUT_DIM, FC_DIMS, OUT_DIM, BATCH_SIZE, dropout=0.65)
 
 train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)

@@ -192,10 +192,6 @@ def _example():
     dataset.save()
 
 
-recreate_database()
-_example()
-
-
 def collect_dataset():
     from data.collector.yahoo import YahooPriceCrawler
     from data.collector.reddit import ArchivedRedditCrawler

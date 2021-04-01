@@ -13,7 +13,7 @@ class Swish(nn.Module):
 
 
 class CryptoSpeculationModel(nn.Module):
-    def __init__(self, device, domain_sizes, embed_dims, lstm_length, lstm_hidden_dim, lstm_layers, fc_dims, out_dim,
+    def __init__(self, device, domain_sizes, embed_dims, lstm_length, lstm_hidden_dim, lstm_layers, lstm_out_dim, fc_dims, out_dim,
                  batch_size, dropout=0.5):
         super().__init__()
         self.device = device
@@ -24,8 +24,6 @@ class CryptoSpeculationModel(nn.Module):
         self.embed = nn.Embedding(domain_sizes[0], embed_dims[0])  # TODO: Initialize with pre-trained embeddings.
         self.lstm = nn.LSTM(embed_dims[0], self.lstm_hidden_dim, num_layers=lstm_layers, bidirectional=True,
                             dropout=dropout, batch_first=True)
-        lstm_out_dim = int(lstm_hidden_dim * lstm_length / 4)
-        print(lstm_out_dim)
         self.reduce = nn.Sequential(*[nn.Linear(lstm_hidden_dim * lstm_length * 2, lstm_out_dim), nn.ReLU()])
 
         self.user_embed = nn.Sequential(*[nn.Linear(domain_sizes[1], embed_dims[1]), nn.ReLU()])
