@@ -4,24 +4,22 @@ from data.database.models import Post
 from data.collector import Collector
 from misc import TimeRange, CoinType
 
-# usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite"]
 usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "rogerkver", "aantonop", "ErikVoorhees",
              "NickSzabo4", "CryptoYoda1338", "bgarlinghouse", "WhalePanda", "cryptoSqueeze", "ZeusZissou",
              "Beastlyorion", "bitcoin_dad", "jebus911", "Sicarious", "CryptoMessiah", "APompliano", "nic__carter",
              "CarpeNoctom", "Melt_Dem", "100trillionUSD", "MessariCrypto", "TuurDemeester", "MartyBent", "elonmusk"]
 
-# coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge", "Cardano", "ADA", "ada",
-# "Chainlink", "LINK", "link", "Polkadot", "DOT", "dot", "Binance coin", "BNB", "bnb", "Ripple", "XRP", "xrp",
-# "OMG Network", "OMG", "omg", "Litecoin", "LTC", "ltc", "Stellar", "XLM", "xlm", "Basic Attraction Token", "BAT",
-# "bat", "Avalanche", "AVAX", "avax", "Ravencoin", "RVN", "rvn", "Maker", "MKR", "mkr", "Chiliz", "CHZ", "chz"]
-
-# usernames = ["elonmusk", "SatoshiLite"]
-# coins = ["Bitcoin", "Doge"]
-
 COIN_KEYWORDS = {
     CoinType.BTC: ["Bitcoin", "BTC"],
     CoinType.ETH: ["Ethereum", "ETH"],
-    CoinType.DOGE: ["Dogecoin"]
+    CoinType.DOGE: ["Dogecoin", "DOGE"],
+    CoinType.ADA: ["Cardano", "ADA"],
+    CoinType.LINK: ["Chainlink", "LINK"],
+    CoinType.DOT: ["Polkadot", "DOT"],
+    CoinType.XRP: ["Ripple", "XRP"],
+    CoinType.LTC: ["Litecoin", "LTC"],
+    CoinType.XLM: ["Stellar", "XLM"],
+    CoinType.OMG: ["omise_go", "omgnetwork", "OMG"],
 }
 
 

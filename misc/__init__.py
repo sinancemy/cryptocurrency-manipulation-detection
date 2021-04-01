@@ -9,6 +9,13 @@ class CoinType(str, Enum):
     BTC = "btc"
     ETH = "eth"
     DOGE = "doge"
+    ADA = "ada"
+    LINK = "link"
+    DOT = "dot1"
+    XRP = "xrp"
+    LTC = "ltc"
+    XLM = "xlm"
+    OMG = "omg"
 
 
 class TimeRange(object):

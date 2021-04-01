@@ -15,14 +15,26 @@ def analyze_trends(price_list):
     """
     df = pd.DataFrame([price.price for price in price_list], index=[price.time for price in price_list])
 
-    ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 8, False)), 8 * 24),
-                  _get_time_window_range(df, 8, True))
-    sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 13, False)), 13 * 24),
-                   _get_time_window_range(df, 13, True))
-    sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 21, False)), 21 * 24),
-                   _get_time_window_range(df, 21, True))
-    sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 55, False)), 55 * 24),
-                   _get_time_window_range(df, 55, True))
+    try:
+        ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 8, False)), 8 * 24),
+                      _get_time_window_range(df, 8, True))
+        sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 13, False)), 13 * 24),
+                       _get_time_window_range(df, 13, True))
+        sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 21, False)), 21 * 24),
+                       _get_time_window_range(df, 21, True))
+        sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 55, False)), 55 * 24),
+                       _get_time_window_range(df, 55, True))
+    except Exception:
+        return 0.0, 0.0, 0.0, 0.0
+
+    if np.isnan(ema8):
+        ema8 = 0.0
+    if np.isnan(sma13):
+        sma13 = 0.0
+    if np.isnan(sma21):
+        sma21 = 0.0
+    if np.isnan(sma55):
+        sma55 = 0.0
 
     return ema8, sma13, sma21, sma55
 
