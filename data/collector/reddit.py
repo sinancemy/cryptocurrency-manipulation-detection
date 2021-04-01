@@ -114,7 +114,7 @@ class ArchivedRedditCrawler(Collector):
                                content,
                                "reddit/" + subreddit,
                                calculate_interaction_score(p.num_comments, p.score),
-                               p.created_utc, p.id)
+                               p.created_utc, "rs" + p.id)
                 # Skip collecting the comments.
                 if not self.settings.collect_comments:
                     continue
@@ -125,4 +125,4 @@ class ArchivedRedditCrawler(Collector):
                                p.body,
                                "reddit/" + subreddit,
                                calculate_interaction_score(0, p.score),
-                               p.created_utc, p.id)
+                               p.created_utc, "rc" + p.id)

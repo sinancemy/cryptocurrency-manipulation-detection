@@ -29,6 +29,10 @@ class Post(object):
         self.type = type
         self.data = data
 
+    def copy(self):
+        return Post(self.coin_type, self.user, self.content, self.source, self.interaction, self.time, self.unique_id,
+                    self.type, self.data)
+
 
 # Represents a market price of a particular coin for a particular time.
 class MarketPrice(object):
