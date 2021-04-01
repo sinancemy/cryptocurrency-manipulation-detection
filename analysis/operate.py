@@ -2,6 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from data.dataset import CryptoSpeculationDataset
 from analysis.model import CryptoSpeculationModel
@@ -19,11 +20,11 @@ def train(model, dataset, device, epochs, batch_size, lr):
 
     model.to(device)
 
+    losses = ([], [])
     # for epoch in tqdm(range(epochs)):
     for epoch in range(epochs):
         model.train()
         training_loss = 0
-        training_acc = 0
         for i, batch in enumerate(train_loader):
             content, user, source, interaction, impact = batch
 
@@ -41,6 +42,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
 
             training_loss += loss.item()
         training_loss /= i
+        losses[0].append(training_loss)
 
         # for p in zip(prediction, true):
         #     print("____________________")
@@ -63,13 +65,17 @@ def train(model, dataset, device, epochs, batch_size, lr):
 
                 test_loss += loss.item()
             test_loss /= i
+            losses[1].append(test_loss)
 
-        for p in zip(prediction, true):
-            print("____________________")
-            print("Pred:", p[0].cpu().detach().numpy())
-            print("True:", p[1].cpu().detach().numpy())
+        # for p in zip(prediction, true):
+        #     print("____________________")
+        #     print("Pred:", p[0].cpu().detach().numpy())
+        #     print("True:", p[1].cpu().detach().numpy())
 
         print(f'Epoch {epoch+1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
+    plt.plot(losses[0])
+    plt.plot(losses[1])
+    plt.show()
 
 
 if torch.cuda.is_available():
@@ -77,17 +83,19 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-EPOCHS = 200
-BATCH_SIZE = 2048
+EPOCHS = 250
+BATCH_SIZE = 3000
 LR = 2e-3
 
 dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
+print(dataset)
 
-DOMAIN_SIZES = [len(dataset.vectorizer.domains[0]) + 1, len(dataset.vectorizer.domains[1]), len(dataset.vectorizer.domains[2])]  # TODO: Add <pad> token for padding sentences.
-EMBED_DIMS = [72, 32, 8]
+DOMAIN_SIZES = [len(dataset.vectorizer.domains[0]) + 1, len(dataset.vectorizer.domains[1]),
+                len(dataset.vectorizer.domains[2]), len(dataset.vectorizer.domains[3])]
+EMBED_DIMS = [72, 32, 8, 4]
 LSTM_LENGTH = dataset.vectorizer.domains[0].max_sentence_length
 LSTM_HIDDEN_DIM = 32
-LSTM_LAYERS = 2
+LSTM_LAYERS = 4
 FC_DIMS = [512, 128, 32]
 OUT_DIM = 4
 

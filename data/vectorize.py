@@ -21,9 +21,12 @@ class DiscreteDomain:
         self.i2w = [self.NEG]
 
         for w in include_list:
+            try:
+                counts.pop(w)
+            except KeyError:
+                continue
             self.w2i[w] = len(self.i2w) + 1
             self.i2w.append(w)
-            counts.pop(w)
         for w in sorted(counts, key=counts.get, reverse=True):
             if w not in neg_list and counts[w] >= min_count_to_include:
                 self.w2i[w] = len(self.i2w) + 1
