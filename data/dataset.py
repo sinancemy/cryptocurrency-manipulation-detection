@@ -1,10 +1,13 @@
 import os.path
+import random
 from pathlib import Path
 
 from torch.utils.data import Dataset
+from torch import FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
+from data.database import recreate_database
 from data.reader.datareader import DataReader
 from analysis.trends import analyze_trends
 from data.vectorize import Vocabulary, DiscreteDomain, Vectorizer
@@ -22,6 +25,9 @@ class CryptoSpeculationDataset(Dataset):
 
         if len(create_args) == 0:
             self.load()
+        elif len(create_args) == 2:
+            self.data_points = create_args["data_points"]
+            self.vectorizer = create_args["vectorizer"]
         elif len(create_args) == 4:
             social_media_crawlers = create_args["social_media_crawlers"]
             price_crawler = create_args["price_crawler"]
@@ -41,8 +47,9 @@ class CryptoSpeculationDataset(Dataset):
 
             self.data_points = list()
             print("Generating discrete domains")
-            content_vocab = Vocabulary([post.content for post in posts], 4096, 24, (4, 128), 16)
-            user_domain = DiscreteDomain([post.user for post in posts], 256, 8, ["[deleted]", "AutoModerator"])
+            content_vocab = Vocabulary([post.content for post in posts], 8192, 16, (4, 128), 24)
+            user_domain = DiscreteDomain([post.user for post in posts], 1024, 10, ["elonmusk"],
+                                         ["[deleted]", "AutoModerator"])
             source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
             self.vectorizer = Vectorizer(content_vocab, user_domain, source_domain)
             for post in tqdm(posts, desc="Vectorizing Data"):
@@ -50,14 +57,19 @@ class CryptoSpeculationDataset(Dataset):
                                                    vectorizer=self.vectorizer)
                 if point.X.content is not None:
                     self.data_points.append(point)
+
+            random.shuffle(self.data_points)
         else:
             raise Exception("Can't initialize CryptoSpeculationDataset from %d create_args." % len(create_args))
 
     def __len__(self):
         return len(self.data_points)
 
-    def __getitem__(self, item):
-        return self.data_points[item]
+    def __getitem__(self, index):
+        item = self.data_points[index]
+        return (IntTensor(item.X.content), FloatTensor(item.X.user),
+                FloatTensor(item.X.source), FloatTensor([item.X.interaction]),
+                FloatTensor(item.y.impact))
 
     def __repr__(self):
         return "CryptoSpeculationDataset: %s\n" \
@@ -69,6 +81,15 @@ class CryptoSpeculationDataset(Dataset):
                % (self.name, len(self.data_points), len(self.vectorizer.domains[0]),
                   self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
                   len(self.vectorizer.domains[2]))
+
+    def partition(self, coefficient):
+        partition_index = int(len(self) * coefficient)
+        return (CryptoSpeculationDataset("%s_train" % self.name,
+                                         data_points=self.data_points[0:partition_index],
+                                         vectorizer=self.vectorizer),
+                CryptoSpeculationDataset("%s_test" % self.name,
+                                         data_points=self.data_points[partition_index:len(self.data_points)],
+                                         vectorizer=self.vectorizer))
 
     def save(self):
         meta = [self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
@@ -157,11 +178,29 @@ def _example():
     from data.collector.twitter import TwitterCrawler
 
     dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
-        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}),
-        TwitterCrawler()],
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 60, api_settings={'limit': 100, 'score': '>7'}, collect_comments=True)],
                                        price_crawler=YahooPriceCrawler(resolution="1d"),
                                        coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
-                                       time_range=TimeRange(1577836800, 1609459200))
+                                       time_range=TimeRange(1577836800, 1578836800))
     dataset.save()
 
-# _example()
+
+recreate_database()
+_example()
+
+
+def collect_dataset():
+    from data.collector.yahoo import YahooPriceCrawler
+    from data.collector.reddit import ArchivedRedditCrawler
+    from data.collector.twitter import TwitterCrawler
+    from data.database import recreate_database
+
+    dataset = CryptoSpeculationDataset("Jun19_Feb21_Big", social_media_crawlers=[
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 2000, 'score': '>4'}),
+        TwitterCrawler()],
+                                       price_crawler=YahooPriceCrawler(resolution="1h"),
+                                       coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE, CoinType.ADA,
+                                                   CoinType.DOT, CoinType.LINK, CoinType.LTC, CoinType.OMG,
+                                                   CoinType.XLM, CoinType.XRP],
+                                       time_range=TimeRange(1559347200, 1612137600))
+    dataset.save()
