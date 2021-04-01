@@ -51,7 +51,9 @@ class CryptoSpeculationDataset(Dataset):
             user_domain = DiscreteDomain([post.user for post in posts], 1024, 10, ["elonmusk"],
                                          ["[deleted]", "AutoModerator"])
             source_domain = DiscreteDomain([post.source for post in posts], 128, 1)
-            self.vectorizer = Vectorizer(content_vocab, user_domain, source_domain)
+            coin_domain = DiscreteDomain([post.coin_type.value for post in posts], 128, 1)
+            self.vectorizer = Vectorizer(
+                content_vocab, user_domain, source_domain, coin_domain)
             for post in tqdm(posts, desc="Vectorizing Data"):
                 point = CryptoSpeculationDataPoint(post=post, prices=prices[post.coin_type],
                                                    vectorizer=self.vectorizer)
@@ -78,9 +80,10 @@ class CryptoSpeculationDataset(Dataset):
                "\t- Sentence length: %d\n" \
                "\t- User domain size: %d\n" \
                "\t- Source domain size: %d\n" \
+               "\t- Coin domain size: %d\n" \
                % (self.name, len(self.data_points), len(self.vectorizer.domains[0]),
                   self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
-                  len(self.vectorizer.domains[2]))
+                  len(self.vectorizer.domains[2]), len(self.vectorizer.domains[3]))
 
     def partition(self, coefficient):
         partition_index = int(len(self) * coefficient)
@@ -93,10 +96,10 @@ class CryptoSpeculationDataset(Dataset):
 
     def save(self):
         meta = [self.vectorizer.domains[0].max_sentence_length, len(self.vectorizer.domains[1]),
-                len(self.vectorizer.domains[2]), 1, 4]
-        data = np.vstack(
-            [np.hstack((point.X.content, point.X.user, point.X.source, point.X.interaction, point.y.impact))
-             for point in self.data_points])
+                len(self.vectorizer.domains[2]), len(self.vectorizer.domains[3]), 1, 4]
+        data = np.vstack([np.hstack(
+            (point.X.content, point.X.user, point.X.source, point.X.coin, point.X.interaction, point.y.impact))
+            for point in self.data_points])
         Path(os.path.join(DATASETS_DIR, self.name)).mkdir(parents=True, exist_ok=True)
         np.savez_compressed(os.path.join(DATASETS_DIR, self.name, "data.npz"), data=data, meta=meta)
         self.vectorizer.save(os.path.join(DATASETS_DIR, self.name, "mappings.vectorizer"))
@@ -109,8 +112,8 @@ class CryptoSpeculationDataset(Dataset):
         for point in data:
             self.data_points.append(CryptoSpeculationDataPoint(
                 content=point[0:sum(meta[0:1])], user=point[sum(meta[0:1]):sum(meta[0:2])],
-                source=point[sum(meta[0:2]):sum(meta[0:3])], interaction=point[sum(meta[0:3]):sum(meta[0:4])],
-                impact=point[sum(meta[0:4]):sum(meta[0:5])]
+                source=point[sum(meta[0:2]):sum(meta[0:3])], coin=point[sum(meta[0:3]):sum(meta[0:4])],
+                interaction=point[sum(meta[0:4]):sum(meta[0:5])], impact=point[sum(meta[0:5]):sum(meta[0:6])]
             ))
         self.vectorizer = Vectorizer()
         self.vectorizer.load(os.path.join(DATASETS_DIR, self.name, "mappings.vectorizer"))
@@ -126,9 +129,10 @@ class CryptoSpeculationDataPoint:
             self.y = CryptoSpeculationY(prices=list(filter(
                 lambda price: TimeRange(post.time - 60 * 60 * 24 * 56, post.time + 60 * 60 * 24 * 56).in_range(
                     price.time), prices)))
-        elif len(kwargs) == 5:
+        elif len(kwargs) == 6:
             self.X = CryptoSpeculationX(content=kwargs["content"], user=kwargs["user"],
-                                        source=kwargs["source"], interaction=kwargs["interaction"])
+                                        source=kwargs["source"], coin=kwargs["coin"],
+                                        interaction=kwargs["interaction"])
             self.y = CryptoSpeculationY(impact=kwargs["impact"])
 
     def __repr__(self):
@@ -140,13 +144,14 @@ class CryptoSpeculationDataPoint:
                "\t- Content: %s\n" \
                "\t- Author: %s\n" \
                "\t- Source: %s\n" \
+               "\t- Coin: %s\n" \
                "\t- Interaction Score: %d\n" \
                "y:\n" \
                "\t- EMA8: %f\n" \
                "\t- SMA13: %f\n" \
                "\t- SMA21: %f\n" \
                "\t- SMA55: %f" % (format_array_repr(self.X.content), format_array_repr(self.X.user),
-                                  format_array_repr(self.X.source), self.X.interaction,
+                                  format_array_repr(self.X.source), format_array_repr(self.X.coin), self.X.interaction,
                                   self.y.impact[0], self.y.impact[1], self.y.impact[2], self.y.impact[3])
 
 
@@ -155,12 +160,14 @@ class CryptoSpeculationX:
         if len(kwargs) == 2:
             post = kwargs["post"]
             vectorizer = kwargs["vectorizer"]
-            self.content, self.user, self.source = vectorizer.vectorize(post.content, post.user, post.source)
+            self.content, self.user, self.source, self.coin = vectorizer.vectorize(
+                post.content, post.user, post.source, post.coin_type)
             self.interaction = post.interaction
-        elif len(kwargs) == 4:
+        elif len(kwargs) == 5:
             self.content = np.array(kwargs["content"], dtype=int)
             self.user = np.array(kwargs["user"], dtype=int)
             self.source = np.array(kwargs["source"], dtype=int)
+            self.coin = np.array(kwargs["coin"], dtype=int)
             self.interaction = int(kwargs["interaction"][0])
 
 
@@ -200,7 +207,7 @@ def collect_dataset():
         TwitterCrawler()],
                                        price_crawler=YahooPriceCrawler(resolution="1h"),
                                        coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE, CoinType.ADA,
-                                                   CoinType.DOT, CoinType.LINK, CoinType.LTC, CoinType.OMG,
+                                                   CoinType.LINK, CoinType.LTC, CoinType.OMG,
                                                    CoinType.XLM, CoinType.XRP],
                                        time_range=TimeRange(1559347200, 1612137600))
     dataset.save()

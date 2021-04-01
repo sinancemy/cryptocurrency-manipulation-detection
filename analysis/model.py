@@ -30,6 +30,7 @@ class CryptoSpeculationModel(nn.Module):
 
         self.user_embed = nn.Sequential(*[nn.Linear(domain_sizes[1], embed_dims[1]), nn.ReLU()])
         self.source_embed = nn.Sequential(*[nn.Linear(domain_sizes[2], embed_dims[2]), nn.ReLU()])
+        self.coin_embed = nn.Sequential(*[nn.Linear(domain_sizes[3], embed_dims[3]), nn.ReLU()])
 
         fc_dims.insert(0, lstm_out_dim + embed_dims[1] + embed_dims[2] + 1)
         fc_layers = []
