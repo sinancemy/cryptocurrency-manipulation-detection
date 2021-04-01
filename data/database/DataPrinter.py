@@ -16,7 +16,7 @@ class DataPrinter(object):
         else:
             prices = self.db.read_prices_by_time_and_coin_type(tr.low, tr.high, ct)
         for price in prices:
-            print(price)
+            print(price.data)
 
     def print_posts(self, tr: TimeRange = None, ct: CoinType = None, src: str = None,
                     interaction_range: (int, int) = None):
@@ -31,4 +31,4 @@ class DataPrinter(object):
             selectors.append(RangeSelector("interaction", interaction_range[0], interaction_range[1]))
         posts = self.db.read_by("posts", selectors, row_to_post)
         for post in posts:
-            print(post)
+            print(post.data)

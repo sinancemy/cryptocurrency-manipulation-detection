@@ -159,7 +159,7 @@ def _example():
     dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
         ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}),
         TwitterCrawler()],
-                                       price_crawler=YahooPriceCrawler(resolution="1h"),
+                                       price_crawler=YahooPriceCrawler(resolution="1d"),
                                        coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
                                        time_range=TimeRange(1577836800, 1609459200))
     dataset.save()
