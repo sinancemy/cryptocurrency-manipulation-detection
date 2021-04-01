@@ -7,6 +7,7 @@ from data.database.models import Post
 from misc import *
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # coins = ["Bitcoin", "BTC", "btc", "Ethereum", "ETH", "eth", "Dogecoin", "DOGE", "doge",
@@ -42,8 +43,8 @@ def calculate_interaction_score(num_comments, score):
 
 class RealtimeRedditCrawler(Collector):
 
-    def __init__(self, coin: CoinType, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT):
-        super().__init__(coin=coin, limit=limit)
+    def __init__(self, coin: CoinType, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT, collect_comments=False):
+        super().__init__(coin=coin, limit=limit, collect_comments=collect_comments)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
 
@@ -76,6 +77,8 @@ class RealtimeRedditCrawler(Collector):
             submission = self.spider.submission(id=submission.id)
             # Expand the comments.
             submission.comments.replace_more(limit=3)
+            if not self.settings.collect.comments:
+                continue
             # Iterate over all the comments.
             for top_comment in submission.comments.list():
                 if isinstance(top_comment, MoreComments):
@@ -94,8 +97,8 @@ class RealtimeRedditCrawler(Collector):
 
 class ArchivedRedditCrawler(Collector):
 
-    def __init__(self, interval, api_settings, coin: CoinType = CoinType.BTC):
-        super().__init__(coin=coin, api_settings=api_settings, interval=interval)
+    def __init__(self, interval, api_settings, coin: CoinType = CoinType.BTC, collect_comments=False):
+        super().__init__(coin=coin, api_settings=api_settings, interval=interval, collect_comments=collect_comments)
         self.api = PushshiftAPI()
 
     def collect(self, time_range: TimeRange):
@@ -105,18 +108,21 @@ class ArchivedRedditCrawler(Collector):
             for subreddit in COIN_SUBREDDITS[self.settings.coin.value]:
                 sbm = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
                                                   **self.settings.api_settings)
-                cmt = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low,
-                                               **self.settings.api_settings)
                 for p in sbm:
                     content = p.title + (" " + p.selftext if hasattr(p, 'selftext') else "")
                     yield Post(self.settings.coin, p.author,
-                                      content,
-                                      "reddit/" + subreddit,
-                                      calculate_interaction_score(p.num_comments, p.score),
-                                      p.created_utc, p.id)
+                               content,
+                               "reddit/" + subreddit,
+                               calculate_interaction_score(p.num_comments, p.score),
+                               p.created_utc, p.id)
+                # Skip collecting the comments.
+                if not self.settings.collect_comments:
+                    continue
+                cmt = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low,
+                                               **self.settings.api_settings)
                 for p in cmt:
                     yield Post(self.settings.coin, p.author,
-                                      p.body,
-                                      "reddit/" + subreddit,
-                                      calculate_interaction_score(0, p.score),
-                                      p.created_utc, p.id)
+                               p.body,
+                               "reddit/" + subreddit,
+                               calculate_interaction_score(0, p.score),
+                               p.created_utc, p.id)
