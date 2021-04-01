@@ -79,3 +79,6 @@ class Database(object):
     def read_prices_by_time_and_coin_type(self, low, high, coin_type: CoinType):
         return self.read_by("prices", [RangeSelector("time", low, high),
                                        MatchSelector('coin_type', coin_type.value)], row_to_price)
+
+    def read_prices_by_coin_type(self, coin_type: CoinType):
+        return self.read_by("prices", [MatchSelector('coin_type', coin_type.value)], row_to_price)
