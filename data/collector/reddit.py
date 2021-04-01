@@ -104,7 +104,7 @@ class ArchivedRedditCrawler(Collector):
     def collect(self, time_range: TimeRange):
         for t in range(time_range.low, time_range.high + 1, self.settings.interval):
             tr = TimeRange(t, min(t + self.settings.interval, time_range.high))
-            # print("ArchivedRedditCrawler: Reading within", tr)
+            print("ArchivedRedditCrawler: Reading within", tr)
             for subreddit in COIN_SUBREDDITS[self.settings.coin.value]:
                 sbm = self.api.search_submissions(subreddit=subreddit, before=tr.high, after=tr.low,
                                                   **self.settings.api_settings)

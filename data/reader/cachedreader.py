@@ -36,7 +36,7 @@ class CachedReader(object):
             self.db.create(self.table, collected)
         # Save the cached range information into the database.
         if len(collector_ranges) > 0:
-            # print("CachedReader: Caching...")
+            print("CachedReader: Caching...")
             self.db.create("cached_ranges",
                            list(map(lambda r: CachedRange(r.low, r.high, collector_state), collector_ranges)))
         # Now, read the data from the database.

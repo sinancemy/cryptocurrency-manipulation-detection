@@ -7,6 +7,7 @@ from torch import FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
+from data.database import recreate_database
 from data.reader.datareader import DataReader
 from analysis.trends import analyze_trends
 from data.vectorize import Vocabulary, DiscreteDomain, Vectorizer
@@ -177,15 +178,15 @@ def _example():
     from data.collector.twitter import TwitterCrawler
 
     dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
-        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1500, 'score': '>7'}),
-        TwitterCrawler()],
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 60, api_settings={'limit': 100, 'score': '>7'}, collect_comments=True)],
                                        price_crawler=YahooPriceCrawler(resolution="1d"),
                                        coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
-                                       time_range=TimeRange(1577836800, 1609459200))
+                                       time_range=TimeRange(1577836800, 1578836800))
     dataset.save()
 
 
-# _example()
+recreate_database()
+_example()
 
 
 def collect_dataset():
