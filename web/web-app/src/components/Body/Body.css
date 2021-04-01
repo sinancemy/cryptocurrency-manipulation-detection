@@ -1,0 +1,40 @@
+.body .container {
+  position: absolute;
+  margin-top: 50px;
+  margin-left: 50px;
+  width: 1670px;
+  height: 850px;
+  border-radius: 5px 5px;
+  box-shadow: 0px 0px 20px 0px rgba(15, 15, 15, 0.2);
+  background: rgba(12, 14, 17, 0.2);
+  border: 2px solid #f6c14e;
+}
+
+.body .container .first-writing {
+  text-decoration: none;
+  text-align: center;
+  margin-top: 50px;
+  font-size: 36px;
+  border: none;
+  color: white;
+}
+
+.body .container .last-writing {
+  text-decoration: none;
+  text-align: center;
+  font-size: 36px;
+  border: none;
+  color: #c4c4c4;
+}
+
+.body .container .button-container {
+  position: absolute;
+  margin-left: 700px;
+}
+.body .container .button-container button {
+  background-color: #f6c14e;
+  border-radius: 5px 5px;
+  font-size: 24px;
+  border: none;
+  color: #0c0e11;
+}
