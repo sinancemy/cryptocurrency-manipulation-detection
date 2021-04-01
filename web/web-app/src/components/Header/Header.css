@@ -1,0 +1,36 @@
+.header {
+  height: 64px;
+  width: 100%;
+  background-color: #0c0e11;
+}
+
+.header .left-side a {
+  float: left;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 24px;
+  color: #f6c14e;
+}
+
+.header .right-side {
+  float: right;
+  padding-top: 14px;
+  padding-right: 16px;
+}
+
+.header .right-side button {
+  background-color: #f6c14e;
+  border-radius: 5px 5px;
+  font-size: 24px;
+  border: none;
+  color: #0c0e11;
+}
+
+.header .right-side a {
+  text-decoration: none;
+  font-size: 24px;
+  padding-right: 16px;
+  border: none;
+  color: white;
+}
