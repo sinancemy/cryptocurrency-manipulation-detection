@@ -72,11 +72,9 @@ def train(model, dataset, device, epochs, batch_size, lr):
 
 def predict(model, predict_set, device, batch_size=1024):
     predict_loader = DataLoader(predict_set, batch_size=batch_size, shuffle=False)
-
     model.to(device)
     model.eval()
-    predictions = np.zeros((0, 4))
-    print(predictions.shape)
+    predictions = np.zeros((0, 4))  # 4 because there are 4 impact scores
     with torch.no_grad():
         for i, batch in enumerate(predict_loader):
             content, user, source, interaction = batch
@@ -88,8 +86,6 @@ def predict(model, predict_set, device, batch_size=1024):
                                       Variable(source).to(device), Variable(interaction).to(device))
             print(batch_predictions.shape)
             predictions = np.vstack((predictions, batch_predictions.detach().cpu().numpy()))
-
-    print(predictions)
     return predictions
 
 

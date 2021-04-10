@@ -28,3 +28,5 @@ def _example():
     posts = [Post(CoinType.BTC, "elonmusk", "Everyone should be selling right now.", "twitter", 2114, None, None),
              Post(CoinType.DOGE, "some_guy", "Everyone should be buying right now.", "reddit/dogecoin", 9, None, None)]
     pred.predict(posts)
+
+_example()
