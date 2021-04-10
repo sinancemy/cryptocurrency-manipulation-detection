@@ -1,6 +1,13 @@
+import os.path
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+
+from misc import chdir_to_main
+
+chdir_to_main()
+MODELS_DIR = "analysis/models"
 
 
 class Swish(nn.Module):
@@ -13,15 +20,18 @@ class Swish(nn.Module):
 
 
 class CryptoSpeculationModel(nn.Module):
-    def __init__(self, device, domain_sizes, embed_dims, lstm_length, lstm_hidden_dim, lstm_layers, lstm_out_dim, fc_dims, out_dim,
-                 batch_size, dropout=0.5):
+    def __init__(self, name, device, vectorizer, embed_dims=[72, 32, 8, 4], lstm_hidden_dim=32, lstm_layers=4,
+                 lstm_out_dim=1024, fc_dims=[512, 128, 32], out_dim=4, batch_size=1024, dropout=0.6):
+        domain_sizes = vectorizer.domain_sizes()
+        lstm_length = vectorizer.domains[0].max_sentence_length
+
         super().__init__()
+        self.name = name
         self.device = device
         self.batch_size = batch_size
         self.lstm_hidden_dim = lstm_hidden_dim
         self.lstm_layers = lstm_layers
-
-        self.embed = nn.Embedding(domain_sizes[0], embed_dims[0])  # TODO: Initialize with pre-trained embeddings.
+        self.embed = nn.Embedding(domain_sizes[0]+1, embed_dims[0])  # TODO: Initialize with pre-trained embeddings.
         self.lstm = nn.LSTM(embed_dims[0], self.lstm_hidden_dim, num_layers=lstm_layers, bidirectional=True,
                             dropout=dropout, batch_first=True)
         self.reduce = nn.Sequential(*[nn.Linear(lstm_hidden_dim * lstm_length * 2, lstm_out_dim), nn.ReLU()])
@@ -63,3 +73,9 @@ class CryptoSpeculationModel(nn.Module):
     def to(self, device):
         super().to(device)
         self.device = device
+
+    def save(self):
+        torch.save(self.state_dict(), os.path.join(MODELS_DIR, self.name + ".pt"))
+
+    def load(self):
+        self.load_state_dict(torch.load(os.path.join(MODELS_DIR, self.name + ".pt")))

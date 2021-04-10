@@ -2,9 +2,10 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm
+import numpy as np
 import matplotlib.pyplot as plt
 
-from data.dataset import CryptoSpeculationDataset
+from data.dataset import CryptoSpeculationDataset, PredictSet
 from analysis.model import CryptoSpeculationModel
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
@@ -44,11 +45,6 @@ def train(model, dataset, device, epochs, batch_size, lr):
         training_loss /= i
         losses[0].append(training_loss)
 
-        # for p in zip(prediction, true):
-        #     print("____________________")
-        #     print("Pred:", p[0].cpu().detach().numpy())
-        #     print("True:", p[1].cpu().detach().numpy())
-
         model.eval()
         test_loss = 0
         with torch.no_grad():
@@ -67,39 +63,49 @@ def train(model, dataset, device, epochs, batch_size, lr):
             test_loss /= i
             losses[1].append(test_loss)
 
-        # for p in zip(prediction, true):
-        #     print("____________________")
-        #     print("Pred:", p[0].cpu().detach().numpy())
-        #     print("True:", p[1].cpu().detach().numpy())
+        print(f'Epoch {epoch + 1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
 
-        print(f'Epoch {epoch+1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
     plt.plot(losses[0])
     plt.plot(losses[1])
     plt.show()
 
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-else:
-    device = torch.device("cpu")
+def predict(model, predict_set, device, batch_size=1024):
+    predict_loader = DataLoader(predict_set, batch_size=batch_size, shuffle=False)
 
-EPOCHS = 250
-BATCH_SIZE = 3000
-LR = 2e-3
+    model.to(device)
+    model.eval()
+    predictions = np.zeros((0, 4))
+    print(predictions.shape)
+    with torch.no_grad():
+        for i, batch in enumerate(predict_loader):
+            content, user, source, interaction = batch
 
-dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
-print(dataset)
+            model.batch_size = content.shape[0]
+            model.reset_lstm_inputs()
 
-DOMAIN_SIZES = [len(dataset.vectorizer.domains[0]) + 1, len(dataset.vectorizer.domains[1]),
-                len(dataset.vectorizer.domains[2]), len(dataset.vectorizer.domains[3])]
-EMBED_DIMS = [72, 32, 8, 4]
-LSTM_LENGTH = dataset.vectorizer.domains[0].max_sentence_length
-LSTM_HIDDEN_DIM = 32
-LSTM_LAYERS = 4
-LSTM_OUT_DIM = 1024
-FC_DIMS = [512, 128, 32]
-OUT_DIM = 4
+            batch_predictions = model(Variable(content).to(device), Variable(user).to(device),
+                                      Variable(source).to(device), Variable(interaction).to(device))
+            print(batch_predictions.shape)
+            predictions = np.vstack((predictions, batch_predictions.detach().cpu().numpy()))
 
-model = CryptoSpeculationModel(device, DOMAIN_SIZES, EMBED_DIMS, LSTM_LENGTH, LSTM_HIDDEN_DIM, LSTM_LAYERS, LSTM_OUT_DIM, FC_DIMS, OUT_DIM, BATCH_SIZE, dropout=0.65)
+    print(predictions)
+    return predictions
 
-train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
+
+def _example_train():
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    else:
+        device = torch.device("cpu")
+
+    EPOCHS = 5
+    BATCH_SIZE = 3000
+    LR = 2e-3
+
+    dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
+
+    model = CryptoSpeculationModel("test_model", device, dataset.vectorizer)
+
+    train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
+    model.save()

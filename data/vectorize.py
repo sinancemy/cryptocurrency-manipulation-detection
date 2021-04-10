@@ -122,6 +122,9 @@ class Vectorizer:
     def vectorize(self, *objs):
         return [domain.vectorize(objs[i]) for i, domain in enumerate(self.domains)]
 
+    def domain_sizes(self):
+        return [len(d) for d in self.domains]
+
     def save(self, save_dir):
         data = zlib.compress(
             [domain.serialize() + [domain.__class__.__name__] for domain in self.domains].__repr__().encode())

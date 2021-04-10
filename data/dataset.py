@@ -119,6 +119,27 @@ class CryptoSpeculationDataset(Dataset):
         self.vectorizer.load(os.path.join(DATASETS_DIR, self.name, "mappings.vectorizer"))
 
 
+class PredictSet(Dataset):
+    def __init__(self, posts, vectorizer):
+        self.X = []
+        for post in posts:
+            self.X.append(CryptoSpeculationX(post=post, vectorizer=vectorizer))
+
+    def __getitem__(self, index):
+        x = self.X[index]
+        return (IntTensor(x.content), FloatTensor(x.user),
+                FloatTensor(x.source), FloatTensor([x.interaction]))
+
+    def __len__(self):
+        return len(self.X)
+
+
+def load_vectorizer_of(dataset_name):
+    vectorizer = Vectorizer()
+    vectorizer.load(os.path.join(DATASETS_DIR, dataset_name, "mappings.vectorizer"))
+    return vectorizer
+
+
 class CryptoSpeculationDataPoint:
     def __init__(self, **kwargs):
         if len(kwargs) == 3:
@@ -192,7 +213,7 @@ def _example():
     dataset.save()
 
 
-def collect_dataset():
+def _collect_dataset():
     from data.collector.yahoo import YahooPriceCrawler
     from data.collector.reddit import ArchivedRedditCrawler
     from data.collector.twitter import TwitterCrawler
