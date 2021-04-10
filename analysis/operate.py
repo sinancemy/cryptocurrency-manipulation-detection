@@ -84,7 +84,6 @@ def predict(model, predict_set, device, batch_size=1024):
 
             batch_predictions = model(Variable(content).to(device), Variable(user).to(device),
                                       Variable(source).to(device), Variable(interaction).to(device))
-            print(batch_predictions.shape)
             predictions = np.vstack((predictions, batch_predictions.detach().cpu().numpy()))
     return predictions
 

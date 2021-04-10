@@ -29,4 +29,5 @@ def _example():
              Post(CoinType.DOGE, "some_guy", "Everyone should be buying right now.", "reddit/dogecoin", 9, None, None)]
     pred.predict(posts)
 
+
 _example()
