@@ -5,11 +5,26 @@ from data.database import Database
 from json_helpers import *
 
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 
 @app.route("/api/posts")
 def get_posts():
-    return "posts"
+    start = request.args.get("start", type=int, default=-1)
+    if start < 0:
+        return "start parameter is invalid"
+    coin_type = request.args.get("type", type=str, default=None)
+    if coin_type is None:
+        return "coin type is invalid"
+    try:
+        coin_type = misc.CoinType(coin_type)
+    except:
+        return "coin type is invalid"
+    end = request.args.get("end", type=int, default=int(time.time()))
+    # Connect to the database
+    db = Database()
+    posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
+    return jsonify([post_to_json(p) for p in posts])
 
 
 @app.route("/api/prices")
