@@ -2,9 +2,8 @@ import sqlite3
 from data.database.sql_generator import *
 from data.database.models import *
 import os
-import itertools
 
-DATABASE_FILE = "database.db"
+DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"
 
 
 # Recreates the database from scratch.
