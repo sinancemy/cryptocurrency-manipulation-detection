@@ -29,6 +29,26 @@ CREATE TABLE "cached_ranges" (
     "type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
+""", """
+CREATE TABLE "users" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "username"	TEXT NOT NULL UNIQUE,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+CREATE TABLE "followed_coins" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "coin" TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+CREATE TABLE "followed_sources" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "source" TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
 """]
 
 

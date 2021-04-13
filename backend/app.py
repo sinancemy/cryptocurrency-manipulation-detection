@@ -24,7 +24,7 @@ def get_posts():
     # Connect to the database
     db = Database()
     posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
-    return jsonify([post_to_json(p) for p in posts])
+    return jsonify([post_to_dict(p) for p in posts])
 
 
 @app.route("/api/prices")
@@ -43,7 +43,7 @@ def get_prices():
     # Connect to the database
     db = Database()
     prices = db.read_prices_by_time_and_coin_type(start, end, coin_type)
-    return jsonify([price_to_json(p) for p in prices])
+    return jsonify([price_to_dict(p) for p in prices])
 
 
 if __name__ == "__main__":
