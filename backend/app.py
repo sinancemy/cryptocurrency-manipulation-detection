@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify
 import time
 
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 import misc
@@ -11,6 +12,9 @@ from json_helpers import *
 app = Flask(__name__)
 app.secret_key = b'f&#Uj**pF(G6R5O'
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+app.config["CORS_SUPPORTS_CREDENTIALS"] = True
+
+CORS(app)
 
 login_manager = LoginManager(app)
 
@@ -48,7 +52,7 @@ def get_posts():
     try:
         start, end, coin_type = get_api_args()
     except ValueError as err:
-        return err
+        return jsonify({"error": str(err)})
     # Connect to the database
     db = Database()
     posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
@@ -60,7 +64,7 @@ def get_prices():
     try:
         start, end, coin_type = get_api_args()
     except ValueError as err:
-        return err
+        return jsonify({"error": str(err)})
     # Connect to the database
     db = Database()
     prices = db.read_prices_by_time_and_coin_type(start, end, coin_type)
@@ -74,15 +78,15 @@ def login():
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return "please provide credentials"
+        return jsonify({"error": "please provide credentials"})
     db = Database()
     user = get_user_by_username(db, username)
     # Check the existence of the user.
     if user is None:
-        return "invalid credentials"
+        return jsonify({"error": "invalid credentials"})
     # Check the password.
     if not verify_password(password, user.user.password, user.user.salt):
-        return "invalid credentials"
+        return jsonify({"error": "invalid credentials"})
     login_user(user)
     return jsonify(dictify(user))
 
@@ -92,18 +96,18 @@ def register():
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return "please provide credentials"
+        return jsonify({"error": "please provide credentials"})
     db = Database()
     success = create_user(db, username, password)
     if not success:
-        return "user already exists"
-    return "ok"
+        return jsonify({"error": "user already exists"})
+    return jsonify({"status": "ok"})
 
 
 @app.route("/user/logout")
 def logout():
     logout_user()
-    return "ok"
+    return jsonify({"status": "ok"})
 
 
 @app.route("/user/info")
@@ -122,7 +126,7 @@ def follow_coin():
     db = Database()
     # current_user.followed_coins
     # db.create("followed_coins", [])
-    return "ok"
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
