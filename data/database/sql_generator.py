@@ -33,6 +33,8 @@ CREATE TABLE "cached_ranges" (
 CREATE TABLE "users" (
     "id"	INTEGER NOT NULL UNIQUE,
     "username"	TEXT NOT NULL UNIQUE,
+    "password" TEXT NOT NULL,
+    "salt" TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
