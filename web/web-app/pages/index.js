@@ -18,6 +18,7 @@ export default function Home() {
             <Link href="/login">Sign Up Now!</Link>
           </button>
         </div>
+        <div className="h-64"></div>
       </div>
     </div>
   );

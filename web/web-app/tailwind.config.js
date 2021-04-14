@@ -11,6 +11,9 @@ module.exports = {
           50: "#F6C14E",
         },
       },
+      spacing: {
+        128: "32rem",
+      },
     },
   },
   variants: {
