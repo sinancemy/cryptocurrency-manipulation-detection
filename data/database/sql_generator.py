@@ -83,7 +83,7 @@ def generate_insert_with_ignore_query(table_name, cols):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors) -> (str, list):
+def generate_select_query(table_name, selectors: list) -> (str, list):
     sql = "SELECT * FROM " + table_name
     params = []
     conds = []
