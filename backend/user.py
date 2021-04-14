@@ -51,7 +51,7 @@ def get_user_by_username(db: Database, username: str) -> Optional[UserInfo]:
     if len(user_rows) != 1:
         return None
     partial_user = UserInfo(user_rows[0], [], [])
-    return populate_user_info(db, user_rows[0].userid, partial_user)
+    return populate_user_info(db, user_rows[0].id, partial_user)
 
 
 def get_user_by_userid(db: Database, userid: str) -> Optional[UserInfo]:
@@ -64,11 +64,11 @@ def get_user_by_userid(db: Database, userid: str) -> Optional[UserInfo]:
     if len(user_rows) != 1:
         return None
     partial_user = UserInfo(user_rows[0], [], [])
-    return populate_user_info(db, user_rows[0].userid, partial_user)
+    return populate_user_info(db, user_rows[0].id, partial_user)
 
 
 def populate_user_info(db: Database, userid: int, partial_user: UserInfo):
-    partial_user.followed_coins = db.read_by("followed_coins", MatchSelector("userid", userid), row_to_followed_coin)
-    partial_user.followed_sources = db.read_by("followed_sources", MatchSelector("userid", userid),
+    partial_user.followed_coins = db.read_by("followed_coins", [MatchSelector("userid", userid)], row_to_followed_coin)
+    partial_user.followed_sources = db.read_by("followed_sources", [MatchSelector("userid", userid)],
                                                row_to_followed_source)
     return partial_user

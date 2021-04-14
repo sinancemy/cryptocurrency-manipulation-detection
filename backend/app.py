@@ -4,12 +4,13 @@ import time
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 import misc
-from data.database import Database
+from data.database import Database, recreate_database
 from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user
 from json_helpers import *
 
 app = Flask(__name__)
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+app.secret_key = b'f&#Uj**pF(G6R5O'
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
 login_manager = LoginManager(app)
 
@@ -83,7 +84,7 @@ def login():
     if not verify_password(password, user.user.password, user.user.salt):
         return "invalid credentials"
     login_user(user)
-    return jsonify(user.__dict__)
+    return jsonify(dictify(user))
 
 
 @app.route("/user/register", methods=["POST"])
@@ -108,7 +109,7 @@ def logout():
 @app.route("/user/info")
 @login_required
 def get_followed_coins():
-    return jsonify(current_user.__dict__)
+    return jsonify(dictify(current_user))
 
 
 @app.route("/user/follow_coin")
@@ -125,4 +126,5 @@ def follow_coin():
 
 
 if __name__ == "__main__":
+    recreate_database()
     app.run()
