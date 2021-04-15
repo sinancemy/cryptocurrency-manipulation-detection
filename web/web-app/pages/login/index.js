@@ -1,4 +1,6 @@
+import axios from "axios";
 import { useState } from "react";
+import { useCookies } from "react-cookie";
 
 export default function Login() {
 
@@ -6,18 +8,19 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
 
+  const [cookie, setCookie] = useCookies(["user"])
+
   const submitLogin = async (e) => {
-    const res = await fetch("//127.0.0.1:5000/user/login", {
-      method: "POST",
-      headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      credentials: "include",
-      body: "username=" + username + "&password=" + password
-    })
-    .then(r => r.json())
+    var signupFormData = new FormData()
+    signupFormData.append("username", username)
+    signupFormData.append("password", password)
+    const res = await axios.post("//127.0.0.1:5000/user/login", signupFormData, { withCredentials: true })
     .then(r => {
-      if(r.result === "error") {
-        setErrorMsg(r.error_msg)
+      if(r.data.result === "error") {
+        setErrorMsg(r.data.error_msg)
+        return
       }
+      console.log(r.headers.cookie)
     })
   }
 
@@ -54,8 +57,8 @@ export default function Login() {
               />
               <button
                 type="submit"
-                class="bg-yellow-50 text-blue-50 w-full py-2.5 rounded-lg text-sm shadow-sm font-semibold text-center inline-block"
                 onClick={submitLogin}
+                class="bg-yellow-50 text-blue-50 w-full py-2.5 rounded-lg text-sm shadow-sm font-semibold text-center inline-block"
               >
                 <span class="inline-block mr-2">Log In</span>
               </button>

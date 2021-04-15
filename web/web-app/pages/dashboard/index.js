@@ -1,8 +1,8 @@
 export async function getServerSideProps(context) {
-  var res = await fetch("http://127.0.0.1:5000/api/coin_list", {credentials: "include"})
+  var res = await fetch("//127.0.0.1:5000/api/coin_list", {credentials: "include"})
   const coins = await res.json()
   
-  res = await fetch("http://127.0.0.1:5000/api/posts", {credentials: "include"})
+  res = await fetch("//127.0.0.1:5000/api/posts", {credentials: "include"})
   const tweets = await res.json()
   return {
     props: {

@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
@@ -107,7 +107,8 @@ def login():
         return jsonify({"result": "error", "error_msg": "Invalid credentials."})
     login_user(user)
     userdict = dictify(user)
-    return jsonify({"result": "ok", "user": userdict})
+    resp = jsonify({"result": "ok", "user": userdict})
+    return resp
 
 
 @app.route("/user/register", methods=["POST"])
