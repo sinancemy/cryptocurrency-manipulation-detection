@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
-export default function Nav() {
+export default function Nav({ props }) {
   return (
     <div className="py-4 px-8 bg-blue-50 text text-white flex justify-between">
       <div className="flex text-xl items-center text-yellow-50">

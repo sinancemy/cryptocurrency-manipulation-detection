@@ -1,11 +1,12 @@
 import time
+from typing import Optional
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 import misc
-from data.database import Database, recreate_database
+from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector
 from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user
 from json_helpers import *
 
@@ -27,9 +28,11 @@ def load_user(user_id):
     return get_user_by_userid(db, user_id)
 
 
-def get_coin_type_arg() -> misc.CoinType:
+def get_coin_type_arg(required: bool = False) -> Optional[misc.CoinType]:
     coin_type = request.args.get("type", type=str, default=None)
     if coin_type is None:
+        if not required:
+            return None
         raise ValueError("coin type is invalid")
     try:
         coin_type = misc.CoinType(coin_type)
@@ -38,43 +41,58 @@ def get_coin_type_arg() -> misc.CoinType:
     return coin_type
 
 
-def get_api_args():
-    start = request.args.get("start", type=int, default=-1)
-    if start < 0:
-        raise ValueError("start parameter is invalid")
-    coin_type = get_coin_type_arg()
-    end = request.args.get("end", type=int, default=int(time.time()))
-    return start, end, coin_type
-
-
 @app.route("/api/posts")
 def get_posts():
+    start = request.args.get("start", type=int, default=0)
+    end = request.args.get("end", type=int, default=int(time.time()))    # Connect to the database
     try:
-        start, end, coin_type = get_api_args()
+        coin_type = get_coin_type_arg(required=False)
     except ValueError as err:
         return jsonify({"error": str(err)})
+    selectors = [RangeSelector("time", start, end)]
+    source = request.args.get("source", type=str, default=None)
+    user = request.args.get("user", type=str, default=None)
+    if coin_type is not None:
+        selectors.append(MatchSelector("coin_type", coin_type.value))
+    if source is not None:
+        selectors.append(MatchSelector("source", source))
+    if user is not None:
+        selectors.append(MatchSelector("user", user))
     # Connect to the database
     db = Database()
-    posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
+    posts = db.read_by("posts", selectors, row_to_post)
+    # Sort by time.
+    posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
 
 
 @app.route("/api/prices")
 def get_prices():
+    start = request.args.get("start", type=int, default=0)
+    end = request.args.get("end", type=int, default=int(time.time()))
     try:
-        start, end, coin_type = get_api_args()
+        coin_type = get_coin_type_arg(required=False)
     except ValueError as err:
         return jsonify({"error": str(err)})
     # Connect to the database
     db = Database()
     prices = db.read_prices_by_time_and_coin_type(start, end, coin_type)
+    # Sort by time.
+    prices = sorted(prices, key=lambda p: p.time, reverse=True)
     return jsonify([price_to_dict(p) for p in prices])
 
 
-@app.route("/user/login", methods=["GET", "POST"])
+@app.route("/api/coin_list")
+def get_coin_list():
+    coin_types = []
+    for coin_type in misc.CoinType:
+        coin_types.append({"name": coin_type,
+                           "image": "https://www.dhresource.com/0x0/f2/albu/g9/M00/27/85/rBVaVVxO822ACwv4AALYau1h4a8355.jpg/500pcs-30mm-diameter-bitcoin-logo-label-sticker.jpg"})
+    return jsonify(coin_types)
+
+
+@app.route("/user/login", methods=["POST"])
 def login():
-    if request.method == "GET":
-        return "bu bir get"
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
@@ -104,6 +122,11 @@ def register():
     return jsonify({"status": "ok"})
 
 
+@app.route("/user/logged_in")
+def logged_in():
+    return jsonify({"logged_in": current_user.is_authenticated})
+
+
 @app.route("/user/logout")
 def logout():
     logout_user()
@@ -129,6 +152,12 @@ def follow_coin():
     return jsonify({"status": "ok"})
 
 
+@app.route("/user/follow_source")
+@login_required
+def follow_source():
+    pass
+
+
 if __name__ == "__main__":
-    recreate_database()
+    # recreate_database()
     app.run()

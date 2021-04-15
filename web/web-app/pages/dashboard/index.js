@@ -1,62 +1,19 @@
-export default function Dashboard() {
-  const data = [
-    {
-      id: 1,
-      name: "Bitcoin",
-      image:
-        "https://www.dhresource.com/0x0/f2/albu/g9/M00/27/85/rBVaVVxO822ACwv4AALYau1h4a8355.jpg/500pcs-30mm-diameter-bitcoin-logo-label-sticker.jpg",
-    },
-    {
-      id: 2,
-      name: "MFT",
-      image:
-        "https://www.dhresource.com/0x0/f2/albu/g9/M00/27/85/rBVaVVxO822ACwv4AALYau1h4a8355.jpg/500pcs-30mm-diameter-bitcoin-logo-label-sticker.jpg",
-    },
-    {
-      id: 3,
-      name: "Ethereum",
-      image:
-        "https://www.dhresource.com/0x0/f2/albu/g9/M00/27/85/rBVaVVxO822ACwv4AALYau1h4a8355.jpg/500pcs-30mm-diameter-bitcoin-logo-label-sticker.jpg",
-    },
-  ];
+export async function getServerSideProps(context) {
+  var res = await fetch("http://127.0.0.1:5000/api/coin_list", {credentials: "include"})
+  const coins = await res.json()
+  
+  res = await fetch("http://127.0.0.1:5000/api/posts", {credentials: "include"})
+  const tweets = await res.json()
+  return {
+    props: {
+      coins: coins,
+      tweets: tweets
+    }
+  }
+}
 
-  const tweets = [
-    {
-      id: 1,
-      username: "elon musk",
-      text: "Odit atque alias ab.",
-      created_at: new Date().toLocaleDateString(),
-      interaction: 12,
-    },
-    {
-      id: 2,
-      username: "nostrum-culpa-amet",
-      text: "Dolore inventore saepe exercitationem.",
-      created_at: new Date().toLocaleDateString(),
-      interaction: 55,
-    },
-    {
-      id: 3,
-      username: "soluta-id-at",
-      text: "Sed quo quia sunt.",
-      created_at: new Date().toLocaleDateString(),
-      interaction: 43,
-    },
-    {
-      id: 4,
-      username: "soluta-id-at",
-      text: "Sed quo quia sunt.",
-      created_at: new Date().toLocaleDateString(),
-      interaction: 77,
-    },
-    {
-      id: 5,
-      username: "soluta-id-at",
-      text: "Sed quo quia sunt.",
-      created_at: new Date().toLocaleDateString(),
-      interaction: 123,
-    },
-  ];
+export default function Dashboard({ coins, tweets }) {
+  const data = coins
 
   return (
     <div className="container mx-auto py-4 grid lg:grid-cols-5 gap-4 text-yellow-50">
@@ -116,14 +73,19 @@ export default function Dashboard() {
           {tweets.map((tweet, i) => (
             <li
               key={i}
-              className="flex text-black border py-1 px-4 bg-white items-center justify-between rounded-md mt-2"
+              className="grid grid-cols-5 gap-3 text-black border py-1 px-4 bg-white justify-between rounded-md mt-2"
             >
-              <span className="font-semibold underline">{tweet.username}</span>
-              <p className="flex-1 ml-2">{tweet.text}</p>
               <div>
-                <p className="font-semibold">{tweet.created_at}</p>
-                <span className="font-semibold">Interaction: </span>
-                {tweet.interaction}
+                <span className="font-semibold underline width-50">{tweet.user}</span><br /> 
+                {tweet.source}
+              </div>
+              <div className="col-span-3">
+                <p>{tweet.content}</p>
+              </div>
+              <div>
+                <p className="text-sm">{new Date(tweet.time*1000).toLocaleString('en-US', {hour12: false})}
+                <br />
+                Interaction: {tweet.interaction}</p>
               </div>
             </li>
           ))}

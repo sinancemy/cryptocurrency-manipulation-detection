@@ -75,7 +75,12 @@ class Database(object):
 
     def read_posts_by_time_and_coin_type(self, low, high, coin_type: CoinType):
         return self.read_by("posts", [RangeSelector("time", low, high),
-                                      MatchSelector('coin_type', coin_type.value)], row_to_post)
+                                      MatchSelector("coin_type", coin_type.value)], row_to_post)
+
+    def read_posts_by_time_and_coin_type_and_source(self, low, high, coin_type: CoinType, source: str):
+        return self.read_by("posts", [RangeSelector("time", low, high),
+                                      MatchSelector("coin_type", coin_type.value),
+                                      MatchSelector("source", source)], row_to_post)
 
     def read_prices(self):
         return self.read_by("prices", [], row_to_price)
