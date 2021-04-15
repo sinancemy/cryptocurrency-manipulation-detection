@@ -96,17 +96,18 @@ def login():
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return jsonify({"error": "please provide credentials"})
+        return jsonify({"result": "error", "error_msg": "Please provide credentials."})
     db = Database()
     user = get_user_by_username(db, username)
     # Check the existence of the user.
     if user is None:
-        return jsonify({"error": "invalid credentials"})
+        return jsonify({"result": "error", "error_msg": "Invalid credentials."})
     # Check the password.
     if not verify_password(password, user.user.password, user.user.salt):
-        return jsonify({"error": "invalid credentials"})
+        return jsonify({"result": "error", "error_msg": "Invalid credentials."})
     login_user(user)
-    return jsonify(dictify(user))
+    userdict = dictify(user)
+    return jsonify({"result": "ok", "user": userdict})
 
 
 @app.route("/user/register", methods=["POST"])
@@ -114,12 +115,12 @@ def register():
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return jsonify({"error": "please provide credentials"})
+        return jsonify({"result": "error", "error_msg": "Please provide credentials."})
     db = Database()
     success = create_user(db, username, password)
     if not success:
-        return jsonify({"error": "user already exists"})
-    return jsonify({"status": "ok"})
+        return jsonify({"result": "error", "error_msg": "User already exists."})
+    return jsonify({"result": "ok"})
 
 
 @app.route("/user/logged_in")
