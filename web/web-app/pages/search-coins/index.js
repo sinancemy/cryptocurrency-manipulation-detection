@@ -1,4 +1,15 @@
-export default function SearchCoins() {
+export async function getServerSideProps(context) {
+  var res = await fetch("http://127.0.0.1:5000/api/coin_list")
+  const coins = await res.json()
+  
+  return {
+    props: {
+      coins: coins
+    }
+  }
+}
+
+export default function SearchCoins({ coins }) {
   return (
     <div>
       <div className="mt-24 grid grid-cols-5">
@@ -20,11 +31,11 @@ export default function SearchCoins() {
           </button>
         </div>
         <div className="col-start-3 col-end-4 grid grid-cols-2 lg:grid-cols-3 gap-4 text-yellow-50 bg-blue-50 mt-4 border-2 p-4 border-yellow-50 max-h-128 overflow-y-auto">
-          {[{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}].map(
-            (_, i) => (
+          {coins.map(
+            (coin, i) => (
               <div key={i} className="text-center p-4">
-                <img className="h-12 w-12 mx-auto" alt="image" />
-                <p>coin</p>
+                <img className="h-12 w-12 mx-auto" alt="image" src={coin.image}  />
+                <p>{coin.name}</p>
               </div>
             )
           )}

@@ -65,10 +65,10 @@ export default function Profile({ userInfo }) {
         </div>
         <div className="col-start-3 col-end-4">
           <h1 className="text-2xl text-yellow-50 text-center">
-            Posts that you follow
+            Sources that you follow
           </h1>
           <div className="grid lg:grid-cols-2 gap-4 text-yellow-50 bg-blue-50 mt-4 border-2 p-4 border-yellow-50 max-h-128 overflow-y-auto">
-            {[{}, {}, {}, {}, {}, {}, {}, {}].map((_, i) => (
+            {userInfo?.followed_sources?.map((_, i) => (
               <div key={i} className="flex items-center p-4">
                 <img className="h-24 w-24" alt="image" />
                 <p className="ml-2">twitter/elonMusk</p>

@@ -16,16 +16,15 @@ export default function Signup() {
     var signUp = new FormData()
     signUp.append("username", username)
     signUp.append("password", password)
-    const res = axios.post("//127.0.0.1:5000/user/register", signUp)
-    .then(r => {
-      if(r.data.result === "error") {
-        setErrorMsg(r.data.error_msg)
+    const res = await axios.post("//127.0.0.1:5000/user/register", signUp)
+    if(res.data.result === "error") {
+        setErrorMsg(res.data.error_msg)
         return
-      } else if(r.data.result == "ok") {
-        setSuccessMsg("Success. Please log in...")
+      } else if(res.data.result == "ok") {
+        setSuccessMsg("Success. Redirecting to log in...")
+        await new Promise(res => setTimeout(res, 1000))
         router.push("/login")
       }
-    })
   }
 
   return (

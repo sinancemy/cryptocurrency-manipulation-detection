@@ -5,7 +5,8 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 
 import misc
-from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector
+from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
+    FollowedSource
 from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user, UserInfo, \
     check_session, new_session, remove_session
 from json_helpers import *
@@ -36,8 +37,7 @@ def get_token_arg() -> str:
     return token
 
 
-def get_user() -> Optional[UserInfo]:
-    db = Database()
+def get_user(db: Database) -> Optional[UserInfo]:
     token = get_token_arg()
     print("User has token", token)
     return check_session(db, token)
@@ -93,6 +93,12 @@ def get_coin_list():
     return jsonify(coin_types)
 
 
+@app.route("/api/prediction")
+def prediction():
+    coin_type = get_coin_type_arg(required=True)
+    return jsonify({})
+
+
 @app.route("/user/login", methods=["POST"])
 def login():
     username = request.form.get("username", default="")
@@ -108,8 +114,7 @@ def login():
     if not verify_password(password, user.user.password, user.user.salt):
         return jsonify({"result": "error", "error_msg": "Invalid credentials."})
     token = new_session(db, user.user.id)
-    resp = jsonify({"result": "ok", "token": token})
-    return resp
+    return jsonify({"result": "ok", "token": token})
 
 
 @app.route("/user/register", methods=["POST"])
@@ -125,9 +130,11 @@ def register():
     return jsonify({"result": "ok"})
 
 
+# TODO Remove endpoint.
 @app.route("/user/logged_in")
 def logged_in():
-    user = get_user()
+    db = Database()
+    user = get_user(db)
     return jsonify({"logged_in": user is not None})
 
 
@@ -137,13 +144,15 @@ def logout():
     if token is None:
         return jsonify({"result": "error", "error_msg": "No token given."})
     db = Database()
+    # TODO: Remove the session from the database.
     remove_session(db, token)
     return jsonify({"result": "ok"})
 
 
 @app.route("/user/info")
 def get_user_info():
-    user = get_user()
+    db = Database()
+    user = get_user(db)
     if user is None:
         return jsonify({"result": "error"})
     return jsonify({"result": "ok", "user": dictify(user)})
@@ -156,14 +165,26 @@ def follow_coin():
     except ValueError as err:
         return err
     db = Database()
-    # current_user.followed_coins
-    # db.create("followed_coins", [])
+    user = get_user(db)
+    if user is None:
+        return jsonify({"result": "error", "error_msg": "Invalid token."})
+    if coin_type in [fc.coin_type for fc in user.followed_coins]:
+        return jsonify({"result": "error", "error_msg": "Already following."})
+    db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type)])
     return jsonify({"status": "ok"})
 
 
 @app.route("/user/follow_source")
 def follow_source():
-    pass
+    source = request.args.get("source", type=str, default=None)
+    db = Database()
+    user = get_user(db)
+    if user is None:
+        return jsonify({"result": "error", "error_msg": "Invalid token."})
+    if source in [fs.source for fs in user.followed_sources]:
+        return jsonify({"result": "error", "error_msg": "Already following."})
+    db.create("followed_sources", [FollowedSource(-1, user.user.id, source)])
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
