@@ -232,4 +232,5 @@ def _collect_dataset():
     dataset.save()
 
 
+recreate_database()
 _example()

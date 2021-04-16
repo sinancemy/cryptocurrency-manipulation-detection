@@ -1,9 +1,13 @@
+import { useRouter } from "next/router"
+import { useEffect } from "react"
+
 export async function getServerSideProps(context) {
-  var res = await fetch("//127.0.0.1:5000/api/coin_list", {credentials: "include"})
+  var res = await fetch("http://127.0.0.1:5000/api/coin_list")
   const coins = await res.json()
   
-  res = await fetch("//127.0.0.1:5000/api/posts", {credentials: "include"})
+  res = await fetch("http://127.0.0.1:5000/api/posts")
   const tweets = await res.json()
+  
   return {
     props: {
       coins: coins,
@@ -12,9 +16,17 @@ export async function getServerSideProps(context) {
   }
 }
 
-export default function Dashboard({ coins, tweets }) {
-  const data = coins
+export default function Dashboard({coins, tweets, loggedIn}) {
 
+  const router = useRouter()
+  // If the user is not logged in, then redirect back to the home page.
+  if(!loggedIn) {
+    useEffect(() => {
+      router.push("/")
+    })
+  }
+
+  const data = coins
   return (
     <div className="container mx-auto py-4 grid lg:grid-cols-5 gap-4 text-yellow-50">
       <div className="border-2 border-yellow-50 rounded-2xl drop-shadow-2xl bg-opacity-20 bg-blue-50 p-4 max-h-64 overflow-y-auto">

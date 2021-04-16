@@ -28,6 +28,10 @@ def row_to_followed_source(r):
     return FollowedSource(r[0], r[1], r[2])
 
 
+def row_to_session(r):
+    return Session(r[1], r[2], r[3])
+
+
 class Post(object):
     def __init__(self, coin_type: CoinType, user: str, content: str, source: str, interaction: int, time: int,
                  unique_id: str, type: str = "null"):
@@ -83,3 +87,10 @@ class FollowedSource(object):
         self.id = id
         self.userid = userid
         self.source = source
+
+
+class Session(object):
+    def __init__(self, userid: int, token: str, expiration: int):
+        self.userid = userid
+        self.token = token
+        self.expiration = expiration

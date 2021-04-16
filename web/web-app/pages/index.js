@@ -15,7 +15,7 @@ export default function Home() {
             <Link href="#">Learn More</Link>
           </button>
           <button className="ml-8 h-12 bg-yellow-50 text-xl text-blue-50 py-2 px-4 rounded">
-            <Link href="/login">Sign Up Now!</Link>
+            <Link href="/signup">Sign Up Now!</Link>
           </button>
         </div>
         <div className="h-64"></div>

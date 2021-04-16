@@ -1,3 +1,5 @@
+import axios from "axios";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 export default function Signup() {
@@ -6,24 +8,22 @@ export default function Signup() {
   const [password, setPassword] = useState("")
   const [reenteredPassword, setReenteredPassword] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
+  const [successMsg, setSuccessMsg] = useState("")
+  const router = useRouter()
 
   const submitSignup = async (e) => {
-    if(reenteredPassword !== password) {
-      setErrorMsg("Passwords do not match!")
-      return
-    }
-    const res = await fetch("//127.0.0.1:5000/user/register", {
-      method: "POST",
-      headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      credentials: "include",
-      body: "username=" + username + "&password=" + password
-    })
-    .then(r => r.json())
+    setErrorMsg("")
+    var signUp = new FormData()
+    signUp.append("username", username)
+    signUp.append("password", password)
+    const res = axios.post("//127.0.0.1:5000/user/register", signUp)
     .then(r => {
-      if(r.result === "error") {
-        setErrorMsg(r.error_msg)
-      } else {
-        
+      if(r.data.result === "error") {
+        setErrorMsg(r.data.error_msg)
+        return
+      } else if(r.data.result == "ok") {
+        setSuccessMsg("Success. Please log in...")
+        router.push("/login")
       }
     })
   }
@@ -36,6 +36,11 @@ export default function Signup() {
             <h1 className="font-bold text-yellow-50 text-center text-2xl mb-5">
               New Here?
             </h1>
+            { (successMsg !== '') ? 
+              <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-3 rounded relative" role="alert">
+                <strong class="font-bold">{successMsg}</strong>
+              </div>
+            : null}
             { (errorMsg !== '') ? 
               <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
                 <strong class="font-bold">{errorMsg}</strong>

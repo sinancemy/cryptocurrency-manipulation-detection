@@ -51,7 +51,15 @@ CREATE TABLE "followed_sources" (
     "source" TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
-"""]
+""", """
+CREATE TABLE "sessions" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiration" INTEGER NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)"""
+]
 
 
 class RangeSelector:

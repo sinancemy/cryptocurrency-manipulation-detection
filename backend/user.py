@@ -1,6 +1,8 @@
 from typing import Optional
 
-from data.database import Database, MatchSelector, row_to_user, row_to_followed_coin, row_to_followed_source, User
+from data.database import Database, MatchSelector, row_to_user, row_to_followed_coin, row_to_followed_source, User, \
+    Session, row_to_session
+import time
 import hashlib
 import secrets
 
@@ -72,3 +74,27 @@ def populate_user_info(db: Database, userid: int, partial_user: UserInfo):
     partial_user.followed_sources = db.read_by("followed_sources", [MatchSelector("userid", userid)],
                                                row_to_followed_source)
     return partial_user
+
+
+def new_session(db: Database, userid: int) -> str:
+    # Create a new token.
+    token = secrets.token_hex(64)
+    # Add the new session.
+    db.create("sessions", [Session(userid, token, int(time.time()) + 60 * 60 * 24)])
+    # Return the token.
+    return token
+
+
+def remove_session(db: Database, token: str):
+    # To be implemented.
+    pass
+
+
+def check_session(db: Database, token: str) -> Optional[UserInfo]:
+    sessions = db.read_by("sessions", [MatchSelector("token", token)], row_to_session)
+    if len(sessions) != 1:
+        return None
+    session = sessions[0]
+    if session.token != token:
+        return None
+    return get_user_by_userid(db, session.userid)

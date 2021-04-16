@@ -3,11 +3,11 @@ from typing import Optional
 
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 import misc
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector
-from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user
+from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user, UserInfo, \
+    check_session, new_session, remove_session
 from json_helpers import *
 
 app = Flask(__name__)
@@ -16,16 +16,6 @@ app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.config["CORS_SUPPORTS_CREDENTIALS"] = True
 
 CORS(app)
-
-login_manager = LoginManager(app)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    # Connect to the database.
-    db = Database()
-    # Load the user with the user id.
-    return get_user_by_userid(db, user_id)
 
 
 def get_coin_type_arg(required: bool = False) -> Optional[misc.CoinType]:
@@ -41,10 +31,22 @@ def get_coin_type_arg(required: bool = False) -> Optional[misc.CoinType]:
     return coin_type
 
 
+def get_token_arg() -> str:
+    token = request.args.get("token", type=str, default=None)
+    return token
+
+
+def get_user() -> Optional[UserInfo]:
+    db = Database()
+    token = get_token_arg()
+    print("User has token", token)
+    return check_session(db, token)
+
+
 @app.route("/api/posts")
 def get_posts():
     start = request.args.get("start", type=int, default=0)
-    end = request.args.get("end", type=int, default=int(time.time()))    # Connect to the database
+    end = request.args.get("end", type=int, default=int(time.time()))  # Connect to the database
     try:
         coin_type = get_coin_type_arg(required=False)
     except ValueError as err:
@@ -105,9 +107,8 @@ def login():
     # Check the password.
     if not verify_password(password, user.user.password, user.user.salt):
         return jsonify({"result": "error", "error_msg": "Invalid credentials."})
-    login_user(user)
-    userdict = dictify(user)
-    resp = jsonify({"result": "ok", "user": userdict})
+    token = new_session(db, user.user.id)
+    resp = jsonify({"result": "ok", "token": token})
     return resp
 
 
@@ -126,23 +127,29 @@ def register():
 
 @app.route("/user/logged_in")
 def logged_in():
-    return jsonify({"logged_in": current_user.is_authenticated})
+    user = get_user()
+    return jsonify({"logged_in": user is not None})
 
 
 @app.route("/user/logout")
 def logout():
-    logout_user()
-    return jsonify({"status": "ok"})
+    token = get_token_arg()
+    if token is None:
+        return jsonify({"result": "error", "error_msg": "No token given."})
+    db = Database()
+    remove_session(db, token)
+    return jsonify({"result": "ok"})
 
 
 @app.route("/user/info")
-@login_required
-def get_followed_coins():
-    return jsonify(dictify(current_user))
+def get_user_info():
+    user = get_user()
+    if user is None:
+        return jsonify({"result": "error"})
+    return jsonify({"result": "ok", "user": dictify(user)})
 
 
 @app.route("/user/follow_coin")
-@login_required
 def follow_coin():
     try:
         coin_type = get_coin_type_arg()
@@ -155,7 +162,6 @@ def follow_coin():
 
 
 @app.route("/user/follow_source")
-@login_required
 def follow_source():
     pass
 

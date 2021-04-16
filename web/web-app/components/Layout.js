@@ -1,10 +1,12 @@
 import React from "react";
 import Nav from "./Nav";
 
-export default function Layout({children, logged_in}) {
+export default function Layout({children, userInfo, loggedIn}) {
+  console.log(userInfo)
+  console.log(loggedIn)
   return (
     <div>
-      <Nav logged_in={logged_in} />
+      <Nav loggedIn={loggedIn} userInfo={userInfo} />
       {children}
     </div>
   );
