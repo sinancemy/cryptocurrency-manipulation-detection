@@ -61,11 +61,11 @@ export default function Login({ init_username }) {
       <div className="p-5 md:p-0 mx-auto md:w-full md:max-w-md">
         <div className="px-5 py-7">
           <div className="rounded-t-lg bg-white py-5 px-5 shadow-lg">
-            <h1 className="font-bold text-center text-2xl">
-              Welcome back!
-            </h1>
+              <h1 className="font-bold text-center text-2xl">
+                Welcome back!
+              </h1>
           </div>
-          <form class="bg-gray-50 border-t border-b border-gray-200 pt-6 px-6 shadow-lg" onSubmit={submitLogin}>
+          <form class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg" onSubmit={submitLogin}>
           { (successMsg !== '') ? 
             <div class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative" role="alert">
               {successMsg}
@@ -82,6 +82,7 @@ export default function Login({ init_username }) {
                   Username
                   <input
                     type="text"
+                    placeholder="Your username"
                     disabled={isLoading}
                     value={username}
                     onChange={e => setUsername(e.currentTarget.value)}
@@ -96,6 +97,7 @@ export default function Login({ init_username }) {
                   Password
                   <input
                     type="password"
+                    placeholder="Your password"
                     disabled={isLoading}
                     value={password}
                     onChange={e => setPassword(e.currentTarget.value)}
@@ -105,23 +107,24 @@ export default function Login({ init_username }) {
                 </label>
                 <p class="text-red-500 text-xs italic mt-2 ml-1">{passwordErrorMsg}</p>
               </div>
-              <button 
-                type="submit" 
-                disabled={!canSubmit || isLoading}
-                class="bg-yellow-50 text-blue-50 w-full h-10 rounded-lg text-md shadow-sm font-semibold text-center inline-block disabled:opacity-50 hover:bg-yellow-500">
-              {isLoading ? 
-                <svg class="animate-spin m-auto w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg> 
-              : 'Log in'}
-              </button>
+              <div className="grid grid-cols-2">
+                <button 
+                  type="submit" 
+                  disabled={!canSubmit || isLoading}
+                  class="bg-yellow-50 text-blue-50 h-10 py-2 px-4 w-36 rounded disabled:opacity-50 hover:bg-yellow-500">
+                {isLoading ? 
+                  <svg class="animate-spin m-auto w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg> 
+                : 'Log in'}
+                </button>
+                <a class="link inline-block text-right font-bold text-sm text-blue hover:text-blue-darker" href="#">
+                  Forgot Password?
+                </a>
+              </div>
             </div>
           </form>
-          <div className="rounded-b-lg bg-white py-5 px-6 shadow-lg flex">
-            <div className="font-bold underline text-pink-500">Don't have an account?</div>
-            <div className="ml-auto underline text-pink-300">Forgot password?</div>
-          </div>
         </div>
       </div>
     </div>
