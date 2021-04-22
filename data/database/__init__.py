@@ -46,6 +46,12 @@ class Database(object):
         self.conn.executemany(insert_sql, model_values)
         self.conn.commit()
 
+    # Generic deletion method.
+    def delete_by(self, table, selectors: list):
+        delete_sql, params = generate_delete_query(table, selectors)
+        cur = self.conn.cursor()
+        cur.execute(delete_sql, params)
+
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter) -> list:
         select_sql, params = generate_select_query(table, selectors)

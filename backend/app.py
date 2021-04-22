@@ -7,7 +7,7 @@ from flask_cors import CORS
 import misc
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
-from backend.user import get_user_by_userid, get_user_by_username, verify_password, create_user, UserInfo, \
+from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
     check_session, new_session, remove_session
 from json_helpers import *
 
@@ -39,7 +39,6 @@ def get_token_arg() -> str:
 
 def get_user(db: Database) -> Optional[UserInfo]:
     token = get_token_arg()
-    print("User has token", token)
     return check_session(db, token)
 
 
@@ -95,6 +94,7 @@ def get_coin_list():
 
 @app.route("/api/prediction")
 def prediction():
+    # TODO implement
     coin_type = get_coin_type_arg(required=True)
     return jsonify({})
 
@@ -130,21 +130,12 @@ def register():
     return jsonify({"result": "ok"})
 
 
-# TODO Remove endpoint.
-@app.route("/user/logged_in")
-def logged_in():
-    db = Database()
-    user = get_user(db)
-    return jsonify({"logged_in": user is not None})
-
-
 @app.route("/user/logout")
 def logout():
     token = get_token_arg()
     if token is None:
         return jsonify({"result": "error", "error_msg": "No token given."})
     db = Database()
-    # TODO: Remove the session from the database.
     remove_session(db, token)
     return jsonify({"result": "ok"})
 
