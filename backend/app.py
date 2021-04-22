@@ -101,32 +101,34 @@ def prediction():
 
 @app.route("/user/login", methods=["POST"])
 def login():
+    #time.sleep(2)
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return jsonify({"result": "error", "error_msg": "Please provide credentials."})
+        return jsonify({"result": "error", "error_type": 0, "error_msg": "Please provide credentials."})
     db = Database()
     user = get_user_by_username(db, username)
     # Check the existence of the user.
     if user is None:
-        return jsonify({"result": "error", "error_msg": "Invalid credentials."})
+        return jsonify({"result": "error", "error_type": 1, "error_msg": "Invalid user."})
     # Check the password.
     if not verify_password(password, user.user.password, user.user.salt):
-        return jsonify({"result": "error", "error_msg": "Invalid credentials."})
+        return jsonify({"result": "error", "error_type": 2, "error_msg": "Invalid password."})
     token = new_session(db, user.user.id)
     return jsonify({"result": "ok", "token": token})
 
 
 @app.route("/user/register", methods=["POST"])
 def register():
+    #time.sleep(2)
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
-        return jsonify({"result": "error", "error_msg": "Please provide credentials."})
+        return jsonify({"result": "error", "error_type": 0, "error_msg": "Please provide credentials."})
     db = Database()
     success = create_user(db, username, password)
     if not success:
-        return jsonify({"result": "error", "error_msg": "User already exists."})
+        return jsonify({"result": "error", "error_type": 1, "error_msg": "User already exists."})
     return jsonify({"result": "ok"})
 
 
