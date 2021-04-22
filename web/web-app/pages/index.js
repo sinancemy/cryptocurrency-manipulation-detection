@@ -13,7 +13,7 @@ export default function Home({ loggedIn }) {
 
   return (
     <div>
-      <div className="container mx-auto border-2 my-6 border-yellow-50 rounded-2xl drop-shadow-2xl bg-opacity-20 bg-blue-50">
+      <div className="animate-fade-in-down container mx-auto border-2 my-6 border-yellow-50 rounded-2xl drop-shadow-2xl bg-opacity-20 bg-blue-50">
         <h1 className="text-5xl text-center my-6 font-semibold text-white">
           Cryptocurrency Speculation Detection Through Social Media Analysis
         </h1>

@@ -5,21 +5,21 @@ import { async } from "regenerator-runtime";
 
 export default function Signup() {
 
+  const router = useRouter()
+
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [reenteredPassword, setReenteredPassword] = useState("")
   const [termsAgreed, setTermsAgreed] = useState(false)
+  const [usernameErrorMsg, setUsernameErrorMsg] = useState("")
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState("")
+  const [reenteredPasswordErrorMsg, setReenteredPasswordErrorMsg] = useState("")
 
   const [errorMsg, setErrorMsg] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
 
-  const [usernameErrorMsg, setUsernameErrorMsg] = useState("")
-  const [passwordErrorMsg, setPasswordErrorMsg] = useState("")
-  const [reenteredPasswordErrorMsg, setReenteredPasswordErrorMsg] = useState("")
   const [canSubmit, setCanSubmit] = useState(false)
   const [isLoading, setLoading] = useState(false)
-
-  const router = useRouter()
 
   const submitSignup = async (e) => {
     e.preventDefault()
@@ -39,7 +39,7 @@ export default function Signup() {
       } else if(res.data.result == "ok") {
         setSuccessMsg("Success! You are being redirected...")
         await new Promise(res => setTimeout(res, 2000))
-        router.push("/login")
+        router.push("/login?username=" + username)
       }
   }
 
@@ -121,85 +121,89 @@ export default function Signup() {
             <h1 className="font-bold text-yellow-50 text-center text-2xl mb-5">
               New here?
             </h1>
-            <form class="bg-white shadow-md rounded px-8 pt-6 pb-8" onSubmit={submitSignup}>
+            <form className="bg-white shadow-md rounded pt-6 px-6" onSubmit={submitSignup}>
             { (successMsg !== '') ? 
-              <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-3 rounded relative" role="alert">
+              <div class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative" role="alert">
                 {successMsg}
               </div>
             : null}
             { (errorMsg !== '') ? 
-              <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
+              <div class="animate-fade-in-down bg-red-100 border border-red-400 text-sm text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
                 {errorMsg}
               </div>
             : null}
-            <div class="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Username
-                <input
-                  type="text"
-                  disabled={isLoading}
-                  value={username}
-                  onFocus={() => usernameCheckerFirstUpdate.current = false}
-                  onChange={e => setUsername(e.currentTarget.value)}
-                  className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
-                        ${ usernameErrorMsg !== '' ? 'border-red-500' : null}`}
-                />
-                </label>
-                <p class="text-red-500 text-xs italic mt-2 ml-1">{usernameErrorMsg}</p>
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Password
-                <input
-                  type="password"
-                  disabled={isLoading}
-                  value={password}
-                  onFocus={() => passwordCheckerFirstUpdate.current = false}
-                  onChange={e => setPassword(e.currentTarget.value)}
-                  className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
-                        ${ passwordErrorMsg !== '' ? 'border-red-500' : null}`}
-                />
-                </label>
-                <p class="text-red-500 text-xs italic mt-2 ml-1">{passwordErrorMsg}</p>
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Password (again)
-                <input
-                  type="password"
-                  disabled={isLoading}
-                  value={reenteredPassword}
-                  onFocus={() => reenteredPasswordCheckerFirstUpdate.current = false}
-                  onChange={e => setReenteredPassword(e.currentTarget.value)}
-                  className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
-                  ${ reenteredPasswordErrorMsg !== '' ? 'border-red-500' : null}`}
-                />
-                </label>
-                <p class="text-red-500 text-xs italic mt-2 ml-1">{reenteredPasswordErrorMsg}</p>
-              </div>
-              <div class="mb-4">
-                <label class="text-gray-700 text-sm mb-2">
-                  <input 
-                    type="checkbox" 
-                    class="mr-2" 
-                    checked={termsAgreed}
-                    onClick={e => setTermsAgreed(e.currentTarget.checked)}
+              <div class="pb-8">
+                <div class="mb-4">
+                  <label className="block text-gray-700 text-md font-bold mb-2">
+                    Username
+                    <input
+                      type="text"
+                      disabled={isLoading}
+                      value={username}
+                      onFocus={() => usernameCheckerFirstUpdate.current = false}
+                      onChange={e => setUsername(e.currentTarget.value)}
+                      className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
+                            ${ usernameErrorMsg !== '' ? 'border-red-500' : null}`}
+                    />
+                    </label>
+                    <p class="text-red-500 text-xs italic mt-2 ml-1">{usernameErrorMsg}</p>
+                  </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-md font-bold mb-2">
+                    Password
+                  <input
+                    type="password"
+                    disabled={isLoading}
+                    value={password}
+                    onFocus={() => passwordCheckerFirstUpdate.current = false}
+                    onChange={e => setPassword(e.currentTarget.value)}
+                    className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
+                          ${ passwordErrorMsg !== '' ? 'border-red-500' : null}`}
                   />
-                  I accept the&nbsp;
-                  <a class="text-indigo-700 hover:text-indigo-900" href="#">
-                    terms and conditions
-                  </a>.
-                </label>
+                  </label>
+                  <p class="text-red-500 text-xs italic mt-2 ml-1">{passwordErrorMsg}</p>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-md font-bold mb-2">
+                    Password (again)
+                  <input
+                    type="password"
+                    disabled={isLoading}
+                    value={reenteredPassword}
+                    onFocus={() => reenteredPasswordCheckerFirstUpdate.current = false}
+                    onChange={e => setReenteredPassword(e.currentTarget.value)}
+                    className={`mt-1 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
+                    ${ reenteredPasswordErrorMsg !== '' ? 'border-red-500' : null}`}
+                  />
+                  </label>
+                  <p class="text-red-500 text-xs italic mt-2 ml-1">{reenteredPasswordErrorMsg}</p>
+                </div>
+                <div class="mb-4">
+                  <label class="text-gray-700 text-sm mb-2">
+                    <input 
+                      type="checkbox" 
+                      class="mr-2" 
+                      checked={termsAgreed}
+                      onChange={e => setTermsAgreed(e.currentTarget.checked)}
+                    />
+                    I accept the&nbsp;
+                    <a class="text-indigo-700 hover:text-indigo-900" href="#">
+                      terms and conditions
+                    </a>.
+                  </label>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={!canSubmit || isLoading}
+                  class="bg-yellow-50 text-blue-50 w-full h-10 rounded-lg text-md shadow-sm font-semibold text-center inline-block disabled:opacity-50 hover:bg-yellow-500">
+                {isLoading ? 
+                  <svg class="animate-spin m-auto h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg> 
+                : 'Sign up'}
+                </button>
               </div>
-              <button 
-                type="submit" 
-                disabled={!canSubmit || isLoading}
-                class="bg-yellow-50 text-blue-50 w-full py-2.5 rounded-lg text-sm shadow-sm font-semibold text-center inline-block disabled:opacity-50 hover:bg-yellow-500">
-              {isLoading ? <svg class="animate-spin m-auto h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg> : 'Sign up'}
-            </button>
             </form>
           </div>
         </div>

@@ -101,7 +101,6 @@ def prediction():
 
 @app.route("/user/login", methods=["POST"])
 def login():
-    #time.sleep(2)
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
@@ -120,7 +119,6 @@ def login():
 
 @app.route("/user/register", methods=["POST"])
 def register():
-    #time.sleep(2)
     username = request.form.get("username", default="")
     password = request.form.get("password", default="")
     if username == "" or password == "":
