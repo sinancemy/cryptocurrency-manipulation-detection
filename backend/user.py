@@ -79,6 +79,8 @@ def populate_user_info(db: Database, userid: int, partial_user: UserInfo):
 def new_session(db: Database, userid: int) -> str:
     # Create a new token.
     token = secrets.token_hex(64)
+    # Remove the other sessions associated with the userid.
+    db.delete_by("sessions", [MatchSelector("userid", userid)])
     # Add the new session.
     db.create("sessions", [Session(userid, token, int(time.time()) + 60 * 60 * 24)])
     # Return the token.
@@ -86,15 +88,25 @@ def new_session(db: Database, userid: int) -> str:
 
 
 def remove_session(db: Database, token: str):
-    # To be implemented.
-    pass
+    db.delete_by("sessions", [MatchSelector("token", token)])
 
 
 def check_session(db: Database, token: str) -> Optional[UserInfo]:
     sessions = db.read_by("sessions", [MatchSelector("token", token)], row_to_session)
-    if len(sessions) != 1:
+    # If multiple sessions are associated with the same token, delete all sessions.
+    if len(sessions) > 1:
+        db.delete_by("sessions", [MatchSelector("token", token)])
+        print("Detected multiple sessions for token", token)
+        return None
+    # If no sessions were found for the token, authentication is unsuccessful.
+    elif len(sessions) == 0:
         return None
     session = sessions[0]
-    if session.token != token:
+    curr_time = int(time.time())
+    # Check the expiration of the session.
+    if curr_time > session.expiration:
+        print("Supplied expired token", token)
+        db.delete_by("sessions", [MatchSelector("token", token)])
         return None
+    # Otherwise, authentication is successful. Return the authenticated user.
     return get_user_by_userid(db, session.userid)

@@ -20,11 +20,10 @@ export default function Dashboard({coins, tweets, loggedIn}) {
 
   const router = useRouter()
   // If the user is not logged in, then redirect back to the home page.
-  if(!loggedIn) {
-    useEffect(() => {
+  useEffect(() => {
+    if(!loggedIn) {
       router.push("/")
-    })
-  }
+    }})
 
   const data = coins
   return (

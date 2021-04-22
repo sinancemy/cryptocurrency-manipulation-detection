@@ -59,7 +59,7 @@ CREATE TABLE "sessions" (
     "expiration" INTEGER NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )"""
-]
+                        ]
 
 
 class RangeSelector:
@@ -90,11 +90,10 @@ def generate_insert_with_ignore_query(table_name, cols):
     return "INSERT OR IGNORE INTO " + table_name + cols_sql + " VALUES " + vals_sql
 
 
-# Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors: list) -> (str, list):
-    sql = "SELECT * FROM " + table_name
+def create_conditionals(selectors: list) -> (str, list):
     params = []
     conds = []
+    sql = ""
     for (i, selector) in enumerate(selectors):
         if isinstance(selector, RangeSelector):
             cond = "(" + selector.col + " <= ? AND " + selector.col + " >= ?)"
@@ -105,5 +104,21 @@ def generate_select_query(table_name, selectors: list) -> (str, list):
             conds.append(cond)
             params += [selector.needle]
     if len(conds) > 0:
-        sql += " WHERE " + " AND ".join(conds)
+        sql = "WHERE " + " AND ".join(conds)
     return sql, params
+
+
+# Creates a SELECT query with given predicates in the form of selector objects.
+def generate_select_query(table_name, selectors: list) -> (str, list):
+    sql = "SELECT * FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    return sql, cond_params
+
+
+# Creates a DELETE query with given predicates in the form of selector objects.
+def generate_delete_query(table_name, selectors: list):
+    sql = "DELETE FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    return sql, cond_params
