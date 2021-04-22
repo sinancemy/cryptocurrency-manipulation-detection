@@ -58,14 +58,14 @@ export default function Login() {
   }, [username, password])
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="p-10 xs:p-0 mx-auto md:w-full md:max-w-md">
+    <div className="min-h-screen flex flex-col animate-fade-in-down">
+      <div className="p-5 xs:p-0 mx-auto md:w-full md:max-w-md">
         <div className="w-full rounded-lg divide-y rounded drop-shadow-2xl bg-opacity-20 bg-blue-50">
           <div className="px-5 py-7">
             <h1 className="font-bold text-yellow-50 text-center text-2xl mb-5">
               Welcome back!
             </h1>
-            <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" onSubmit={submitLogin}>
+            <form class="bg-white shadow-md rounded px-8 pt-6 pb-8" onSubmit={submitLogin}>
             { (successMsg !== '') ? 
               <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-3 rounded relative" role="alert">
                 {successMsg}
