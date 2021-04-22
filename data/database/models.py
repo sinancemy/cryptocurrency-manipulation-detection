@@ -16,6 +16,22 @@ def row_to_cached_range(r):
     return CachedRange(r[1], r[2], r[3])
 
 
+def row_to_user(r):
+    return User(r[0], r[1], r[2], r[3])
+
+
+def row_to_followed_coin(r):
+    return FollowedCoin(r[0], r[1], CoinType(r[2]))
+
+
+def row_to_followed_source(r):
+    return FollowedSource(r[0], r[1], r[2])
+
+
+def row_to_session(r):
+    return Session(r[1], r[2], r[3])
+
+
 class Post(object):
     def __init__(self, coin_type: CoinType, user: str, content: str, source: str, interaction: int, time: int,
                  unique_id: str, type: str = "null"):
@@ -49,3 +65,32 @@ class CachedRange(object):
         self.low = low
         self.high = high
         self.type = type
+
+
+class User(object):
+    def __init__(self, id: int, username: str, password: str, salt: str):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.salt = salt
+
+
+class FollowedCoin(object):
+    def __init__(self, id: int, userid: int, coin_type: CoinType):
+        self.id = id
+        self.userid = userid
+        self.coin_type = coin_type
+
+
+class FollowedSource(object):
+    def __init__(self, id: int, userid: int, source: str):
+        self.id = id
+        self.userid = userid
+        self.source = source
+
+
+class Session(object):
+    def __init__(self, userid: int, token: str, expiration: int):
+        self.userid = userid
+        self.token = token
+        self.expiration = expiration

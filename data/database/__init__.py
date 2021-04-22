@@ -2,9 +2,8 @@ import sqlite3
 from data.database.sql_generator import *
 from data.database.models import *
 import os
-import itertools
 
-DATABASE_FILE = "database.db"
+DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"
 
 
 # Recreates the database from scratch.
@@ -28,19 +27,27 @@ class Database(object):
         except Exception as e:
             print("Could not connect to the database", e)
 
+    # Adds the given models into the specified table.
+    # Fields that are named as 'id' are discarded.
     def create(self, table, models: list, ignore=True):
         if len(models) == 0:
             return
         model_keys = list(models[0].__dict__.keys())
         model_values = list(map(lambda p: list(p.__dict__.values()), models))
+        # If the models have an "id" field, we want to discard them during insertion.
+        if "id" in model_keys:
+            i = model_keys.index("id")
+            model_keys.remove("id")
+            for v in model_values:
+                v.pop(i)
         insert_sql = generate_insert_with_ignore_query(table, model_keys) if ignore else \
-            generate_insert_query(table, models[0].__dict__.keys())
+            generate_insert_query(table, model_keys)
         # Batch insert the given posts.
         self.conn.executemany(insert_sql, model_values)
         self.conn.commit()
 
     # Generic reading method.
-    def read_by(self, table, selectors, row_converter):
+    def read_by(self, table, selectors: list, row_converter) -> list:
         select_sql, params = generate_select_query(table, selectors)
         cur = self.conn.cursor()
         cur.execute(select_sql, params)
@@ -68,7 +75,12 @@ class Database(object):
 
     def read_posts_by_time_and_coin_type(self, low, high, coin_type: CoinType):
         return self.read_by("posts", [RangeSelector("time", low, high),
-                                      MatchSelector('coin_type', coin_type.value)], row_to_post)
+                                      MatchSelector("coin_type", coin_type.value)], row_to_post)
+
+    def read_posts_by_time_and_coin_type_and_source(self, low, high, coin_type: CoinType, source: str):
+        return self.read_by("posts", [RangeSelector("time", low, high),
+                                      MatchSelector("coin_type", coin_type.value),
+                                      MatchSelector("source", source)], row_to_post)
 
     def read_prices(self):
         return self.read_by("prices", [], row_to_price)

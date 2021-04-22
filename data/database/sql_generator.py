@@ -29,7 +29,37 @@ CREATE TABLE "cached_ranges" (
     "type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
-"""]
+""", """
+CREATE TABLE "users" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "username"	TEXT NOT NULL UNIQUE,
+    "password" TEXT NOT NULL,
+    "salt" TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+CREATE TABLE "followed_coins" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "coin" TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+CREATE TABLE "followed_sources" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "source" TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+CREATE TABLE "sessions" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "userid" INTEGER NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiration" INTEGER NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)"""
+]
 
 
 class RangeSelector:
@@ -61,7 +91,7 @@ def generate_insert_with_ignore_query(table_name, cols):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors) -> (str, list):
+def generate_select_query(table_name, selectors: list) -> (str, list):
     sql = "SELECT * FROM " + table_name
     params = []
     conds = []
