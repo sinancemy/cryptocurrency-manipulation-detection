@@ -1,33 +1,42 @@
-import { useRouter } from "next/router"
-import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/router";
+import { useEffect, useRef, useState } from "react";
 
 export async function getServerSideProps(context) {
-  const coins = await (await fetch("http://127.0.0.1:5000/api/coin_list")).json()
-  const tweets = await (await fetch("http://127.0.0.1:5000/api/posts")).json()
+  const coins = await (
+    await fetch("http://127.0.0.1:5000/api/coin_list")
+  ).json();
+  const tweets = await (await fetch("http://127.0.0.1:5000/api/posts")).json();
 
-  const prices_fetched = await (await fetch("http://127.0.0.1:5000/api/prices?start=0&type=eth")).json()
-  const labels = prices_fetched.map(p => p.time * 1000)
-  const datapoints = prices_fetched.map(p => p.price)
-
+  const prices_fetched = await (
+    await fetch("http://127.0.0.1:5000/api/prices?start=0&type=eth")
+  ).json();
+  const labels = prices_fetched.map((p) => p.time * 1000);
+  const datapoints = prices_fetched.map((p) => p.price);
 
   return {
     props: {
       coins: coins,
       tweets: tweets,
       pricesLabels: labels,
-      pricesDps: datapoints
-    }
-  }
+      pricesDps: datapoints,
+    },
+  };
 }
 
-export default function Dashboard({coins, tweets, loggedIn, pricesLabels, pricesDps}) {
-
-  const router = useRouter()
+export default function Dashboard({
+  coins,
+  tweets,
+  loggedIn,
+  pricesLabels,
+  pricesDps,
+}) {
+  const router = useRouter();
   // If the user is not logged in, then redirect back to the home page.
   useEffect(() => {
-    if(!loggedIn) {
-      router.push("/login")
-    }})
+    if (!loggedIn) {
+      router.push("/login");
+    }
+  });
 
   return (
     <div className="container mx-auto py-4 grid lg:grid-cols-5 gap-4 text-yellow-50">
@@ -88,16 +97,23 @@ export default function Dashboard({coins, tweets, loggedIn, pricesLabels, prices
               className="grid grid-cols-5 gap-3 text-black border py-1 px-4 bg-white justify-between rounded-md mt-2"
             >
               <div>
-                <span className="font-semibold underline width-50">{tweet.user}</span><br /> 
+                <span className="font-semibold underline width-50">
+                  {tweet.user}
+                </span>
+                <br />
                 {tweet.source}
               </div>
               <div className="col-span-3">
                 <p>{tweet.content}</p>
               </div>
               <div>
-                <p className="text-sm">{new Date(tweet.time*1000).toLocaleString('en-US', {hour12: false})}
-                <br />
-                Interaction: {tweet.interaction}</p>
+                <p className="text-sm">
+                  {new Date(tweet.time * 1000).toLocaleString("en-US", {
+                    hour12: false,
+                  })}
+                  <br />
+                  Interaction: {tweet.interaction}
+                </p>
               </div>
             </li>
           ))}

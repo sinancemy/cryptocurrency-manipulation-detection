@@ -1,40 +1,38 @@
-import axios from "axios"
-import cookie from "cookie"
-import { useRouter } from "next/router"
-import { useEffect } from "react"
+import axios from "axios";
+import cookie from "cookie";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 export async function getServerSideProps(context) {
+  const cookies = cookie.parse(context.req.headers.cookie);
 
-  const cookies = cookie.parse(context.req.headers.cookie)
-
-  console.log(cookies)
+  console.log(cookies);
   const res = await axios.get("http://127.0.0.1:5000/user/info", {
     params: {
-      token: cookies.token
-    }
-  })
-  var userinfo = null
-  if(res.data.result === "ok") {
-    userinfo = res.data.userinfo
+      token: cookies.token,
+    },
+  });
+  var userinfo = null;
+  if (res.data.result === "ok") {
+    userinfo = res.data.userinfo;
   }
   return {
     props: {
-      userInfo: userinfo
-    }
-  }
+      userInfo: userinfo,
+    },
+  };
 }
 
 export default function Profile({ userInfo, token }) {
-
-  console.log(userInfo)
-  console.log(token)
-  const router = useRouter()
+  console.log(userInfo);
+  console.log(token);
+  const router = useRouter();
 
   // If the user is not logged in, then redirect back to the home page.
-  if(userInfo === null) {
+  if (userInfo === null) {
     useEffect(() => {
-      router.push("/")
-    })
+      router.push("/");
+    });
   }
 
   return (
