@@ -34,6 +34,18 @@ export default function Search({ coins, userInfo, token }) {
     });
   }
 
+  const [query, setQuery] = useState("");
+  const filterCoins = (coins, query) => {
+    if (!query) {
+      return coins;
+    }
+    return coins.filter((coin) => {
+      const name = coin.name.toLowerCase();
+      return name.includes(query);
+    });
+  };
+  const filteredCoins = filterCoins(coins, query);
+
   const coinNameArray = [];
   userInfo.followed_coins.forEach((coin) => {
     coinNameArray.push(coin.coin_type);
@@ -84,6 +96,8 @@ export default function Search({ coins, userInfo, token }) {
           <input
             className="col-span-3 mt-4 ml-4 mr-4 mb-4"
             type="text"
+            value={query}
+            onInput={(e) => setQuery(e.target.value)}
             placeholder="Search"
           />
         </div>
@@ -93,9 +107,9 @@ export default function Search({ coins, userInfo, token }) {
             onSubmit={submitForm}
           >
             <Form>
-              <div className="max-h-96 overflow-y-auto border">
-                {coins.map((coin, index) => (
-                  <div key={index} className="grid grid-cols-3 border">
+              <ul className="max-h-96 overflow-y-auto border">
+                {filteredCoins.map((coin, index) => (
+                  <li key={index} className="grid grid-cols-3 border">
                     <img
                       className="h-12 w-12 border"
                       src={coin.image}
@@ -108,9 +122,9 @@ export default function Search({ coins, userInfo, token }) {
                       className="border"
                       type="checkbox"
                     />
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
               <button
                 type="submit"
                 className="col-start-2 w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 rounded disabled:opacity-50 hover:bg-yellow-500"
