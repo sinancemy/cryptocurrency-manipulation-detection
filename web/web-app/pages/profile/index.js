@@ -15,7 +15,7 @@ export async function getServerSideProps(context) {
   })
   var userinfo = null
   if(res.data.result === "ok") {
-    userinfo = res.data.user
+    userinfo = res.data.userinfo
   }
   return {
     props: {
@@ -24,9 +24,10 @@ export async function getServerSideProps(context) {
   }
 }
 
-export default function Profile({ userInfo }) {
+export default function Profile({ userInfo, token }) {
 
   console.log(userInfo)
+  console.log(token)
   const router = useRouter()
 
   // If the user is not logged in, then redirect back to the home page.

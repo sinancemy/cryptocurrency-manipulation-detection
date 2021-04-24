@@ -191,6 +191,8 @@ def follow_coin():
 @app.route("/user/follow_source")
 def follow_source():
     source_str = request.args.get("source", type=str, default=None)
+    unfollow_flag = request.args.get("unfollow", type=int, default=0)
+    unfollow = unfollow_flag == 1
     corresponding_sources = expand_requested_source(source_str)
     if len(corresponding_sources) == 0:
         return jsonify({"result": "error", "error_msg": "No such source."})
