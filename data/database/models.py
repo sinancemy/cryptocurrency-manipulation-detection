@@ -88,6 +88,9 @@ class FollowedSource(object):
         self.userid = userid
         self.source = source
 
+    def __repr__(self):
+        return self.source
+
 
 class Session(object):
     def __init__(self, userid: int, token: str, expiration: int):

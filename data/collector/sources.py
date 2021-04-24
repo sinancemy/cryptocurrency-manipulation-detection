@@ -16,11 +16,21 @@ class Source:
         return self.username + "@" + self.source
 
 
-def expand_requested_source(req: str) -> list:
+# Checks whether the given source (req) corresponds to at least one supported source.
+def is_valid_source(req: str) -> bool:
+    # Search the requested source in all the sources that we support.
+    search_result = find_in_all_sources(req)
+    # Return true if and only if requested source corresponds to a source that we support.
+    return len(search_result) > 0
+
+
+def find_in_all_sources(req) -> list:
     parsed = parse_source(req)
     if parsed is None:
         return []
-    return list(filter(lambda src: source_matches(src, parsed), get_all_sources()))
+    # Search the requested source in all the sources that we support.
+    search_result = list(filter(lambda src: source_matches(parsed, src), get_all_sources()))
+    return search_result
 
 
 def source_matches(a: Source, b: Source) -> bool:
@@ -48,10 +58,10 @@ def get_all_sources() -> list:
 
 
 if __name__ == "__main__":
-    print(expand_requested_source("*@twitter"))
-    print(expand_requested_source("VitalikButerin@twitter"))
-    print(expand_requested_source("Mermaid@twitter"))
-    print(expand_requested_source("*@reddit/Bitcoin"))
-    print(expand_requested_source("cabbar@reddit/Bitcoin"))
-    print(expand_requested_source("cabbar@reddit/Habsburg"))
-    print(expand_requested_source("*@reddit/Habsburg"))
+    print(is_valid_source("*@twitter"))
+    print(is_valid_source("VitalikButerin@twitter"))
+    print(is_valid_source("Mermaid@twitter"))
+    print(is_valid_source("*@reddit/Bitcoin"))
+    print(is_valid_source("cabbar@reddit/Bitcoin"))
+    print(is_valid_source("cabbar@reddit/Habsburg"))
+    print(is_valid_source("*@reddit/Habsburg"))

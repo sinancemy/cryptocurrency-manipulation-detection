@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 
 import misc
-from data.collector.sources import get_all_sources, source_matches, parse_source, expand_requested_source
+from data.collector.sources import get_all_sources, source_matches, parse_source, is_valid_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
 from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
@@ -20,16 +20,15 @@ app.config["CORS_SUPPORTS_CREDENTIALS"] = True
 CORS(app)
 
 
-def get_coin_type_arg(required: bool = False) -> Optional[misc.CoinType]:
+def get_coin_type_arg() -> Optional[misc.CoinType]:
     coin_type = request.args.get("type", type=str, default=None)
     if coin_type is None:
-        if not required:
-            return None
-        raise ValueError("coin type is invalid")
+        return None
     try:
+        # Convert to enum.
         coin_type = misc.CoinType(coin_type)
-    except TypeError:
-        raise ValueError("coin type is invalid")
+    except ValueError:
+        return None
     return coin_type
 
 
@@ -47,10 +46,7 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
 def get_posts():
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))  # Connect to the database
-    try:
-        coin_type = get_coin_type_arg(required=False)
-    except ValueError as err:
-        return jsonify({"error": str(err)})
+    coin_type = get_coin_type_arg()
     selectors = [RangeSelector("time", start, end)]
     source = request.args.get("source", type=str, default=None)
     user = request.args.get("user", type=str, default=None)
@@ -58,7 +54,7 @@ def get_posts():
         selectors.append(MatchSelector("coin_type", coin_type.value))
     if source is not None:
         selectors.append(MatchSelector("source", source))
-    if user is not None:
+    if user is not None and user != "*":
         selectors.append(MatchSelector("user", user))
     # Connect to the database
     db = Database()
@@ -72,10 +68,9 @@ def get_posts():
 def get_prices():
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))
-    try:
-        coin_type = get_coin_type_arg(required=False)
-    except ValueError as err:
-        return jsonify({"error": str(err)})
+    coin_type = get_coin_type_arg()
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     # Connect to the database
     db = Database()
     prices = db.read_prices_by_time_and_coin_type(start, end, coin_type)
@@ -105,7 +100,6 @@ def get_source_list():
 @app.route("/api/prediction")
 def prediction():
     # TODO implement
-    coin_type = get_coin_type_arg(required=True)
     return jsonify({})
 
 
@@ -156,16 +150,16 @@ def get_user_info():
     user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error"})
-    d = (dictify(user, {'password', 'salt'}))
+    d = dictify(user, {'password', 'salt'})
     return jsonify({"result": "ok", "userinfo": d})
 
 
 @app.route("/user/follow_coin")
 def follow_coin():
-    try:
-        coin_type = get_coin_type_arg()
-    except ValueError as err:
-        return err
+    coin_type = get_coin_type_arg()
+    # Check whether the requested coin type is valid.
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     unfollow_flag = request.args.get("unfollow", type=int, default=0)
     unfollow = unfollow_flag == 1
     db = Database()
@@ -176,39 +170,49 @@ def follow_coin():
     if not unfollow:
         if coin_type in [fc.coin_type for fc in user.followed_coins]:
             return jsonify({"result": "error", "error_msg": "Already following."})
+        # Follow the coin.
         db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type)])
     # Unfollow
     else:
         followed = next(filter(lambda fc: coin_type == fc.coin_type, user.followed_coins), None)
         if followed is None:
             return jsonify({"result": "error", "error_msg": "Already unfollowed."})
-        print(followed.id)
-        # Delete the followed coin.
+        # Unfollow the followed coin.
         db.delete_by("followed_coins", [MatchSelector("id", followed.id)])
-    return jsonify({"status": "ok"})
+    return jsonify({"result": "ok"})
 
 
 @app.route("/user/follow_source")
 def follow_source():
-    source_str = request.args.get("source", type=str, default=None)
+    requested_source = request.args.get("source", type=str, default=None)
+    # Check whether the requested source corresponds to a supported source.
+    is_valid = is_valid_source(requested_source)
+    if not is_valid:
+        return jsonify({"result": "error", "error_msg": "No such source."})
     unfollow_flag = request.args.get("unfollow", type=int, default=0)
     unfollow = unfollow_flag == 1
-    corresponding_sources = expand_requested_source(source_str)
-    if len(corresponding_sources) == 0:
-        return jsonify({"result": "error", "error_msg": "No such source."})
     db = Database()
     user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error", "error_msg": "Invalid token."})
-    corresponding_sources_set = set([src.__repr__() for src in corresponding_sources])
-    followed_sources_set = set(user.followed_sources)
-    # Find the sources that should be added to the database.
-    to_follow_set = corresponding_sources_set.difference(followed_sources_set)
-    if len(to_follow_set) == 0:
-        return jsonify({"result": "error", "error_msg": "Already following."})
-    # Follow the new sources.
-    db.create("followed_sources", [FollowedSource(-1, user.user.id, source) for source in to_follow_set])
-    return jsonify({"status": "ok"})
+    # Get the sources the user is already following.
+    followed_sources_set = set([src.__repr__() for src in user.followed_sources])
+    # Follow
+    if not unfollow:
+        # If the user is already following the source, no need to add it again.
+        if requested_source in followed_sources_set:
+            return jsonify({"result": "error", "error_msg": "Already following."})
+        # Follow the new source.
+        db.create("followed_sources", [FollowedSource(-1, user.user.id, requested_source)])
+    # Unfollow
+    else:
+        # Get the followed source instance.
+        followed = next(filter(lambda fc: requested_source == fc.source, user.followed_sources), None)
+        if followed is None:
+            return jsonify({"result": "error", "error_msg": "Already unfollowed."})
+        # Unfollow the followed source.
+        db.delete_by("followed_sources", [MatchSelector("id", followed.id)])
+    return jsonify({"result": "ok"})
 
 
 if __name__ == "__main__":
