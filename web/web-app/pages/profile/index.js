@@ -4,9 +4,15 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 
 export async function getServerSideProps(context) {
+  if (context.req.headers.cookie == null) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
   const cookies = cookie.parse(context.req.headers.cookie);
-
-  console.log(cookies);
   const res = await axios.get("http://127.0.0.1:5000/user/info", {
     params: {
       token: cookies.token,
@@ -24,17 +30,6 @@ export async function getServerSideProps(context) {
 }
 
 export default function Profile({ userInfo, token }) {
-  console.log(userInfo);
-  console.log(token);
-  const router = useRouter();
-
-  // If the user is not logged in, then redirect back to the home page.
-  if (userInfo === null) {
-    useEffect(() => {
-      router.push("/");
-    });
-  }
-
   return (
     <div>
       <div className="text-yellow-50 bg-blue-50 mt-4 border-t border-b border-yellow-50">

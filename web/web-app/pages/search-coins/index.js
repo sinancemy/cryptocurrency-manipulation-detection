@@ -1,44 +1,153 @@
+import axios from "axios";
+import cookie from "cookie";
+import Router from "next/router";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import { Field, Formik, Form } from "formik";
+
 export async function getServerSideProps(context) {
-  var res = await fetch("http://127.0.0.1:5000/api/coin_list")
-  const coins = await res.json()
-  
+  if (context.req.headers.cookie == null) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+  const res = await axios.get("http://127.0.0.1:5000/api/coin_list");
+
+  const cookies = cookie.parse(context.req.headers.cookie);
+  const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
+    params: {
+      token: cookies.token,
+    },
+  });
+  var userinfo = null;
+  if (res2.data.result === "ok") {
+    userinfo = res2.data.userinfo;
+  }
   return {
     props: {
-      coins: coins
-    }
-  }
+      coins: res.data,
+      userInfo: userinfo,
+    },
+  };
 }
 
-export default function SearchCoins({ coins }) {
+export default function SearchCoins({ coins, userInfo, token }) {
+  const router = useRouter();
+  if (userInfo === null) {
+    useEffect(() => {
+      router.push("/");
+    });
+  }
+
+  const [query, setQuery] = useState("");
+  const filterCoins = (coins, query) => {
+    if (!query) {
+      return coins;
+    }
+    return coins.filter((coin) => {
+      const name = coin.name.toLowerCase();
+      return name.includes(query);
+    });
+  };
+  const filteredCoins = filterCoins(coins, query);
+
+  const coinNameArray = [];
+  userInfo.followed_coins.forEach((coin) => {
+    coinNameArray.push(coin.coin_type);
+  });
+  const initialNameArray = [...coinNameArray];
+
+  const submitForm = (values) => {
+    let unfollowed = initialNameArray.filter(
+      (x) => !values.checked.includes(x)
+    );
+    let followed = values.checked.filter((x) => !initialNameArray.includes(x));
+    followed.forEach((coin) => {
+      submitRequest(coin, true);
+    });
+
+    unfollowed.forEach((coin) => {
+      submitRequest(coin, false);
+    });
+  };
+
+  const submitRequest = async (coin, bool) => {
+    if (bool) {
+      await axios.get(
+        "//127.0.0.1:5000/user/follow_coin?token=" +
+          token +
+          "&type=" +
+          coin +
+          "&unfollow=0"
+      );
+    } else {
+      await axios.get(
+        "//127.0.0.1:5000/user/follow_coin?token=" +
+          token +
+          "&type=" +
+          coin +
+          "&unfollow=1"
+      );
+    }
+  };
+
   return (
-    <div>
-      <div className="mt-24 grid grid-cols-5">
-        <h1 className=" col-start-3 col-end-4 text-4xl text-yellow-50 text-center">
-          Search Coins
-        </h1>
-        <div className="col-start-3 col-end-4 text-yellow-50 bg-blue-50 mt-4 border-2 p-4 border-yellow-50 border-2 flex gap-7">
-          <input
-            type="text"
-            placeholder="Search"
-            className="border rounded-lg px-3 py-2 mt-1 mb-5 text-sm w-full items-center mt-4"
-          />
-          <button>
-            <img
-              className="h-12 w-12 items-center fill-current text-yellow-50"
-              src="search.png"
-              alt="logo"
-            />
-          </button>
+    <div className="animate-fade-in-down">
+      <div className="grid grid-cols-3 mt-8">
+        <div className="col-start-2 bg-white border-b rounded-t-lg">
+          <h1 className="font-bold text-center text-2xl mt-4 mb-4">
+            Follow Coins
+          </h1>
         </div>
-        <div className="col-start-3 col-end-4 grid grid-cols-2 lg:grid-cols-3 gap-4 text-yellow-50 bg-blue-50 mt-4 border-2 p-4 border-yellow-50 max-h-128 overflow-y-auto">
-          {coins.map(
-            (coin, i) => (
-              <div key={i} className="text-center p-4">
-                <img className="h-12 w-12 mx-auto" alt="image" src={coin.image}  />
-                <p>{coin.name}</p>
-              </div>
-            )
-          )}
+        <div className="col-start-2 grid grid-cols-12 bg-gray-50">
+          <input
+            className="col-start-2 col-end-12 mt-4 mb-4 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight"
+            type="text"
+            value={query}
+            onInput={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+          />
+        </div>
+        <div className="col-start-2 bg-gray-50 rounded-b-lg">
+          <Formik
+            initialValues={{ checked: coinNameArray }}
+            onSubmit={submitForm}
+          >
+            <Form>
+              <ul className="max-h-96 overflow-y-auto">
+                {filteredCoins.map((coin, index) => (
+                  <li
+                    key={index}
+                    className="grid grid-cols-12 py-1 px-4 rounded-md"
+                  >
+                    <div className="col-start-2 bg-gray-200">
+                      <img className="h-12 w-12" src={coin.image} alt="logo" />
+                    </div>
+                    <div className="col-start-3 bg-gray-200 col-span-8 flex items-center">
+                      <p className="text-black ml-2">{coin.name}</p>
+                    </div>
+                    <div className="col-start-11 bg-gray-200 flex items-center">
+                      <Field
+                        className="h-6 w-6"
+                        value={coin.name}
+                        name="checked"
+                        type="checkbox"
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="col-start-2 w-full bg-yellow-50 text-blue-50 h-10 rounded disabled:opacity-50 hover:bg-yellow-500"
+                type="submit"
+              >
+                Submit
+              </button>
+            </Form>
+          </Formik>
         </div>
       </div>
     </div>
