@@ -41,7 +41,7 @@ CREATE TABLE "users" (
 CREATE TABLE "followed_coins" (
     "id"	INTEGER NOT NULL UNIQUE,
     "userid" INTEGER NOT NULL,
-    "coin" TEXT NOT NULL,
+    "coin_type" TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """

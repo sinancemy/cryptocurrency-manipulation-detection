@@ -35,12 +35,17 @@ def convert_to_unix(datestamp, timestamp):
 
 
 class TwitterCrawler(Collector):
+
     def __init__(self, coin: CoinType = CoinType.BTC):
         super().__init__(coin=coin)
         self.config = twint.Config()
         self.config.Limit = 1
         self.config.Store_object = True
         self.config.Hide_output = True
+
+    @staticmethod
+    def get_all_sources() -> list:
+        return [username + "@twitter" for username in usernames]
 
     def collect(self, time_range: TimeRange):
         for username in usernames:

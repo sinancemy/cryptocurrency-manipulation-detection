@@ -15,3 +15,7 @@ class Collector(object):
 
     def collect(self, time_range: TimeRange) -> iter:
         raise NotImplementedError()
+
+    @staticmethod
+    def get_all_sources() -> list:
+        raise NotImplementedError()

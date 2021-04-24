@@ -1,3 +1,5 @@
+import functools
+
 import praw
 from praw.models import MoreComments
 from psaw import PushshiftAPI
@@ -47,6 +49,10 @@ class RealtimeRedditCrawler(Collector):
         super().__init__(coin=coin, limit=limit, collect_comments=collect_comments)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
+
+    @staticmethod
+    def get_all_sources() -> list:
+        return ["*@reddit/" + s for s in functools.reduce(list.__add__, COIN_SUBREDDITS.values())]
 
     def collect(self, time_range: TimeRange) -> list:
         posts = []
@@ -100,6 +106,10 @@ class ArchivedRedditCrawler(Collector):
     def __init__(self, interval, api_settings, coin: CoinType = CoinType.BTC, collect_comments=False):
         super().__init__(coin=coin, api_settings=api_settings, interval=interval, collect_comments=collect_comments)
         self.api = PushshiftAPI()
+
+    @staticmethod
+    def get_all_sources() -> list:
+        return ["*@reddit/" + s for s in functools.reduce(list.__add__, COIN_SUBREDDITS.values())]
 
     def collect(self, time_range: TimeRange):
         for t in range(time_range.low, time_range.high + 1, self.settings.interval):

@@ -1,3 +1,5 @@
+from enum import Enum
+
 from data.database.models import Post, MarketPrice
 
 
@@ -11,12 +13,17 @@ def price_to_dict(price: MarketPrice):
     return price.__dict__
 
 
-def dictify(o):
+def dictify(o, excluded_keys: set):
     if isinstance(o, list):
-        return [dictify(e) for e in o]
+        return [dictify(e, excluded_keys) for e in o]
+    if isinstance(o, Enum):
+        return o.value
     if hasattr(o, "__dict__"):
-        d = o.__dict__
+        d: dict = o.__dict__
+        for e in excluded_keys:
+            if e in d:
+                d.pop(e)
         for k in d:
-            d[k] = dictify(d[k])
+            d[k] = dictify(d[k], excluded_keys)
         return d
     return o

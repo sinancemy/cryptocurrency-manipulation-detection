@@ -1,8 +1,7 @@
-import "tailwindcss/tailwind.css";
-import "../styles/globals.css";
-import Layout from "../components/Layout";
-import cookie from "cookie"
-import { useCookies } from "react-cookie";
+import "tailwindcss/tailwind.css"
+import "../styles/globals.css"
+import Layout from "../components/Layout"
+import { useCookies } from "react-cookie"
 
 function MyApp({ Component, pageProps }) {
 

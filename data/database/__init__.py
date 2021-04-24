@@ -51,6 +51,7 @@ class Database(object):
         delete_sql, params = generate_delete_query(table, selectors)
         cur = self.conn.cursor()
         cur.execute(delete_sql, params)
+        self.conn.commit()
 
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter) -> list:

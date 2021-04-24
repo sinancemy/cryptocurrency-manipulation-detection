@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 
 import misc
+from data.collector.sources import get_all_sources, source_matches, parse_source, expand_requested_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
 from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
@@ -37,7 +38,7 @@ def get_token_arg() -> str:
     return token
 
 
-def get_user(db: Database) -> Optional[UserInfo]:
+def get_user_from_token(db: Database) -> Optional[UserInfo]:
     token = get_token_arg()
     return check_session(db, token)
 
@@ -92,6 +93,15 @@ def get_coin_list():
     return jsonify(coin_types)
 
 
+@app.route("/api/source_list")
+def get_source_list():
+    sources = get_all_sources()
+    return jsonify([{
+            "username": src.username,
+            "source": src.source
+        } for src in sources])
+
+
 @app.route("/api/prediction")
 def prediction():
     # TODO implement
@@ -143,10 +153,11 @@ def logout():
 @app.route("/user/info")
 def get_user_info():
     db = Database()
-    user = get_user(db)
+    user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error"})
-    return jsonify({"result": "ok", "user": dictify(user)})
+    d = (dictify(user, {'password', 'salt'}))
+    return jsonify({"result": "ok", "userinfo": d})
 
 
 @app.route("/user/follow_coin")
@@ -155,26 +166,46 @@ def follow_coin():
         coin_type = get_coin_type_arg()
     except ValueError as err:
         return err
+    unfollow_flag = request.args.get("unfollow", type=int, default=0)
+    unfollow = unfollow_flag == 1
     db = Database()
-    user = get_user(db)
+    user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error", "error_msg": "Invalid token."})
-    if coin_type in [fc.coin_type for fc in user.followed_coins]:
-        return jsonify({"result": "error", "error_msg": "Already following."})
-    db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type)])
+    # Follow
+    if not unfollow:
+        if coin_type in [fc.coin_type for fc in user.followed_coins]:
+            return jsonify({"result": "error", "error_msg": "Already following."})
+        db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type)])
+    # Unfollow
+    else:
+        followed = next(filter(lambda fc: coin_type == fc.coin_type, user.followed_coins), None)
+        if followed is None:
+            return jsonify({"result": "error", "error_msg": "Already unfollowed."})
+        print(followed.id)
+        # Delete the followed coin.
+        db.delete_by("followed_coins", [MatchSelector("id", followed.id)])
     return jsonify({"status": "ok"})
 
 
 @app.route("/user/follow_source")
 def follow_source():
-    source = request.args.get("source", type=str, default=None)
+    source_str = request.args.get("source", type=str, default=None)
+    corresponding_sources = expand_requested_source(source_str)
+    if len(corresponding_sources) == 0:
+        return jsonify({"result": "error", "error_msg": "No such source."})
     db = Database()
-    user = get_user(db)
+    user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error", "error_msg": "Invalid token."})
-    if source in [fs.source for fs in user.followed_sources]:
+    corresponding_sources_set = set([src.__repr__() for src in corresponding_sources])
+    followed_sources_set = set(user.followed_sources)
+    # Find the sources that should be added to the database.
+    to_follow_set = corresponding_sources_set.difference(followed_sources_set)
+    if len(to_follow_set) == 0:
         return jsonify({"result": "error", "error_msg": "Already following."})
-    db.create("followed_sources", [FollowedSource(-1, user.user.id, source)])
+    # Follow the new sources.
+    db.create("followed_sources", [FollowedSource(-1, user.user.id, source) for source in to_follow_set])
     return jsonify({"status": "ok"})
 
 
