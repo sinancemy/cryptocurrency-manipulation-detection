@@ -26,36 +26,57 @@ export async function getServerSideProps(context) {
 }
 
 export default function Search({ coins, userInfo, token }) {
-  console.log(userInfo);
+  const router = useRouter();
+
   if (userInfo === null) {
     useEffect(() => {
       router.push("/");
     });
   }
 
-  const parseInitial = () => {
-    console.log(userInfo.followed_coins);
-  };
-  parseInitial();
+  const coinNameArray = [];
+  userInfo.followed_coins.forEach((coin) => {
+    coinNameArray.push(coin.coin_type);
+  });
+  const initialNameArray = [...coinNameArray];
 
-  const testSubmitTwo = (values) => {
-    values.checked.forEach((coin) => {
-      testSubmit(coin);
+  const submitForm = (values) => {
+    let unfollowed = initialNameArray.filter(
+      (x) => !values.checked.includes(x)
+    );
+    let followed = values.checked.filter((x) => !initialNameArray.includes(x));
+    followed.forEach((coin) => {
+      submitRequest(coin, true);
+    });
+
+    unfollowed.forEach((coin) => {
+      submitRequest(coin, false);
     });
   };
-  const testSubmit = async (coin) => {
-    const res = await axios.get(
-      "//127.0.0.1:5000/user/follow_coin?token=" +
-        token +
-        "&type=" +
-        coin +
-        "&unfollow=0"
-    );
+
+  const submitRequest = async (coin, bool) => {
+    if (bool) {
+      await axios.get(
+        "//127.0.0.1:5000/user/follow_coin?token=" +
+          token +
+          "&type=" +
+          coin +
+          "&unfollow=0"
+      );
+    } else {
+      await axios.get(
+        "//127.0.0.1:5000/user/follow_coin?token=" +
+          token +
+          "&type=" +
+          coin +
+          "&unfollow=1"
+      );
+    }
   };
 
   return (
     <div className="animate-fade-in-down">
-      <div className="grid grid-cols-3 gap-4 border">
+      <div className="grid grid-cols-3 gap-4 border mt-4">
         <h1 className="col-start-2 font-bold text-center text-2xl text-white">
           Follow Coins
         </h1>
@@ -68,8 +89,8 @@ export default function Search({ coins, userInfo, token }) {
         </div>
         <div className="col-start-2">
           <Formik
-            initialValues={{ checked: userInfo.followed_coins }}
-            onSubmit={testSubmitTwo}
+            initialValues={{ checked: coinNameArray }}
+            onSubmit={submitForm}
           >
             <Form>
               <div className="max-h-96 overflow-y-auto border">
