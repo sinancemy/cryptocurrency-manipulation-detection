@@ -56,6 +56,7 @@ class Database(object):
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter) -> list:
         select_sql, params = generate_select_query(table, selectors)
+        print(select_sql)
         cur = self.conn.cursor()
         cur.execute(select_sql, params)
         rows = cur.fetchall()

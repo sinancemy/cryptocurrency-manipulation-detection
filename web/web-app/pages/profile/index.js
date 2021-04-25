@@ -4,10 +4,7 @@ import { useRouter } from "next/router"
 import { useEffect } from "react"
 
 export async function getServerSideProps(context) {
-
   const cookies = cookie.parse(context.req.headers.cookie)
-
-  console.log(cookies)
   const res = await axios.get("http://127.0.0.1:5000/user/info", {
     params: {
       token: cookies.token
