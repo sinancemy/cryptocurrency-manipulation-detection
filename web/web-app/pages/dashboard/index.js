@@ -32,7 +32,7 @@ export async function getServerSideProps(context) {
 export default function Dashboard({coins, userInfo, loggedIn}) {  
   const ResponsiveGraph = withParentSize(Graph)
   const [graphSettings, setGraphSettings] = useState({
-    coinType: "btc",
+    coinType: "eth",
     extent: "year",
     timeWindow: 30,
   })
@@ -182,20 +182,24 @@ export default function Dashboard({coins, userInfo, loggedIn}) {
       </div>
       <div className="col-span-4">
         <div className="h-1/5 mb-5 rounded-lg drop-shadow-2xl overflow-hidden lg:col-span-3 bg-blue-128">
-          <ResponsiveGraph 
+          { prices.length > 0 ? (<ResponsiveGraph 
             loading={graphLoading} 
             stock={prices} 
             graphSettings={graphSettings} 
             selectedRange={selectedRange} 
             setSelectedRange={setSelectedRange}
-          />
+          />) : (
+            <div className="ml-5 mt-5 text-black">
+              No price data found.
+            </div>
+          ) }
         </div>
         <div className="max-h-128">
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
             <div className="flex flex-justify-between font-light">
               <div>
-                <span className="font-semibold">{ selectedRange && ( selectedRange.mid.price.toFixed(2) ) }</span>
+                <span className="font-semibold">{ selectedRange && ( selectedRange.mid.price.toPrecision(5) ) }</span>
                 <span className="ml-1">{ graphSettings.coinType.toUpperCase() }/USD</span> at{" "}
                 <span className="font-semibold">{ selectedRange && ( new Date(selectedRange.midDate).toLocaleString() ) }</span>
               </div>

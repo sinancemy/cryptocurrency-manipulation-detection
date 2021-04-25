@@ -59,10 +59,13 @@ const Graph = withTooltip(
         domain: extent(stock, getDate),
         range: [0, xMax],
       }), [stock, xMax]);
-    const stockValueScale = useMemo(() => scaleLinear({
-      domain: [0, (max(stock, getStockValue) || 0) + yMax/3],
-      range: [yMax, 0],
-      nice: true,}), [stock, yMax]);
+    const stockValueScale = useMemo(() => {
+      const high = (max(stock, getStockValue) || 0)
+      return scaleLinear({
+        domain: [0, high + high/8],
+        range: [yMax, 0]
+      })
+    }, [stock, yMax]);
 
     // Tooltip handler
     const handleTooltip = useCallback((event) => {
@@ -280,14 +283,14 @@ const Graph = withTooltip(
           <div>
             <Tooltip 
               top={tooltipTop - 12} 
-              left={_min(tooltipLeft + 12, xMax - 95)} 
+              left={_min(tooltipLeft + 12, xMax - 135)} 
               style={{
                 ...tooltipStyles,
-                width: 80,
+                width: 120,
                 textAlign: 'center',
                 opacity: 0.7
                 }}>
-              {`$${getStockValue(tooltipData.selectedPoint).toFixed(2)}`}
+              {`$${getStockValue(tooltipData.selectedPoint).toPrecision(5)}`}
             </Tooltip>
             <Tooltip
               top={yMax - 36}
