@@ -10,7 +10,7 @@ from data.database import Database, recreate_database, MatchSelector, row_to_pos
     FollowedSource
 from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
     check_session, new_session, remove_session
-from json_helpers import *
+from backend.json_helpers import *
 
 app = Flask(__name__)
 app.secret_key = b'f&#Uj**pF(G6R5O'
