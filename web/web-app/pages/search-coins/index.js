@@ -35,6 +35,7 @@ export async function getServerSideProps(context) {
 }
 
 export default function SearchCoins({ coins, userInfo, token }) {
+  console.log(coins);
   const router = useRouter();
   if (userInfo === null) {
     useEffect(() => {
@@ -60,38 +61,37 @@ export default function SearchCoins({ coins, userInfo, token }) {
   });
   const initialNameArray = [...coinNameArray];
 
-  const submitForm = (values) => {
+  const submitForm = async (values) => {
     let unfollowed = initialNameArray.filter(
       (x) => !values.checked.includes(x)
     );
     let followed = values.checked.filter((x) => !initialNameArray.includes(x));
-    followed.forEach((coin) => {
-      submitRequest(coin, true);
-    });
 
-    unfollowed.forEach((coin) => {
-      submitRequest(coin, false);
-    });
-  };
+    await Promise.all(
+      followed.map(async (name) => {
+        await axios.get(
+          "http://127.0.0.1:5000/user/follow_coin?token=" +
+            token +
+            "&type=" +
+            name +
+            "&unfollow=0"
+        );
+      })
+    );
 
-  const submitRequest = async (coin, bool) => {
-    if (bool) {
-      await axios.get(
-        "//127.0.0.1:5000/user/follow_coin?token=" +
-          token +
-          "&type=" +
-          coin +
-          "&unfollow=0"
-      );
-    } else {
-      await axios.get(
-        "//127.0.0.1:5000/user/follow_coin?token=" +
-          token +
-          "&type=" +
-          coin +
-          "&unfollow=1"
-      );
-    }
+    await Promise.all(
+      unfollowed.map(async (name) => {
+        await axios.get(
+          "http://127.0.0.1:5000/user/follow_coin?token=" +
+            token +
+            "&type=" +
+            name +
+            "&unfollow=1"
+        );
+      })
+    );
+
+    Router.reload();
   };
 
   return (

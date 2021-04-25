@@ -31,42 +31,42 @@ export async function getServerSideProps(context) {
     .filter((source) => source.source.includes("reddit"))
     .sort((a, b) => a.source.localeCompare(b.source));
 
-  let reddit_users = [];
+  let users = [];
 
   await Promise.all(
     reddit_source.map(async (source) => {
-      let sub_reddit_users = new Set();
+      let reddit_users = new Set();
       const res3 = await axios.get(
         "http://127.0.0.1:5000/api/posts?source=" + source.source
       );
       res3.data.forEach((entry) => {
-        sub_reddit_users.add(entry.user);
+        reddit_users.add(entry.user);
       });
-      sub_reddit_users = Array.from(sub_reddit_users).sort();
-      sub_reddit_users.unshift("*");
-      reddit_users.push([source.source, sub_reddit_users]);
+      reddit_users = Array.from(reddit_users).sort();
+      reddit_users.unshift("Follow All Sources");
+      users.push([source.source, reddit_users]);
     })
   );
 
+  let twitter_users = [];
+  res.data
+    .filter((source) => source.source.includes("twitter"))
+    .forEach((source) => twitter_users.push(source.username));
+
+  twitter_users.sort();
+  twitter_users.unshift("Follow All Sources");
+  users = users.sort((a, b) => a[0].localeCompare(b[0]));
+  users.unshift(["twitter", twitter_users]);
+
   return {
     props: {
-      twitterSource: res.data
-        .filter((source) => source.source.includes("twitter"))
-        .sort((a, b) => a.username.localeCompare(b.username)),
-      redditSource: reddit_source,
-      redditUsers: reddit_users.sort((a, b) => a[0].localeCompare(b[0])),
+      users: users,
       userInfo: userinfo,
     },
   };
 }
 
-export default function SearchSources({
-  twitterSource,
-  redditSource,
-  redditUsers,
-  userInfo,
-  token,
-}) {
+export default function SearchSources({ users, userInfo, token }) {
   const router = useRouter();
   if (userInfo === null) {
     useEffect(() => {
@@ -75,14 +75,11 @@ export default function SearchSources({
   }
 
   const [query, setQuery] = useState("");
-  const filterCoins = (coins, query) => {
+  const filterUsers = (users, query) => {
     if (!query) {
-      return coins;
+      return users;
     }
-    return coins.filter((coin) => {
-      const name = coin.name.toLowerCase();
-      return name.includes(query);
-    });
+    return users.filter((coin) => {});
   };
 
   const sourceNameArray = [];
@@ -92,6 +89,8 @@ export default function SearchSources({
   const initialNameArray = [...sourceNameArray];
 
   const submitForm = async (values) => {
+    console.log(userInfo.followed_sources);
+    console.log(users);
     let unfollowed = initialNameArray.filter(
       (x) => !values.checked.includes(x)
     );
@@ -120,6 +119,8 @@ export default function SearchSources({
         );
       })
     );
+
+    Router.reload();
   };
 
   return (
@@ -146,46 +147,7 @@ export default function SearchSources({
           >
             <Form>
               <ul className="max-h-96 overflow-y-auto">
-                <li key="-1" className="grid grid-cols-12 py-1 px-4 rounded-md">
-                  <div className="col-start-2 col-span-4 bg-gray-200">
-                    <p className="text-black ml-2 font-bold">twitter</p>
-                  </div>
-                  <div className="col-start-6 bg-gray-200 col-span-5 flex items-center">
-                    <p className="text-black ml-2 font-bold">
-                      Follow All Sources
-                    </p>
-                  </div>
-                  <div className="col-start-11 bg-gray-200 flex items-center">
-                    <Field
-                      className="h-6 w-6"
-                      value="*@twitter"
-                      name="checked"
-                      type="checkbox"
-                    />
-                  </div>
-                </li>
-                {twitterSource.map((source, index) => (
-                  <li
-                    key={index}
-                    className="grid grid-cols-12 py-1 px-4 rounded-md"
-                  >
-                    <div className="col-start-2 col-span-4 bg-gray-200">
-                      <p className="text-black ml-2">{source.source}</p>
-                    </div>
-                    <div className="col-start-6 bg-gray-200 col-span-5 flex items-center">
-                      <p className="text-black ml-2">{source.username}</p>
-                    </div>
-                    <div className="col-start-11 bg-gray-200 flex items-center">
-                      <Field
-                        className="h-6 w-6"
-                        value={source.username + "@" + source.source}
-                        name="checked"
-                        type="checkbox"
-                      />
-                    </div>
-                  </li>
-                ))}
-                {redditUsers.map((entry, i) =>
+                {users.map((entry, i) =>
                   entry[1].map((source, j) => (
                     <li
                       key={i.toString() + j.toString()}
@@ -194,7 +156,7 @@ export default function SearchSources({
                       <div className="col-start-2 col-span-4 bg-gray-200">
                         <p
                           className={
-                            source === "*"
+                            source === "Follow All Sources"
                               ? "text-black ml-2 font-bold"
                               : "text-black ml-2"
                           }
@@ -205,18 +167,22 @@ export default function SearchSources({
                       <div className="col-start-6 bg-gray-200 col-span-5 flex items-center">
                         <p
                           className={
-                            source === "*"
+                            source === "Follow All Sources"
                               ? "text-black ml-2 font-bold"
                               : "text-black ml-2"
                           }
                         >
-                          {source === "*" ? "Follow All Sources" : source}
+                          {source}
                         </p>
                       </div>
                       <div className="col-start-11 bg-gray-200 flex items-center">
                         <Field
                           className="h-6 w-6"
-                          value={source + "@" + entry[0]}
+                          value={
+                            source === "Follow All Sources"
+                              ? "*@" + entry[0]
+                              : source + "@" + entry[0]
+                          }
                           name="checked"
                           type="checkbox"
                         />
