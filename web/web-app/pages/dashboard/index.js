@@ -36,23 +36,23 @@ export default function Dashboard({coins, loggedIn}) {
     setGraphLoading(false)
   }, [])
 
-  const onSelect = useCallback(({ range, mid, start, end }) => {
-    setSelectedRange({
-      range: range,
-      mid: mid
-    })
+  // Listen to changes in the selected range and update shown the posts.
+  useEffect(() => {
+    if(selectedRange == null) return
+    const pw0 = selectedRange.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+    const pw1 = selectedRange.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
     axios.get("http://127.0.0.1:5000/api/posts", {
       params: {
-        start: start,
-        end: end,
+        start: parseInt(pw0/1000),
+        end: parseInt(pw1/1000),
         type: graphSettings.coinType
       }
     }).then(res => {
       setPosts(res.data)
     })
-  }, [graphSettings])
+  }, [selectedRange, graphSettings])
 
-  // Update the prices shown on the graph.
+  // Listen to changes in the graph settings and update the prices shown on the graph.
   useEffect(() => {
     const decrement = 60 * 60 * 24 * ((graphSettings.extent === "day") ? 1 : 
                                       (graphSettings.extent === "month") ? 30 :
@@ -85,7 +85,13 @@ export default function Dashboard({coins, loggedIn}) {
         </ul>
       </div>
       <div className="h-80 rounded-2xl drop-shadow-2xl overflow-hidden lg:col-span-3 bg-blue-128">
-        <ResponsiveGraph onSelect={onSelect} loading={graphLoading} stock={prices} graphSettings={graphSettings} selectedRange={selectedRange} />
+        <ResponsiveGraph 
+          loading={graphLoading} 
+          stock={prices} 
+          graphSettings={graphSettings} 
+          selectedRange={selectedRange} 
+          setSelectedRange={setSelectedRange}
+        />
       </div>
       <div className="border-2 border-yellow-50 rounded-2xl drop-shadow-2xl bg-opacity-20 bg-blue-50 p-4">
         <h1 className="text-xl font-bold underline">View</h1>
@@ -167,9 +173,9 @@ export default function Dashboard({coins, loggedIn}) {
       <div className="border-2 border-yellow-50 rounded-2xl drop-shadow-2xl bg-opacity-20 bg-blue-50 p-4 lg:col-span-3">
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-semibold">59.281,00</span>
+            <span className="font-semibold">{ selectedRange && ( selectedRange.mid.price.toFixed(2) ) }</span>
             <span className="ml-1">BTC/USDT</span> at{" "}
-            <span className="font-semibold">19219219</span>
+            <span className="font-semibold">{ selectedRange && ( new Date(selectedRange.midDate).toLocaleString() ) }</span>
           </div>
           <div>
             sort by <button className="font-bold underline">time</button>

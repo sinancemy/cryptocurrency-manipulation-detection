@@ -25,10 +25,21 @@ module.exports = {
                 opacity: '1',
                 transform: 'translateY(0)'
             },
+        },
+        'blur-in': {
+          '0%': {
+            opacity: '1',
+            filter: 'blur(3px)'
+          },
+          '100%': {
+              opacity: '1',
+              filter: 'blur(0px)'
+          },
         }
       },
       animation: {
-        'fade-in-down': 'fade-in-down 0.5s ease-out'
+        'fade-in-down': 'fade-in-down 0.5s ease-out',
+        'blur-in': 'blur-in 0.2s ease-out'
       }
     },
   },

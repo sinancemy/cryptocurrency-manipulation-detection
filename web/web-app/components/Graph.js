@@ -32,11 +32,6 @@ const getDate = (d) => new Date(d.time * 1000);
 const getStockValue = (d) => d.price;
 const bisectDate = bisector(d => new Date(d.time * 1000)).left;
 
-function isSame(prevProps, nextProps) {
-  console.log(prevProps)
-  return true
-}
-
 const Graph = withTooltip(
   ({
     parentWidth,
@@ -49,6 +44,7 @@ const Graph = withTooltip(
     tooltipLeft = 0,
     graphSettings,
     selectedRange,
+    setSelectedRange,
     loading,
     onSelect,
     stock
@@ -56,6 +52,7 @@ const Graph = withTooltip(
     const width = parentWidth
     const height = parentHeight
     if (width < 10) return null;
+    const [selectedMiddle, setSelectedMiddle] = useState(selectedRange?.mid)
     // bounds
     const xMax = width - margin.left - margin.right;
     const yMax = height - margin.top - margin.bottom;
@@ -70,7 +67,8 @@ const Graph = withTooltip(
       range: [yMax, 0],
       nice: true,}), [stock, yMax]
     );
-    // tooltip handler
+
+    // Tooltip handler
     const handleTooltip = useCallback((event) => {
         const { x } = localPoint(event) || { x: 0 };
         const x0 = dateScale.invert(x);
@@ -98,14 +96,11 @@ const Graph = withTooltip(
       },
       [showTooltip, stock, stockValueScale, dateScale, graphSettings],
     );
-    // selection handler
+
+    // Selection handler
     const handleSelect = useCallback((event) => {
       const { x } = localPoint(event) || { x: 0 };
       const x0 = dateScale.invert(x);
-      const pw0 = x0.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-      const pw1 = x0.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-      const i0 = bisectDate(stock, pw0)
-      const i1 = bisectDate(stock, pw1)
       const mid = bisectDate(stock, x0)
       const d0 = stock[mid - 1];
       const d1 = stock[mid];
@@ -113,21 +108,30 @@ const Graph = withTooltip(
       if (d1 && getDate(d1)) {
         d = x0.valueOf() - getDate(d0).valueOf() > getDate(d1).valueOf() - x0.valueOf() ? d1 : d0;
       }
-      onSelect({
-        range: stock.slice(i0, i1), 
+      setSelectedMiddle(d)
+      setSelectedRange({
         mid: d,
-        start: parseInt(pw0/1000),
-        end: parseInt(pw1/1000)
+        midDate: getDate(d)
       })
-    })
+    }, [graphSettings])
+
+    const getSelectedRange = useCallback(() => {
+        if(selectedMiddle == null) return
+        const d = getDate(selectedMiddle)
+        const pw0 = d.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+        const pw1 = d.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+        const i0 = bisectDate(stock, pw0)
+        const i1 = bisectDate(stock, pw1)  
+        return stock.slice(i0, i1)
+    }, [graphSettings, selectedMiddle])
 
     const min = (a, b) => (a < b) ? a : b
     const max_ = (a, b) => (a > b) ? a : b
 
-    return useMemo(() => (
+    return  (
       loading ? ( <div>Loading...</div> ) : (
       <div>
-        <svg width={width} height={height}>
+        <svg width={width} height={height} className="animate-blur-in">
           <rect
             x={0}
             y={0}
@@ -165,9 +169,9 @@ const Graph = withTooltip(
             fill="#A03605"
           />
           )}
-          {selectedRange && (
+          {selectedMiddle && (
           <AreaClosed
-            data={selectedRange.range}
+            data={getSelectedRange()}
             x={d => dateScale(getDate(d))}
             y={d => stockValueScale(getStockValue(d))}
             yScale={stockValueScale}
@@ -234,19 +238,19 @@ const Graph = withTooltip(
               />
             </g>
           )}
-          {selectedRange && (
+          {selectedMiddle && (
             <g>
             <Line
-              from={{ x: dateScale(getDate(selectedRange.mid)), y: 0 }}
-              to={{ x: dateScale(getDate(selectedRange.mid)), y: yMax }}
+              from={{ x: dateScale(getDate(selectedMiddle)), y: 0 }}
+              to={{ x: dateScale(getDate(selectedMiddle)), y: yMax }}
               stroke={selectedPortionColor}
               strokeWidth={2}
               pointerEvents="none"
               strokeDasharray="5,2"
             />
               <circle
-                cx={dateScale(getDate(selectedRange.mid))}
-                cy={stockValueScale(getStockValue(selectedRange.mid)) + 1}
+                cx={dateScale(getDate(selectedMiddle))}
+                cy={stockValueScale(getStockValue(selectedMiddle)) + 1}
                 r={4}
                 fill="black"
                 fillOpacity={0.1}
@@ -256,8 +260,8 @@ const Graph = withTooltip(
                 pointerEvents="none"
               />
               <circle
-                cx={dateScale(getDate(selectedRange.mid))}
-                cy={stockValueScale(getStockValue(selectedRange.mid))}
+                cx={dateScale(getDate(selectedMiddle))}
+                cy={stockValueScale(getStockValue(selectedMiddle))}
                 r={4}
                 fill={selectedPortionColor}
                 stroke="white"
@@ -294,7 +298,7 @@ const Graph = withTooltip(
           </div>
         )}
       </div>)
-    ));
+    );
   },
 )
 
