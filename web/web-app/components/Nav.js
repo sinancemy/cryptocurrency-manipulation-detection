@@ -20,16 +20,13 @@ export default function Nav({ loggedIn, userInfo }) {
       {loggedIn ? (
         <div className="flex items-center">
           <div className="ml-8">
-            <Link href="/search">Search</Link>
-          </div>
-          <div className="ml-8">
             <Link href="/dashboard">Dashboard</Link>
           </div>
           <div className="ml-8">
             <Link href="/search-coins">Search Coins</Link>
           </div>
           <div className="ml-8">
-            <Link href="/search-posts">Search Posts</Link>
+            <Link href="/search-sources">Search Sources</Link>
           </div>
           <div className="ml-8">
             <Link href="/profile">Profile</Link>

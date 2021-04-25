@@ -141,7 +141,7 @@ export default function SearchCoins({ coins, userInfo, token }) {
                 ))}
               </ul>
               <button
-                className="col-start-2 w-full bg-yellow-50 text-blue-50 h-10 rounded disabled:opacity-50 hover:bg-yellow-500"
+                className="col-start-2 w-full bg-yellow-50 text-blue-50 h-10 rounded-b-lg disabled:opacity-50 hover:bg-yellow-500"
                 type="submit"
               >
                 Submit
