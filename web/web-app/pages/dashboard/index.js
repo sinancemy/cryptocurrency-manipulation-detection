@@ -8,6 +8,9 @@ import cookie from "cookie"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
 import { useCookies } from "react-cookie"
 import { VerticalSelector } from "../../components/VerticalSelector"
+import { SourceCard } from "../../components/SourceCard"
+import Link from "next/link"
+import { CuteButton } from "../../components/CuteButton"
 
 
 export async function getServerSideProps(context) {
@@ -192,6 +195,18 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             </ul>
             ) : ("Not following any coins.")}
           </DashboardPanel.Body>
+          <DashboardPanel.Footer>
+            <div className="flex flex-row">
+                <span className="flex-grow"></span>
+                <Link href="/search-coins">
+                <CuteButton>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </CuteButton>
+              </Link>
+             </div>
+          </DashboardPanel.Footer>
         </DashboardPanel>
         <DashboardPanel>
           <DashboardPanel.Header>
@@ -202,25 +217,47 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <ul>
               {userInfo.followed_sources.map((source, i) => (
                 <li className="mt-2" key={i}>
-                  <label className="flex items-center">
-                    <input 
-                      type="checkbox"
-                      checked={selectedSources.includes(source.source)}
-                      onClick={() => {
-                        if(selectedSources.includes(source.source)) {
-                          setSelectedSources(selectedSources.filter(x => x !== source.source))
-                        } else {
-                          setSelectedSources([...selectedSources, source.source])
-                        }
-                      }}
-                    />
-                    <p className="ml-2">{source.source}</p>
-                  </label>
+                  <SourceCard 
+                    source={source.source}
+                    isSelected={() => selectedSources.includes(source.source)}
+                    onToggle={() => {
+                      if(selectedSources.includes(source.source)) {
+                        setSelectedSources(selectedSources.filter(x => x !== source.source))
+                      } else {
+                        setSelectedSources([...selectedSources, source.source])
+                      }
+                    }}
+                  />
                 </li>
               ))}
             </ul>
             ) : ("Not following any sources.")}
           </DashboardPanel.Body>
+          <DashboardPanel.Footer>
+            <div className="flex flex-row">
+              <CuteButton
+                onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
+                disabled={() => selectedSources.length === userInfo.followed_sources.length}
+              >
+                Select all
+              </CuteButton>
+              <span className="flex-grow"></span>
+              <CuteButton
+                onClick={() => setSelectedSources([])}
+                disabled={() => selectedSources.length === 0}
+              >
+                Unselect all
+              </CuteButton>
+              <span className="flex-grow"></span>
+              <Link href="/search-sources">
+                <CuteButton>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </CuteButton>
+              </Link>
+             </div>  
+          </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="p-2 col-span-4">
@@ -360,7 +397,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <div className="font-bold">
               Selection
             </div>
-            <div className="ml-2">
+            <div className="ml-2 text-sm">
               { !selectedRange ? (
                 <span>No selection.</span>
               ) : (
@@ -377,12 +414,15 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                     <span className="col-span-4">{ getSelectedVolume() }</span>
                   </div>
                   <div className="w-full pt-2 text-center">
-                    <button
-                      className="py-1 px-2 border border-gray-200 rounded bg-white hover:bg-gray-50"
-                      onClick={() => setSelectedRange(null)}
+                    <CuteButton
+                      onClick={() => {
+                        setSelectedRange(null)
+                        setPosts(null)
+                      }}
+                      size={'md'}
                     >
                       Clear selection
-                    </button>
+                    </CuteButton>
                   </div>
                 </div>
               )}

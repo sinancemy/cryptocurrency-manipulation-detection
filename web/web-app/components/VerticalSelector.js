@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useMemo } from "react"
 
 export const VerticalSelector = ({ prefix = null, suffix = null, options, getter, setter }) => {
 
-  return (
+  return useMemo(() =>
     <div className="flex flex-row">
       {prefix && <div className="mr-1 font-light">{prefix}</div>}
       {options.map((opt, i) => (

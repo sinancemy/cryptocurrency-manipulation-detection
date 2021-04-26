@@ -2,17 +2,19 @@ import { useMemo, useState } from "react"
 
 const Header = () => null
 const Body = () => null
+const Footer = () => null
 
 export const DashboardPanel = ({ children, collapsable = true }) => {
 
   const header = children.find(c => c.type === Header)
   const body = children.find(c => c.type === Body)
+  const footer = children.find(c => c.type === Footer)
   const [globalHover, setGlobalHover] = useState(false)
   const [shown, setShown] = useState(true)
 
   return useMemo(() => (
         <div 
-          className={`${false ? 'opacity-100' : 'opacity-90'} text-gray-600 text-sm mb-5 text-gray-200 md:p-0 w-full`}
+          className={`${false ? 'opacity-100' : 'opacity-90'} text-gray-600 text-sm mb-5 text-gray-200 w-full`}
           onMouseMove={() => setGlobalHover(true)}
           onMouseLeave={() => setGlobalHover(false)}
         >
@@ -51,9 +53,16 @@ export const DashboardPanel = ({ children, collapsable = true }) => {
             </div>
           )}
             { shown && (
-            <div className={`overflow-y-auto bg-gray-50 rounded-b-lg border-t border-b border-gray-200 p-3 pt-0 shadow-lg`}>
+              <>
+            <div className={`${!footer ? 'rounded-b-lg' : ''} overflow-y-auto bg-gray-50 border-t border-b border-gray-200 pb-2 px-5 shadow-lg`}>
               { body && body.props.children }
             </div>
+            { footer && (
+            <div className={`overflow-y-auto bg-gray-50 rounded-b-lg text-md border-b border-gray-200 py-2 px-5 shadow-lg`}>
+              { footer.props.children} 
+            </div>
+            )}
+            </>
             )}
         </div>
   ))
@@ -61,3 +70,4 @@ export const DashboardPanel = ({ children, collapsable = true }) => {
 
 DashboardPanel.Header = Header
 DashboardPanel.Body = Body
+DashboardPanel.Footer = Footer
