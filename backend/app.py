@@ -1,16 +1,17 @@
 import time
 from typing import Optional
 
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import misc
-from data.collector.sources import get_all_sources, source_matches, parse_source, is_valid_source
+from data.collector.sources import get_all_sources, is_valid_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
 from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
     check_session, new_session, remove_session
-from json_helpers import *
+from backend.json_helpers import *
+import numpy as np
 
 app = Flask(__name__)
 app.secret_key = b'f&#Uj**pF(G6R5O'
@@ -52,7 +53,7 @@ def get_posts():
     user = request.args.get("user", type=str, default=None)
     if coin_type is not None:
         selectors.append(MatchSelector("coin_type", coin_type.value))
-    if source is not None:
+    if source is not None and source != "*":
         selectors.append(MatchSelector("source", source))
     if user is not None and user != "*":
         selectors.append(MatchSelector("user", user))
@@ -95,6 +96,36 @@ def get_source_list():
             "username": src.username,
             "source": src.source
         } for src in sources])
+
+
+@app.route("/api/post_volume")
+def calculate_post_volume():
+    start = request.args.get("start", type=float, default=0)
+    end = request.args.get("end", type=float, default=int(time.time()))
+    ticks = request.args.get("ticks", type=int, default=100)
+    coin_type = get_coin_type_arg()
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    # Connect to the database
+    db = Database()
+    posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
+    full_range = end - start
+    tick_range = full_range / ticks
+    volumes = []
+    for (i, curr_tick) in enumerate(np.arange(start, end - tick_range + 1, tick_range)):
+        tick_start = curr_tick
+        tick_end = curr_tick + tick_range
+        count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
+        volume = count
+        if i > 0:
+            volume += volumes[i-1]['volume']
+        volumes.append({
+            'time': tick_start,
+            'next_time': tick_end,
+            'volume': volume,
+            'count': count
+        })
+    return jsonify(volumes)
 
 
 @app.route("/api/prediction")

@@ -20,13 +20,11 @@ def recreate_database():
 
 class Database(object):
     conn = None
-
     def __init__(self):
         try:
             self.conn = sqlite3.connect(DATABASE_FILE)
         except Exception as e:
             print("Could not connect to the database", e)
-
     # Adds the given models into the specified table.
     # Fields that are named as 'id' are discarded.
     def create(self, table, models: list, ignore=True):
