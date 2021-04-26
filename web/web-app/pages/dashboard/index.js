@@ -64,6 +64,13 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
     return Object.values(dict)
   }
 
+  const getSelectedRange = useCallback(() => {
+    if(selectedRange == null) return [0, 0]
+    const pw0 = selectedRange.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+    const pw1 = selectedRange.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+    return [pw0, pw1]
+  }, [selectedRange, graphSettings])
+
   const updatePosts = useCallback((start, end) => {
     console.log("updating...")
     const type = (showPostsOption === "relevant") ? graphSettings.coinType : "*"
@@ -109,8 +116,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
   // Listen to changes in the relevant settings and refetch the posts.
   useEffect(() => {
     if(selectedRange == null) return
-    const pw0 = selectedRange.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-    const pw1 = selectedRange.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+    const [pw0, pw1] = getSelectedRange()
     updatePosts(parseInt(pw0/1000), parseInt(pw1/1000))
   }, [showPostsOption, selectedRange, graphSettings, selectedSources])
 
@@ -139,7 +145,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
         start: winLow,
         end: winHigh,
         type: graphSettings.coinType,
-        ticks: 100
+        ticks: 1000
       }
     }).then(res => {
       setPostVolume(res.data)
@@ -147,8 +153,8 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
   }, [graphSettings])
 
   return (
-    <div className="animate-fade-in-down mx-10 py-4 grid grid-cols-6 gap-4 text-yellow-50">
-      <div>
+    <div className="animate-fade-in-down mx-10 grid grid-cols-6">
+      <div className="p-2 col-span-1">
         <DashboardPanel>
           <DashboardPanel.Header>
               Followed Coins
@@ -203,10 +209,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>
-      <div className="col-span-4">
+      <div className="p-2 col-span-4">
+        <div className="h-48 mb-2 overflow-hidden rounded-lg drop-shadow-2xl bg-blue-128">
         { userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
-            <>
-            <div className="h-1/5 mb-5 rounded-lg drop-shadow-2xl overflow-hidden lg:col-span-3 bg-blue-128">
             <ResponsiveGraph 
               stock={prices}
               postVolume={postVolume}
@@ -215,14 +220,13 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               selectedRange={selectedRange} 
               setSelectedRange={setSelectedRange}
             />
-            </div>
-              </>
-          ) : (
-            <div className="ml-5 mt-5 text-black">
-              No price data found.
-            </div>
-          ) }
-        <div className="max-h-128">
+        ) : (
+          <div className="p-5 text-gray-800">
+            No price data found.
+          </div>
+        ) }
+          </div>
+        <div>
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
             <div className="flex flex-justify-between font-light">
@@ -260,7 +264,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {sortedPosts.length > 0 ? (
-            <ul className="overflow-y-auto mt-2">
+            <ul className="overflow-y-auto max-h-128">
               {sortedPosts.map((post, i) => (
                 <li
                   key={i}
@@ -290,13 +294,13 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
         </DashboardPanel>
         </div>
       </div>
-      <div>
+      <div className="p-2 col-span-1">
         <DashboardPanel>
           <DashboardPanel.Header>
             Graph View
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-          <ul className="mt-2">
+          <ul className="py-2">
             <li>
               <button 
                 className={graphSettings.extent === "day" && ("font-bold underline")}
@@ -330,7 +334,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               </button>
             </li>
           </ul>
-          <div class="mt-2 border-t border-b py-3">
+          <div className="py-2 border-t">
             <div class="flex flex-row">
               <button
                 className={graphSettings.timeWindow === 5 && ("font-bold underline")}
@@ -359,7 +363,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               <span className="ml-1">days.</span>
             </div>
           </div>
-          <div className="mt-2">
+          <div className="py-2 border-t">
             <label className="flex items-center">
               <input 
                 type="checkbox"
@@ -369,6 +373,34 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               <p className="ml-2">Show post volume</p>
             </label>
           </div>
+          <div className="py-2 border-t">
+            { !selectedRange ? (
+              <span>No selection.</span>
+            ) : (
+              <div>
+                <div className="grid grid-cols-5">
+                  <span>Start</span>
+                  <span className="col-span-4">{ new Date(getSelectedRange()[0]).toLocaleString() }</span>
+                </div>
+                <div className="grid grid-cols-5">
+                  <span>Mid</span>
+                  <span className="col-span-4">{ new Date(selectedRange.midDate).toLocaleString() }</span>
+                </div>
+                <div className="grid grid-cols-5">
+                  <span>End</span>
+                  <span className="col-span-4">{ new Date(getSelectedRange()[1]).toLocaleString() }</span>
+                </div>
+                <div className="w-full pt-2 text-center">
+                  <button
+                    className="p-1 border border-gray-200 rounded bg-white hover:bg-gray-50"
+                    onClick={() => setSelectedRange(null)}
+                  >
+                    Deselect
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           </DashboardPanel.Body>
         </DashboardPanel>
         <DashboardPanel>
@@ -376,7 +408,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             Predictions
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <ul className="mt-2">
+            <ul className="mt-2 h-64">
               {coins.map((coin, i) => (
                 <li className="flex items-center mt-2" key={i}>
                   <img className="h-12 w-12" src={coin.image} alt="logo" />

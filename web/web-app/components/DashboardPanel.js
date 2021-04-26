@@ -51,7 +51,7 @@ export const DashboardPanel = ({ children, collapsable = true }) => {
             </div>
           )}
             { shown && (
-            <div className={`overflow-y-auto max-h-128 bg-gray-50 rounded-b-lg border-t border-b border-gray-200 p-3 pt-1 shadow-lg`}>
+            <div className={`overflow-y-auto bg-gray-50 rounded-b-lg border-t border-b border-gray-200 p-3 pt-0 shadow-lg`}>
               { body && body.props.children }
             </div>
             )}
