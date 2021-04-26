@@ -53,8 +53,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
   const [selectedSources, setSelectedSources] = useState(['*@reddit/Bitcoin'])
 
   const [sortByOption, setSortByOption] = useState("time")
-  const [sortOrderOption, setSortOrderOption] = useState("ascending")
+  const [sortOrderOption, setSortOrderOption] = useState("descending")
   const [showPostsOption, setShowPostsOption] = useState("relevant")
+  const [showPostsFromOption, setShowPostsFromOption] = useState("selected")
 
   const discardDuplicatePosts = (posts) => {
     const dict = {}
@@ -63,6 +64,17 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
     });
     return Object.values(dict)
   }
+
+  const getSelectedPrice = useCallback(() => {
+    const date = parseInt(selectedRange.midDate.valueOf()/1000)
+    return prices.find(p => p.time === date)?.price
+  }, [prices, selectedRange])
+
+  const getSelectedVolume = useCallback(() => {
+    const date = parseInt(selectedRange.midDate.valueOf()/1000)
+    console.log(postVolume)
+    return postVolume.find(p => date >= p.time && date < p.next_time)?.volume
+  }, [postVolume, selectedRange])
 
   const getSelectedRange = useCallback(() => {
     if(selectedRange == null) return [0, 0]
@@ -73,8 +85,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
 
   const updatePosts = useCallback((start, end) => {
     console.log("updating...")
-    const type = (showPostsOption === "relevant") ? graphSettings.coinType : "*"
-    const requests = selectedSources.map(src_string => {
+    const type = (showPostsOption === "all") ? "*" : graphSettings.coinType 
+    const sourcesToConsider = (showPostsFromOption === "all") ? ["*@*"] : selectedSources
+    const requests = sourcesToConsider.map(src_string => {
       const [username, source] = src_string.split('@')
       return axios.get("http://127.0.0.1:5000/api/posts", {
         params: {
@@ -95,7 +108,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
       const collectedUniques = discardDuplicatePosts(collected)
       setPosts(collectedUniques)
       }))
-    }, [showPostsOption, graphSettings, selectedSources]);
+    }, [[showPostsFromOption, showPostsOption, graphSettings, selectedSources]]);
 
     // Sorter (this effect will be updating the shown posts!)
     useEffect(() => {
@@ -118,7 +131,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
     if(selectedRange == null) return
     const [pw0, pw1] = getSelectedRange()
     updatePosts(parseInt(pw0/1000), parseInt(pw1/1000))
-  }, [showPostsOption, selectedRange, graphSettings, selectedSources])
+  }, [showPostsOption, showPostsFromOption, selectedRange, graphSettings, selectedSources])
 
   // Listen to changes in the relevant settings and refetch the prices shown on the graph.
   useEffect(() => {
@@ -210,7 +223,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
         </DashboardPanel>
       </div>
       <div className="p-2 col-span-4">
-        <div className="h-48 mb-2 overflow-hidden rounded-lg drop-shadow-2xl bg-blue-128">
+        <div className="h-48 mb-5 overflow-hidden rounded-lg drop-shadow-2xl bg-blue-128">
         { userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
             <ResponsiveGraph 
               stock={prices}
@@ -232,14 +245,15 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <div className="flex flex-justify-between font-light">
               { selectedRange && graphSettings.coinType && (
               <div>
-                <span className="font-semibold">{ selectedRange.mid.price.toPrecision(5) }</span>
-                <span className="ml-1">{ graphSettings.coinType.toUpperCase() }/USD</span> at{" "}
-                <span className="font-semibold">{ new Date(selectedRange.midDate).toLocaleString() }</span>
+                <span>Showing new posts from{" "}</span>
+                <span className="font-semibold">{ new Date(getSelectedRange()[0]).toLocaleString() }</span>
+                <span>{" "}to{" "}</span>
+                <span className="font-semibold">{ new Date(getSelectedRange()[1]).toLocaleString() }</span>
               </div>
               )}
               <span class="flex-grow"></span>
               <div className="flex">
-                <div className="border-r mr-2 pr-2">
+                <div className="border-r mr-2 px-2">
                   sort by {" "}
                     <SimpleDropdown 
                       options={['time', 'interaction', 'user']} 
@@ -257,7 +271,12 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                       options={['relevant', 'all']} 
                       selected={showPostsOption} 
                       setSelected={setShowPostsOption} />
-                    {" "} posts
+                    {" "} posts from {" "}
+                    <SimpleDropdown
+                      options={['all', 'selected']}
+                      selected={showPostsFromOption}
+                      setSelected={setShowPostsFromOption}
+                    />{" "} sources
                 </div>
               </div>
             </div>
@@ -286,7 +305,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               ))}
             </ul>
             ) : (selectedRange) ? (
-              <div>No posts to show in the selected range from the selected sources.</div>
+              <div>No new posts to show in the selected range.</div>
             ) : (
               <div>Please select a range from the graph and select your sources from the left panel to see the posts.</div>
             )}
@@ -378,17 +397,16 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               <span>No selection.</span>
             ) : (
               <div>
-                <div className="grid grid-cols-5">
-                  <span>Start</span>
-                  <span className="col-span-4">{ new Date(getSelectedRange()[0]).toLocaleString() }</span>
+                <div>
+                  { new Date(selectedRange.midDate).toLocaleString() }
                 </div>
-                <div className="grid grid-cols-5">
-                  <span>Mid</span>
-                  <span className="col-span-4">{ new Date(selectedRange.midDate).toLocaleString() }</span>
+                <div>
+                  <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
+                  <span>{ getSelectedPrice()?.toPrecision(5) } </span>
                 </div>
-                <div className="grid grid-cols-5">
-                  <span>End</span>
-                  <span className="col-span-4">{ new Date(getSelectedRange()[1]).toLocaleString() }</span>
+                <div>
+                  <span className="font-semibold">Posts (cumulative):{" "}</span>
+                  <span className="col-span-4">{ getSelectedVolume() }</span>
                 </div>
                 <div className="w-full pt-2 text-center">
                   <button

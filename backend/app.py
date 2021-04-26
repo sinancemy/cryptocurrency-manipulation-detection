@@ -53,7 +53,7 @@ def get_posts():
     user = request.args.get("user", type=str, default=None)
     if coin_type is not None:
         selectors.append(MatchSelector("coin_type", coin_type.value))
-    if source is not None:
+    if source is not None and source != "*":
         selectors.append(MatchSelector("source", source))
     if user is not None and user != "*":
         selectors.append(MatchSelector("user", user))
@@ -115,12 +115,15 @@ def calculate_post_volume():
     for (i, curr_tick) in enumerate(np.arange(start, end - tick_range + 1, tick_range)):
         tick_start = curr_tick
         tick_end = curr_tick + tick_range
-        volume = sum(1 for p in posts if tick_start <= p.time <= tick_end)
+        count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
+        volume = count
         if i > 0:
             volume += volumes[i-1]['volume']
         volumes.append({
-            'time': curr_tick,
-            'volume': volume
+            'time': tick_start,
+            'next_time': tick_end,
+            'volume': volume,
+            'count': count
         })
     return jsonify(volumes)
 
