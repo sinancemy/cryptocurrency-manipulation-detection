@@ -410,10 +410,10 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                 </div>
                 <div className="w-full pt-2 text-center">
                   <button
-                    className="p-1 border border-gray-200 rounded bg-white hover:bg-gray-50"
+                    className="py-1 px-2 border border-gray-200 rounded bg-white hover:bg-gray-50"
                     onClick={() => setSelectedRange(null)}
                   >
-                    Deselect
+                    Clear selection
                   </button>
                 </div>
               </div>
