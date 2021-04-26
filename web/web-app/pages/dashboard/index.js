@@ -7,6 +7,7 @@ import { DashboardPanel } from "../../components/DashboardPanel"
 import cookie from "cookie"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
 import { useCookies } from "react-cookie"
+import { VerticalSelector } from "../../components/VerticalSelector"
 
 
 export async function getServerSideProps(context) {
@@ -305,9 +306,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               ))}
             </ul>
             ) : (selectedRange) ? (
-              <div>No new posts to show in the selected range.</div>
+              <div className="mt-2">No new posts to show in the selected range.</div>
             ) : (
-              <div>Please select a range from the graph and select your sources from the left panel to see the posts.</div>
+              <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
             )}
           </DashboardPanel.Body>
         </DashboardPanel>
@@ -319,68 +320,31 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             Graph View
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-          <ul className="py-2">
-            <li>
-              <button 
-                className={graphSettings.extent === "day" && ("font-bold underline")}
-                onClick={e => setGraphSettings({ ...graphSettings, extent: "day" })}
-              >
-                Last day
-              </button>
-            </li>
-            <li>
-              <button 
-                className={graphSettings.extent === "week" && ("font-bold underline")}
-                onClick={e => setGraphSettings({ ...graphSettings, extent: "week" })}
-              >
-                Last week
-              </button>
-            </li>
-            <li>
-              <button 
-                className={graphSettings.extent === "month" && ("font-bold underline")}
-                onClick={e => setGraphSettings({ ...graphSettings, extent: "month" })}
-              >
-                Last month
-              </button>
-            </li>
-            <li>
-              <button 
-                className={graphSettings.extent === "year" && ("font-bold underline")}
-                onClick={() => setGraphSettings({ ...graphSettings, extent: "year" })}
-              >
-                Last year
-              </button>
-            </li>
-          </ul>
-          <div className="py-2 border-t">
-            <div class="flex flex-row">
-              <button
-                className={graphSettings.timeWindow === 5 && ("font-bold underline")}
-                onClick={() => setGraphSettings({ ...graphSettings, timeWindow: 5 })}
-              >
-                5
-              </button>
-              <button
-                className={`ml-1 ${graphSettings.timeWindow === 10 && ("font-bold underline")}`}
-                onClick={() => setGraphSettings({ ...graphSettings, timeWindow: 10 })}
-              >
-                10
-              </button>
-              <button
-                className={`ml-1 ${graphSettings.timeWindow === 30 && ("font-bold underline")}`}
-                onClick={() => setGraphSettings({ ...graphSettings, timeWindow: 30 })}
-              >
-                30
-              </button>
-              <button
-                className={`ml-1 ${graphSettings.timeWindow === 60 && ("font-bold underline")}`}
-                onClick={() => setGraphSettings({ ...graphSettings, timeWindow: 60 })}
-              >
-                60
-              </button>
-              <span className="ml-1">days.</span>
+            <div className="py-2">
+              <div className="font-bold">
+                Range
+              </div>
+              <div className="ml-2">
+                <VerticalSelector
+                  options={['day', 'week', 'month', 'year']}
+                  getter={() => graphSettings.extent}
+                  setter={(opt) => setGraphSettings({...graphSettings, extent: opt})}
+                  prefix={"Last"}
+                />
+              </div>
             </div>
+          <div className="py-2">
+            <div className="font-bold">
+              Time window
+            </div>
+            <div className="ml-2">
+              <VerticalSelector
+                options={[5, 10, 30, 60]}
+                getter={() => graphSettings.timeWindow}
+                setter={(opt) => setGraphSettings({...graphSettings, timeWindow: opt})}
+                suffix={"days"}
+              />
+              </div>
           </div>
           <div className="py-2 border-t">
             <label className="flex items-center">
@@ -393,31 +357,36 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             </label>
           </div>
           <div className="py-2 border-t">
-            { !selectedRange ? (
-              <span>No selection.</span>
-            ) : (
-              <div>
+            <div className="font-bold">
+              Selection
+            </div>
+            <div className="ml-2">
+              { !selectedRange ? (
+                <span>No selection.</span>
+              ) : (
                 <div>
-                  { new Date(selectedRange.midDate).toLocaleString() }
+                  <div>
+                    { new Date(selectedRange.midDate).toLocaleString() }
+                  </div>
+                  <div>
+                    <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
+                    <span>{ getSelectedPrice()?.toPrecision(5) } </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Posts (cumulative):{" "}</span>
+                    <span className="col-span-4">{ getSelectedVolume() }</span>
+                  </div>
+                  <div className="w-full pt-2 text-center">
+                    <button
+                      className="py-1 px-2 border border-gray-200 rounded bg-white hover:bg-gray-50"
+                      onClick={() => setSelectedRange(null)}
+                    >
+                      Clear selection
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
-                  <span>{ getSelectedPrice()?.toPrecision(5) } </span>
-                </div>
-                <div>
-                  <span className="font-semibold">Posts (cumulative):{" "}</span>
-                  <span className="col-span-4">{ getSelectedVolume() }</span>
-                </div>
-                <div className="w-full pt-2 text-center">
-                  <button
-                    className="py-1 px-2 border border-gray-200 rounded bg-white hover:bg-gray-50"
-                    onClick={() => setSelectedRange(null)}
-                  >
-                    Clear selection
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           </DashboardPanel.Body>
         </DashboardPanel>
