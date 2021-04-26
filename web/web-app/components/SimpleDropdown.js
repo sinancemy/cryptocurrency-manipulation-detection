@@ -13,7 +13,7 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
       <div>
           <button 
             type="button" 
-            class="inline-flex text-center underline w-full rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" 
+            class="inline-flex text-center w-full rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" 
             onClick={() => setFocused(!focused)}
           >
           {selected}

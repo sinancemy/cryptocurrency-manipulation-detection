@@ -10,10 +10,14 @@ export async function getServerSideProps(context) {
       token: cookies.token
     }
   })
-  var userinfo = null
-  if(res.data.result === "ok") {
-    userinfo = res.data.userinfo
+  if(res.data.result !== "ok") {
+    return {
+      redirect: {
+        destination: '/login'
+      }
+    }
   }
+  const userinfo = res.data.userinfo
   return {
     props: {
       userInfo: userinfo
@@ -22,17 +26,6 @@ export async function getServerSideProps(context) {
 }
 
 export default function Profile({ userInfo, token }) {
-
-  console.log(userInfo)
-  console.log(token)
-  const router = useRouter()
-
-  // If the user is not logged in, then redirect back to the home page.
-  if(userInfo === null) {
-    useEffect(() => {
-      router.push("/")
-    })
-  }
 
   return (
     <div>
