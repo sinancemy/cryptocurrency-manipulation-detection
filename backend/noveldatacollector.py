@@ -1,6 +1,6 @@
 import time
 
-from data.collector.reddit import ArchivedRedditCrawler
+from data.collector.reddit import RealtimeRedditCrawler
 from data.collector.twitter import TwitterCrawler
 from data.collector.yahoo import YahooPriceCrawler
 from data.reader.datareader import DataReader
@@ -12,7 +12,7 @@ SLEEP_INTERVAL = 60 * 60
 # Collect novel data.
 if __name__ == "__main__":
     social_media_crawlers = [
-        ArchivedRedditCrawler(interval=SLEEP_INTERVAL, api_settings={'limit': 1000, 'score': '>5'}),
+        RealtimeRedditCrawler(collect_comments=True),
         TwitterCrawler()]
     price_crawler = YahooPriceCrawler(resolution="1h")
     data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
