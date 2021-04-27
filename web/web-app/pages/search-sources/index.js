@@ -74,13 +74,35 @@ export default function SearchSources({ users, userInfo, token }) {
     });
   }
 
+  const deepCopy = (array) => {
+    const copied = [];
+    array.forEach((entry) => {
+      copied.push([entry[0], [...entry[1]]]);
+    });
+    return copied;
+  };
+
   const [query, setQuery] = useState("");
   const filterUsers = (users, query) => {
     if (!query) {
       return users;
     }
-    return users.filter((coin) => {});
+    let filtered = deepCopy(users);
+    filtered.forEach((entry) => {
+      entry[1].forEach((user, index) => {
+        entry[1][index] = entry[0].concat(user);
+      });
+      entry[1] = entry[1].filter((user) => {
+        return user.toLowerCase().includes(query.toLowerCase());
+      });
+      entry[1].forEach((user, index) => {
+        entry[1][index] = user.replace(entry[0], "");
+      });
+    });
+
+    return filtered;
   };
+  const filteredUsers = filterUsers(users, query);
 
   const sourceNameArray = [];
   userInfo.followed_sources.forEach((source) => {
@@ -89,8 +111,6 @@ export default function SearchSources({ users, userInfo, token }) {
   const initialNameArray = [...sourceNameArray];
 
   const submitForm = async (values) => {
-    console.log(userInfo.followed_sources);
-    console.log(users);
     let unfollowed = initialNameArray.filter(
       (x) => !values.checked.includes(x)
     );
@@ -147,7 +167,7 @@ export default function SearchSources({ users, userInfo, token }) {
           >
             <Form>
               <ul className="max-h-96 overflow-y-auto">
-                {users.map((entry, i) =>
+                {filteredUsers.map((entry, i) =>
                   entry[1].map((source, j) => (
                     <li
                       key={i.toString() + j.toString()}
