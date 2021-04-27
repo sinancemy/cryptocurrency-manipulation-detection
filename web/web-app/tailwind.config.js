@@ -12,6 +12,9 @@ module.exports = {
         yellow: {
           50: "#F6C14E",
         },
+        gray: {
+          780: "#252F3E"
+        }
       },
       spacing: {
         128: "32rem",
