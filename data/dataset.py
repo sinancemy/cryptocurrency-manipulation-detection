@@ -230,7 +230,3 @@ def _collect_dataset():
                                                    CoinType.XLM, CoinType.XRP],
                                        time_range=TimeRange(1559347200, 1612137600))
     dataset.save()
-
-
-recreate_database()
-_example()

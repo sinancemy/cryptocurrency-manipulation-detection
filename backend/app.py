@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import misc
+from analysis.interface import Predictor
 from data.collector.sources import get_all_sources, is_valid_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
@@ -43,6 +44,10 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
     return check_session(db, token)
 
 
+# TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
+predictor = Predictor("test_model", "Jun19_Feb21_Big")
+
+
 @app.route("/api/posts")
 def get_posts():
     start = request.args.get("start", type=int, default=0)
@@ -60,6 +65,10 @@ def get_posts():
     # Connect to the database
     db = Database()
     posts = db.read_by("posts", selectors, row_to_post)
+
+    # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
+    posts = predictor.predict(posts)
+
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])

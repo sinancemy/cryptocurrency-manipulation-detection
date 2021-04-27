@@ -3,7 +3,7 @@ from data.database.sql_generator import *
 from data.database.models import *
 import os
 
-DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"
+DATABASE_FILE = "database.db"
 
 
 # Recreates the database from scratch.

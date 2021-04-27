@@ -45,7 +45,7 @@ def calculate_interaction_score(num_comments, score):
 
 class RealtimeRedditCrawler(Collector):
 
-    def __init__(self, coin: CoinType, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT, collect_comments=False):
+    def __init__(self, coin: CoinType = CoinType.BTC, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT, collect_comments=False):
         super().__init__(coin=coin, limit=limit, collect_comments=collect_comments)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)

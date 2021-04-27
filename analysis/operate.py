@@ -99,7 +99,6 @@ def _example_train():
     LR = 2e-3
 
     dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
-
     model = CryptoSpeculationModel("test_model", device, dataset.vectorizer)
 
     train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
