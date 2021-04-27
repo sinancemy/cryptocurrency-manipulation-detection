@@ -25,7 +25,9 @@ if __name__ == "__main__":
             t = int(time.time())
             time.sleep(1)
 
+        posts = list()
         for c in coin_types:
             data_reader.update_coin_type(c)
-            data_reader.read(TimeRange(t - 60 * 60 * 2, t), 60 * 60 * 24 * 56)
+            new_posts, _ = data_reader.read(TimeRange(t - 60 * 60 * 2, t), SLEEP_INTERVAL)
+            posts += new_posts
         time.sleep(SLEEP_INTERVAL)

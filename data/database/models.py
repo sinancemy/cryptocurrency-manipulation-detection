@@ -34,7 +34,7 @@ def row_to_session(r):
 
 class Post(object):
     def __init__(self, coin_type: CoinType, user: str, content: str, source: str, interaction: int, time: int,
-                 unique_id: str, type: str = "null"):
+                 unique_id: str, type: str = "null", impact=None):
         self.user = user
         self.content = content
         self.interaction = interaction
@@ -43,10 +43,11 @@ class Post(object):
         self.unique_id = unique_id
         self.coin_type = coin_type
         self.type = type
+        self.impact = impact
 
     def copy(self):
         return Post(self.coin_type, self.user, self.content, self.source, self.interaction, self.time, self.unique_id,
-                    self.type)
+                    self.type, self.impact)
 
 
 # Represents a market price of a particular coin for a particular time.
