@@ -21,42 +21,34 @@ export const DashboardPanel = ({ children, collapsable = true, restrictedHeight 
 
   return useMemo(() => (
         <div 
-          className={`text-${textColor} text-sm mb-2 w-full`}
-        >
-          {collapsable ? (
-            <div 
-              className={`text-${headerTextColor} bg-${headerColor} border-${borderColor} cursor-pointer flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-4 px-5`}
+          className={`text-${textColor} text-sm mb-2 w-full`}>
+          <div 
+              className={`text-${headerTextColor} bg-${headerColor} border-${borderColor} ${collapsable && 'cursor-pointer'} flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-4 px-5`}
               onClick={() => setShown(!collapsable || !shown)}>
               <div className={`font-bold text-md w-full`}>
                 { header && header.props.children }
               </div>
-              <span className="flex-grow">
-              </span>
-                { shown ? (
-                  <HiChevronUp />
-                ) : (
-                  <HiChevronDown />
-                ) }
+              { collapsable && (
+                <>
+                <span className="flex-grow"></span>
+                  { shown ? (
+                    <HiChevronUp />
+                  ) : (
+                    <HiChevronDown />
+                  )}
+                </>
+              )}
             </div>
-          ) : (
-            <div
-              className={`text-${headerTextColor} bg-${headerColor} border-${borderColor} cursor-pointer flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-2 px-5`}
-            >
-              <div className={`font-bold text-md w-full`}>
-                { header && header.props.children }
-              </div>
-            </div>
-          )}
             { shown && (
               <>
-            <div className={`${!footer ? 'rounded-b border-b' : ''} ${restrictedHeight ? 'max-h-96' : ''} overflow-y-auto bg-${bodyColor} border-r border-l border-b border-${borderColor} pb-4 px-5`}>
-              { body && body.props.children }
-            </div>
-            { footer && (
-            <div className={`overflow-y-auto bg-${footerColor} rounded-b-md text-md border-b border-r border-l border-${borderColor} py-2 px-5`}>
-              { footer.props.children} 
-            </div>
-            )}
+              <div className={`${!footer ? 'rounded-b border-b' : ''} ${restrictedHeight ? 'max-h-80' : ''} overflow-y-auto bg-${bodyColor} border-r border-l border-b border-${borderColor} pb-4 px-5`}>
+                { body && body.props.children }
+              </div>
+              { footer && (
+              <div className={`overflow-y-auto bg-${footerColor} rounded-b-md text-md border-b border-r border-l border-${borderColor} py-2 px-5`}>
+                { footer.props.children} 
+              </div>
+              )}
             </>
             )}
         </div>

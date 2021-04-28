@@ -13,6 +13,8 @@ import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
 import { PostOverview } from "../../components/PostOverview"
 import { dateToString } from "../../Helpers"
+import { CoinCard } from "../../components/CoinCard"
+import { IoMdSettings } from "react-icons/io"
 
 
 export async function getServerSideProps(context) {
@@ -179,32 +181,22 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               Followed Coins
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {userInfo && userInfo.followed_coins.length > 0 ? (
-            <ul className="mt-2 ">
-              {userInfo?.followed_coins.map((coin, i) => (
-                <li className="mt-2" key={i}>
-                  <label className="flex items-center hover:font-semibold">
-                    <input 
-                      type="radio" 
-                      name="coin-type"
-                      onClick={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
-                      checked={graphSettings.coinType && graphSettings.coinType === coin.coin_type}
-                    />
-                    <p className="ml-2">{coin.coin_type}</p>
-                    </label>
-                </li>
-              ))}
-            </ul>
-            ) : ("Not following any coins.")}
+            {userInfo && userInfo.followed_coins.length > 0 ? 
+            userInfo?.followed_coins.map(coin => (
+              <div className="mt-2">
+                <CoinCard 
+                  coin={coin.coin_type}
+                  isSelected={() => graphSettings.coinType && graphSettings.coinType === coin.coin_type}
+                  onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})} />
+              </div>
+              )) : ("Not following any coins.")}
           </DashboardPanel.Body>
           <DashboardPanel.Footer>
             <div className="flex flex-row">
                 <span className="flex-grow"></span>
                 <Link href="/search-coins">
                 <CuteButton>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <IoMdSettings />
                 </CuteButton>
               </Link>
              </div>
@@ -216,8 +208,8 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {userInfo && userInfo.followed_sources.length > 0 ? (
-              userInfo.followed_sources.map((source, i) => (
-                <div className="mt-2" key={i}>
+              userInfo.followed_sources.map(source => (
+                <div className="mt-2">
                   <SourceCard 
                     source={source.source}
                     isSelected={() => selectedSources.includes(source.source)}
@@ -227,8 +219,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                       } else {
                         setSelectedSources([...selectedSources, source.source])
                       }
-                    }}
-                  />
+                    }} />
                 </div>
               ))
             ) : ("Not following any sources.")}
@@ -237,23 +228,19 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <div className="flex flex-row">
               <CuteButton
                 onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}
-              >
+                disabled={() => selectedSources.length === userInfo.followed_sources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
               <CuteButton
                 onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}
-              >
+                disabled={() => selectedSources.length === 0}>
                 Unselect all
               </CuteButton>
               <span className="flex-grow"></span>
               <Link href="/search-sources">
                 <CuteButton>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <IoMdSettings />
                 </CuteButton>
               </Link>
              </div>  
@@ -269,8 +256,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               showPostVolume={showPostVolume}
               graphSettings={graphSettings} 
               selectedRange={selectedRange} 
-              setSelectedRange={setSelectedRange}
-            />
+              setSelectedRange={setSelectedRange} />
         ) : (
           <div className="p-5 text-gray-800">
             No price data found.
@@ -388,12 +374,12 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <div className="font-bold">
               Selection
             </div>
-            <div className="text-sm">
-              <div className="px-4 py-4 mt-2 bg-gray-800 rounded-md font-light">
+            <div className="text-md">
+              <div className="px-4 py-4 mt-2 bg-gray-800 rounded-md">
                 {selectedRange ? (
                 <>
                 <div>
-                  { new Date(selectedRange.midDate).toLocaleString() }
+                  { dateToString(new Date(selectedRange.midDate)) }
                 </div>
                 <div>
                   <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>

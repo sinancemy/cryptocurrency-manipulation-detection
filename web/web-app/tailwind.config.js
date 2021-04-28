@@ -13,11 +13,12 @@ module.exports = {
           50: "#F6C14E",
         },
         gray: {
-          780: "#252F3E"
+          780: "#252F3E",
+          850: "#18202f"
         }
       },
       spacing: {
-        128: "32rem",
+        128: "36rem",
       },
       keyframes: {
         'fade-in-down': {

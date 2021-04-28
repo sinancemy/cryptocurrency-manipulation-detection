@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
-import { FaRedditAlien, FaTwitter } from "react-icons/fa"
 import { getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
 
 
-const colorMap =  [["twitter", "blue-400"], ["reddit", "red-500"]]
-const iconMap = [["twitter", <FaTwitter />], ["reddit", <FaRedditAlien />]]
-const color = "gray-800"
-const hoverColor = "gray-780"
+const color = "transparent"
+const borderColor = "gray-800"
+const selectedColor = "gray-850"
 const textColor = "gray-100"
 
 export const SourceCard = ({ 
@@ -23,11 +21,11 @@ export const SourceCard = ({
 
   return (
       <label
-        className={`cursor-pointer flex flex-row text-${textColor} text-sm opacity-${isSelected() ? '100' : '40 hover:opacity-70'}`}>
-        <div className={`rounded-l bg-${getSourceColor(source)} w-1.5`}>
+        className={`cursor-pointer border border-${borderColor} rounded-r-md flex flex-row text-${textColor} text-sm opacity-${isSelected() ? `100 bg-${selectedColor}` : '60 hover:opacity-100'}`}>
+        <div className={`rounded-l-md bg-${getSourceColor(source)} w-1.5`}>
         </div>
         <span className="flex-grow"></span>
-        <div className={`px-4 py-2 flex flex-row bg-${color} rounded-r w-full`}>
+        <div className={`px-4 py-2 flex flex-row bg-${color} rounded-r-md w-full`}>
           <div className="">
           { checkbox && (
             <input 
@@ -41,7 +39,7 @@ export const SourceCard = ({
             { getShownSrc() }
           </div>
           <span className="flex-grow"></span>
-          <div className={`opacity-40 text-xl`}>
+          <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
               { getSourceIcon(source) }
           </div>
           </div>

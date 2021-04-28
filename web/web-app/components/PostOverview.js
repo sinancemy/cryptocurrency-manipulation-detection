@@ -1,11 +1,15 @@
 import { useCallback, useState } from "react"
 import { IoChatbubblesSharp } from "react-icons/io5"
+import { FaCode } from "react-icons/fa"
 import { dateToString, getSourceColor, getSourceIcon } from "../Helpers"
 
 const textColor = "gray-200"
 const mutedColor = "gray-500"
+
 const color = "gray-900"
-const innerColor = "gray-800"
+const borderColor = "gray-800"
+const innerColor = "gray-850"
+const innerBorderColor = "gray-800"
 
 export const PostOverview = ({ post }) => {
 
@@ -26,7 +30,7 @@ export const PostOverview = ({ post }) => {
   return (
     <div className="flex flex-row mb-2">
       <div className={`w-1.5 bg-${getSourceColor(post.user + '@' + post.source)} rounded-l`}></div>
-      <div className={`grid grid-cols-6 gap-1 py-2 px-4 w-full text-${textColor} bg-${color} border border-${innerColor} rounded-r`}>
+      <div className={`grid grid-cols-6 gap-1 py-2 px-4 w-full text-${textColor} bg-${color} border border-${borderColor} rounded-r`}>
         <div className={`flex flex-col`}>
           <span className="font-semibold width-50 truncate">
             {post.user}
@@ -39,13 +43,20 @@ export const PostOverview = ({ post }) => {
               {post.source}
             </span>
           </div>
-          <span className={`text-xs text-${mutedColor}`}>
-            { post.unique_id.slice(2) }
-          </span>
+          <div className={`flex flex-row items-center text-xs text-${mutedColor}`}>
+            <span className="mr-1">
+              <FaCode />
+            </span>
+            <span className={`text-xs text-${mutedColor} font-mono`}>
+              { post.unique_id.slice(2) }
+            </span>
+          </div>
+
+          
         </div>
         <div 
           className={`col-span-4 ${!selected && 'max-h-16'} overflow-hidden bg-${innerColor} 
-                      px-4 py-2 rounded ${!selected && 'cursor-pointer'}`}
+                      border border-${innerBorderColor} px-4 py-2 rounded ${!selected && 'cursor-pointer'}`}
           onClick={() => setSelected(!selected)}>
           <p>
             {post.content}
