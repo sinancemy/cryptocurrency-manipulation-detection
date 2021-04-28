@@ -102,9 +102,9 @@ def get_coin_list():
 def get_source_list():
     sources = get_all_sources()
     return jsonify([{
-            "username": src.username,
-            "source": src.source
-        } for src in sources])
+        "username": src.username,
+        "source": src.source
+    } for src in sources])
 
 
 @app.route("/api/post_volume")
@@ -127,7 +127,7 @@ def calculate_post_volume():
         count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
         volume = count
         if i > 0:
-            volume += volumes[i-1]['volume']
+            volume += volumes[i - 1]['volume']
         volumes.append({
             'time': tick_start,
             'next_time': tick_end,
@@ -135,6 +135,11 @@ def calculate_post_volume():
             'count': count
         })
     return jsonify(volumes)
+
+
+@app.route("/api/coin_info")
+def get_coin_info():
+    pass
 
 
 @app.route("/api/prediction")
