@@ -1,6 +1,5 @@
 import { DashboardPanel } from "../../components/DashboardPanel";
 import axios from "axios";
-import { useRouter } from "next/router";
 import { Card } from "../../components/Card";
 import cookie from "cookie";
 import { SimpleDropdown } from "../../components/SimpleDropdown";
@@ -11,21 +10,10 @@ import {
   getSourceColor,
   getSourceIcon,
 } from "../../Helpers";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { IoChatbubblesSharp } from "react-icons/io5";
-import {
-  FaRedditAlien,
-  FaTwitter,
-  FaEthereum,
-  FaBitcoin,
-} from "react-icons/fa";
+import { FaRedditAlien, FaTwitter } from "react-icons/fa";
 import { CuteButton } from "../../components/CuteButton";
 
 const textColor = "gray-200";
@@ -118,7 +106,6 @@ export default function SourceInfo({
 
   const followSource = async () => {
     if (buttonBoolean) {
-      setButtonBoolean(!buttonBoolean);
       await axios.get(
         "http://127.0.0.1:5000/user/follow_source?token=" +
           token +
@@ -134,8 +121,8 @@ export default function SourceInfo({
           sourceName +
           "&unfollow=0"
       );
-      setButtonBoolean(buttonBoolean);
     }
+    setButtonBoolean(!buttonBoolean);
   };
 
   return (
