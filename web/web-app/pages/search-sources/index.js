@@ -163,24 +163,21 @@ export default function SearchSources({ users, userInfo, token }) {
         <div className="col-start-2 bg-gray-50 rounded-b-lg">
           <Formik
             initialValues={{ checked: sourceNameArray }}
-            onSubmit={submitForm}
-          >
+            onSubmit={submitForm}>
             <Form>
               <ul className="max-h-96 overflow-y-auto">
                 {filteredUsers.map((entry, i) =>
                   entry[1].map((source, j) => (
                     <li
                       key={i.toString() + j.toString()}
-                      className="grid grid-cols-12 py-1 px-4 rounded-md"
-                    >
+                      className="grid grid-cols-12 py-1 px-4 rounded-md">
                       <div className="col-start-2 col-span-4 bg-gray-200">
                         <p
                           className={
                             source === "Follow All Sources"
                               ? "text-black ml-2 font-bold"
                               : "text-black ml-2"
-                          }
-                        >
+                          }>
                           {entry[0]}
                         </p>
                       </div>
