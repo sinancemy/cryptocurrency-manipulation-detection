@@ -35,7 +35,6 @@ export async function getServerSideProps(context) {
 }
 
 export default function SearchCoins({ coins, userInfo, token }) {
-  console.log(coins);
   const router = useRouter();
   if (userInfo === null) {
     useEffect(() => {
@@ -50,7 +49,7 @@ export default function SearchCoins({ coins, userInfo, token }) {
     }
     return coins.filter((coin) => {
       const name = coin.name.toLowerCase();
-      return name.includes(query);
+      return name.includes(query.toLowerCase());
     });
   };
   const filteredCoins = filterCoins(coins, query);
