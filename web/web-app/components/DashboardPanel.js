@@ -12,7 +12,7 @@ const bodyColor = "gray-900"
 const textColor = "gray-100"
 const headerTextColor = "gray-100"
 
-export const DashboardPanel = ({ children, collapsable = true, restrictedHeight = true }) => {
+export const DashboardPanel = ({ children, collapsable = true, restrictedHeight = true, headerDivisior = false }) => {
 
   const header = children.find(c => c.type === Header)
   const body = children.find(c => c.type === Body)
@@ -23,8 +23,8 @@ export const DashboardPanel = ({ children, collapsable = true, restrictedHeight 
         <div 
           className={`text-${textColor} text-sm mb-2 w-full`}>
           <div 
-              className={`text-${headerTextColor} bg-${headerColor} border-${borderColor} ${collapsable && 'cursor-pointer'} flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-4 px-5`}
-              onClick={() => setShown(!collapsable || !shown)}>
+            className={`text-${headerTextColor} bg-${headerColor} ${headerDivisior && `drop-shadow-md`} ${collapsable && 'cursor-pointer'} flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-4 px-5`}
+            onClick={() => setShown(!collapsable || !shown)}>
               <div className={`font-bold text-md w-full`}>
                 { header && header.props.children }
               </div>

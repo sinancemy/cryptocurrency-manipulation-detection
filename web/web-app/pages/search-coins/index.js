@@ -1,13 +1,15 @@
 import axios from "axios";
 import cookie from "cookie";
 import Router from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { Field, Formik, Form } from "formik";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { CoinCard } from "../../components/CoinCard";
 import { Card } from "../../components/Card";
 import { getCoinColor, getCoinIcon } from "../../Helpers";
+import { CoinOverview } from "../../components/CoinOverview";
+import { CuteButton } from "../../components/CuteButton";
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -58,54 +60,37 @@ export default function SearchCoins({ coins, userInfo, token }) {
   };
   const filteredCoins = filterCoins(coins, query);
 
-  const coinNameArray = [];
-  userInfo.followed_coins.forEach((coin) => {
-    coinNameArray.push(coin.coin_type);
-  });
-  const initialNameArray = [...coinNameArray];
+  const [followedCoins, setFollowedCoins] = useState([...userInfo.followed_coins.map(coin => coin.coin_type)])
+  console.log(followedCoins)
 
-  const submitForm = async (values) => {
-    let unfollowed = initialNameArray.filter(
-      (x) => !values.checked.includes(x)
-    );
-    let followed = values.checked.filter((x) => !initialNameArray.includes(x));
+  const toggleFollow = useCallback((coin) => {
+    const alreadyFollowing = followedCoins.includes(coin)
+    const unfollow = alreadyFollowing ? 1 : 0
+    axios.get("http://127.0.0.1:5000/user/follow_coin?token=" + token 
+                + "&type=" + coin 
+                + "&unfollow=" + unfollow)
+    .then(resp => {
+      if(resp.data.result === "ok") {
+        if(unfollow === 1) {
+          setFollowedCoins(followedCoins.filter(c => c !== coin))
+        } else {
+          setFollowedCoins([...followedCoins, coin])
+        }
+      }
+    })
+  }, [followedCoins])
 
-    await Promise.all(
-      followed.map(async (name) => {
-        await axios.get(
-          "http://127.0.0.1:5000/user/follow_coin?token=" +
-            token +
-            "&type=" +
-            name +
-            "&unfollow=0"
-        );
-      })
-    );
-
-    await Promise.all(
-      unfollowed.map(async (name) => {
-        await axios.get(
-          "http://127.0.0.1:5000/user/follow_coin?token=" +
-            token +
-            "&type=" +
-            name +
-            "&unfollow=1"
-        );
-      })
-    );
-
-    Router.reload();
-  };
+  const isFollowing = useCallback((coin) => {
+    return followedCoins.includes(coin)
+  }, [followedCoins])
 
   return (
     <div className="grid grid-cols-3 mt-8 animate-fade-in-down">
       <div className="col-start-2">
-        <Formik initialValues={{ checked: coinNameArray }} onSubmit={submitForm}>
-          <Form>
-            <DashboardPanel collapsable={false}>
+            <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true}>
               <DashboardPanel.Header>
                 <h1 className="font-bold text-center text-2xl mt-4 mb-4">
-                  Follow Coins
+                  Search Coins
                 </h1>
                 <div className="col-start-2 grid grid-cols-12">
                   <input
@@ -113,43 +98,31 @@ export default function SearchCoins({ coins, userInfo, token }) {
                     type="text"
                     value={query}
                     onInput={(e) => setQuery(e.target.value)}
-                    placeholder="Search"
+                    placeholder="Type to search..."
                   />
                 </div>
               </DashboardPanel.Header>
               <DashboardPanel.Body>
-                  <ul>
-                    {filteredCoins.map(coin => (
-                      <div className="mb-2">
-                        <Card 
-                        isSelected={() => false}
-                        badgeColor={getCoinColor(coin.name)}
-                        icon={getCoinIcon(coin.name)}>
-                          <Card.Title>
-                            {coin.name}
-                          </Card.Title>
-                          <Card.Input>
-                            <Field
-                              className="h-6 w-6"
-                              value={coin.name}
-                              name="checked"
-                              type="checkbox" />
-                          </Card.Input>
-                        </Card>
-                      </div>
-                    ))}
-                  </ul>
+                <div className="pt-2">
+                  {filteredCoins.map(coin => (
+                    <div className="mb-2">
+                      <CoinOverview 
+                        isSelected={() => true}
+                        setSelected={() => true}
+                        coin={coin.name}
+                        button={(
+                          <CuteButton
+                            onClick={() => toggleFollow(coin.name)}
+                            textColor={ isFollowing(coin.name) ? "yellow-400" : "green-400" }
+                            fullWidth={true}>
+                            { isFollowing(coin.name) ? "Unfollow" : "Follow" }
+                          </CuteButton>
+                        )}/>
+                    </div>
+                  ))}
+                </div>
               </DashboardPanel.Body>
-              <DashboardPanel.Footer>
-                <button
-                  className="col-start-2 w-full bg-yellow-50 text-blue-50 h-10 rounded disabled:opacity-50 hover:bg-yellow-500"
-                  type="submit">
-                  Submit
-                </button>
-              </DashboardPanel.Footer>
             </DashboardPanel>
-          </Form>
-        </Formik>
       </div>
     </div>
   );

@@ -148,7 +148,7 @@ export default function SearchSources({ users, userInfo, token }) {
       <div className="grid grid-cols-3 mt-8">
         <div className="col-start-2 bg-white border-b rounded-t-lg">
           <h1 className="font-bold text-center text-2xl mt-4 mb-4">
-            Follow Sources
+            Search Sources
           </h1>
         </div>
         <div className="col-start-2 grid grid-cols-12 bg-gray-50">
@@ -157,7 +157,7 @@ export default function SearchSources({ users, userInfo, token }) {
             type="text"
             value={query}
             onInput={(e) => setQuery(e.target.value)}
-            placeholder="Search"
+            placeholder="Type to search..."
           />
         </div>
         <div className="col-start-2 bg-gray-50 rounded-b-lg">

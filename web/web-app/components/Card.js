@@ -22,16 +22,16 @@ export const Card = ({ children, isSelected, badgeColor, icon}) => {
         <div className={`rounded-l-md bg-${badgeColor} w-1.5`}>
         </div>
         <span className="flex-grow"></span>
-        <div className={`px-4 py-2 flex flex-row ${isSelected() ? `bg-${selectedColor}` : `bg-${color}`} w-full border border-${borderColor} rounded-r-md`}>
+        <div className={`px-4 py-2 flex flex-row items-center ${isSelected() ? `bg-${selectedColor}` : `bg-${color}`} w-full border border-${borderColor} rounded-r-md`}>
           <div className="">
             { input && input.props.children }
           </div>
           <div className="truncate w-36">
-              { title && title.props.children }
+            { title && title.props.children }
           </div>
           <span className="flex-grow"></span>
           <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
-              { icon }
+            { icon }
           </div>
           </div>
       </label>

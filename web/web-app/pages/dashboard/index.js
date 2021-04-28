@@ -34,7 +34,6 @@ export async function getServerSideProps(context) {
     }
   }
   const userinfo = userinfoResp.data.userinfo
-  const coinsResp = await axios.get("http://127.0.0.1:5000/api/coin_list")
   const initialGraphSettings = {
     coinType: userinfo.followed_coins.length > 0 ? userinfo.followed_coins[0].coin_type : null,
     extent: "year",
@@ -43,13 +42,12 @@ export async function getServerSideProps(context) {
   return {
     props: {
       userInfo: userinfo,
-      coins: coinsResp.data,
       initialGraphSettings: initialGraphSettings,
     }
   }
 }
 
-export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettings}) {  
+export default function Dashboard({userInfo, initialGraphSettings}) {  
   const ResponsiveGraph = withParentSize(Graph)
   const [prices, setPrices] = useState([])
   const [posts, setPosts] = useState([])
@@ -59,7 +57,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
   const [showPostVolume, setShowPostVolume] = useState(true)
   const [selectedRange, setSelectedRange] = useState(null)
   const [sortedPosts, setSortedPosts] = useState([])
-  const [selectedSources, setSelectedSources] = useState(['*@reddit/Bitcoin'])
+  const [selectedSources, setSelectedSources] = useState([])
 
   const [sortByOption, setSortByOption] = useState("time")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
