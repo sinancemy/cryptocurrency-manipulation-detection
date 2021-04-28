@@ -137,9 +137,14 @@ export default function SourceInfo({
                 <FaRedditAlien className="h-12 w-12 items-center" />
               )}
               <span className="mt-2">{sourceName.slice(2)}</span>
-              <CuteButton onClick={() => followSource()} disabled={() => false}>
-                {buttonBoolean ? "Unfollow" : "Follow"}
-              </CuteButton>
+              <div className="mt-2">
+                <CuteButton
+                  onClick={() => followSource()}
+                  disabled={() => false}
+                >
+                  {buttonBoolean ? "Unfollow" : "Follow"}
+                </CuteButton>
+              </div>
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body></DashboardPanel.Body>
