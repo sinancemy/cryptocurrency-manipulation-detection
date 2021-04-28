@@ -4,8 +4,8 @@ import { DashboardPanel } from "../../components/DashboardPanel"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PostOverview } from "../../components/PostOverview"
-
-// graph ekle
+import { CuteButton } from "../../components/CuteButton"
+import { SourceCard } from "../../components/SourceCard"
 
 export async function getServerSideProps(context) {
     if (context.req.headers.cookie == null) {
@@ -59,23 +59,33 @@ export async function getServerSideProps(context) {
   users = users.sort((a, b) => a[0].localeCompare(b[0]));
   users.unshift(["twitter", twitter_users]);
 
+  const res4 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin);
+
+  let lastPrice = res4.data.last_price
+  let topActiveUsers = res4.data.top_active_users
+  let topInteractedUsers = res4.data.top_interacted_users
+  let topSources = res4.data.top_sources
+
   return {
     props: {
       users: users,
       userInfo: userinfo,
       coinQuery: context.query.coin,
+      topSources: topSources,
+      lastPrice: lastPrice,
+      topActiveUsers: topActiveUsers,
+      topInteractedUsers: topInteractedUsers,
     },
   };
   }
 
-export default function CoinInfo({coinQuery}){
+export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, topActiveUsers, topInteractedUsers}){
 
-    const [sortByOption, setSortByOption] = useState("time")
+    const [sortByOption, setSortByOption] = useState("interaction")
     const [sortOrderOption, setSortOrderOption] = useState("descending")
     const [posts, setPosts] = useState([])
     const [sortedPosts, setSortedPosts] = useState([])
-    const [showPostsFromOption, setShowPostsFromOption] = useState("all sources")
-    const [selectedSources, setSelectedSources] = useState(['*@*'])
+    const [selectedSources, setSelectedSources] = useState([])
 
     const discardDuplicatePosts = (posts) => {
         const dict = {}
@@ -87,13 +97,13 @@ export default function CoinInfo({coinQuery}){
 
       const updatePosts = useCallback(() => {
         console.log("updating...")
-        const sourcesToConsider = (showPostsFromOption === "all sources") ? ["*@*"] : selectedSources //((showPostsFromOption === "Reddit") ? ["*@reddit"] : ["*@twitter"])
+        const sourcesToConsider = selectedSources
         console.log(sourcesToConsider)
         const requests = sourcesToConsider.map(src_string => {
-          const [username, source] = src_string.split('@')
+            const [user, source] = src_string.split('@')
           return axios.get("http://127.0.0.1:5000/api/posts?type=" + coinQuery, {
             params: {
-              user: username,
+              user: user,
               source: source,
             }
           })
@@ -107,7 +117,7 @@ export default function CoinInfo({coinQuery}){
           const collectedUniques = discardDuplicatePosts(collected)
           setPosts(collectedUniques)
           }))
-        }, [[showPostsFromOption, selectedSources]]);  
+        }, [[selectedSources]]);  
 
     useEffect(() => {
         if(posts === null || posts.length === 0) {
@@ -126,16 +136,58 @@ export default function CoinInfo({coinQuery}){
 
       useEffect(() => {
         updatePosts()
-      }, [showPostsFromOption, selectedSources])      
+      }, [selectedSources])
 
     return(
         <div className="animate-fade-in-down mx-10 grid grid-cols-6">
          <div className="col-start-3 py-5 col-span-2">
             <div className="col-start-2 bg-white border-b rounded">
                 <h1 className="font-bold text-center text-2xl py-2">
-                    {coinQuery}
+                    {coinQuery.toUpperCase() + " - Current Price:  $" + lastPrice.price}
                 </h1>
             </div>
+        </div>
+
+        <div className="col-start-1 p-1 col-span-1">
+        <DashboardPanel>
+          <DashboardPanel.Header>
+                Top Sources
+          </DashboardPanel.Header>
+          <DashboardPanel.Body>
+            { topSources.length > 0 ? (
+                topSources.map(source => (
+                <div className="mt-2">
+                  <SourceCard 
+                    source={"*@" + source.source}
+                    isSelected={() => selectedSources.includes("*@" + source.source)}
+                    onToggle={() => {
+                      if(selectedSources.includes("*@" + source.source)) {
+                        setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
+                      } else {
+                        setSelectedSources([...selectedSources, "*@" + source.source])
+                      }
+                    }} />
+                </div>
+              ))
+            ) : ("There are no sources.")}
+          </DashboardPanel.Body>
+          <DashboardPanel.Footer>
+            <div className="flex flex-row">
+              <CuteButton
+                onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
+                disabled={() => selectedSources.length === topSources.length}>
+                Select all
+              </CuteButton>
+              <span className="flex-grow"></span>
+              <CuteButton
+                onClick={() => setSelectedSources([])}
+                disabled={() => selectedSources.length === 0}>
+                Unselect all
+              </CuteButton>
+              <span className="flex-grow"></span>
+             </div>  
+          </DashboardPanel.Footer>
+        </DashboardPanel>
         </div>
 
         <div className="col-start-2 py-2 col-span-4">
@@ -144,7 +196,7 @@ export default function CoinInfo({coinQuery}){
             <div className="flex flex-justify-between font-light">
               <span class="flex-grow"></span>
               <div className="flex">
-                <div className="border-r mr-2 px-2">
+                <div className="mr-2 px-2">
                   sort by {" "}
                     <SimpleDropdown 
                       options={['time', 'interaction', 'user']} 
@@ -155,15 +207,6 @@ export default function CoinInfo({coinQuery}){
                       selected={sortOrderOption} 
                       setSelected={setSortOrderOption} />
                       {" "} order
-                </div>
-                <div>
-                  show 
-                    {" "} posts from {" "}
-                    <SimpleDropdown
-                      options={['all sources', 'Twitter', 'Reddit']}
-                      selected={showPostsFromOption}
-                      setSelected={setShowPostsFromOption}
-                    />{" "}
                 </div>
               </div>
             </div>
@@ -181,6 +224,45 @@ export default function CoinInfo({coinQuery}){
           </DashboardPanel.Body>
         </DashboardPanel>
         </div>
+
+        <div className="col-start-6 p-1 col-span-1">
+        <DashboardPanel>
+          <DashboardPanel.Header>
+                Top Active Users
+          </DashboardPanel.Header>
+          <DashboardPanel.Body>
+            { topActiveUsers.length > 0 ? (
+                topActiveUsers.map(source => (
+                <div className="mt-2">
+                  <SourceCard 
+                    source={source.user +"@"+ source.source}
+                    isSelected={() => 1+1}
+                    onToggle={() => 1+1} />
+                </div>
+              ))
+            ) : ("There are no sources.")}
+          </DashboardPanel.Body>
+        </DashboardPanel>
+
+        <DashboardPanel>
+          <DashboardPanel.Header>
+                Top Interacted Users
+          </DashboardPanel.Header>
+          <DashboardPanel.Body>
+            { topInteractedUsers.length > 0 ? (
+                topInteractedUsers.map(source => (
+                <div className="mt-2">
+                  <SourceCard 
+                    source={source.user +"@"+ source.source}
+                    isSelected={() => 1+1}
+                    onToggle={() => 1+1} />
+                </div>
+              ))
+            ) : ("There are no sources.")}
+          </DashboardPanel.Body>
+        </DashboardPanel>
+        </div>
+
     </div>
     );
 }
