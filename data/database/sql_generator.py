@@ -122,3 +122,22 @@ def generate_delete_query(table_name, selectors: list):
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
     return sql, cond_params
+
+
+def generate_top_query(table_name, order_by, order_dir: str, limit: int, selectors: list):
+    sql = "SELECT * FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    sql += " ORDER BY " + order_by + " " + order_dir
+    sql += " LIMIT " + str(limit)
+    return sql, cond_params
+
+
+def generate_grouped_top_query(table_name, group_by, group_selector: str, limit: int, selectors: list):
+    sql = "SELECT " + group_selector + ",* FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    sql += " GROUP BY " + group_by
+    sql += " ORDER BY " + group_selector + " DESC"
+    sql += " LIMIT " + str(limit)
+    return sql, cond_params
