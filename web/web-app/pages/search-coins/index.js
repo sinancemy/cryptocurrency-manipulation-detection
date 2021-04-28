@@ -31,6 +31,13 @@ export async function getServerSideProps(context) {
   var userinfo = null;
   if (res2.data.result === "ok") {
     userinfo = res2.data.userinfo;
+  } else {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
   }
   return {
     props: {
@@ -53,15 +60,10 @@ export default function SearchCoins({ coins, userInfo, token }) {
     if (!query) {
       return coins;
     }
-    return coins.filter((coin) => {
-      const name = coin.name.toLowerCase();
-      return name.includes(query.toLowerCase());
-    });
+    return coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()));
   };
   const filteredCoins = filterCoins(coins, query);
-
   const [followedCoins, setFollowedCoins] = useState([...userInfo.followed_coins.map(coin => coin.coin_type)])
-  console.log(followedCoins)
 
   const toggleFollow = useCallback((coin) => {
     const alreadyFollowing = followedCoins.includes(coin)
@@ -85,7 +87,7 @@ export default function SearchCoins({ coins, userInfo, token }) {
   }, [followedCoins])
 
   return (
-    <div className="grid grid-cols-3 mt-8 animate-fade-in-down">
+    <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
       <div className="col-start-2">
             <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true}>
               <DashboardPanel.Header>

@@ -55,7 +55,7 @@ class Database(object):
 
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter) -> list:
-        select_sql, params = generate_select_query(table, selectors)
+        select_sql, params = generate_select_all_query(table, selectors)
         cur = self.conn.cursor()
         cur.execute(select_sql, params)
         rows = cur.fetchall()
@@ -125,7 +125,7 @@ class Database(object):
 
     def read_top_active_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
         return self.read_grouped_tops("posts", "user", "COUNT(id)", limit,
-                                                 [MatchSelector("coin_type", coin_type.value)], row_converter)
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
 
     def read_top_interacted_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
         return self.read_grouped_tops("posts", "user", "SUM(interaction)", limit,
@@ -136,3 +136,10 @@ class Database(object):
         if len(rows) < 1:
             return None
         return rows[0]
+
+    def read_users(self):
+        sql = generate_select_distinct_query("posts", ["user", "source"])
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return [{"user": r[0], "source": r[1]} for r in rows]

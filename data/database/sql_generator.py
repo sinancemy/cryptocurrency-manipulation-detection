@@ -109,11 +109,15 @@ def create_conditionals(selectors: list) -> (str, list):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors: list) -> (str, list):
+def generate_select_all_query(table_name, selectors: list) -> (str, list):
     sql = "SELECT * FROM " + table_name
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
     return sql, cond_params
+
+
+def generate_select_distinct_query(table_name: str, cols: list) -> str:
+    return "SELECT DISTINCT " + ",".join(cols) + " FROM " + table_name
 
 
 # Creates a DELETE query with given predicates in the form of selector objects.

@@ -45,7 +45,7 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
 
 
 # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-predictor = Predictor("test_model", "Jun19_Feb21_Big")
+# predictor = Predictor("test_model", "Jun19_Feb21_Big")
 
 
 @app.route("/api/posts")
@@ -67,12 +67,18 @@ def get_posts():
     posts = db.read_by("posts", selectors, row_to_post)
 
     # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-    if len(posts) > 0:
-        posts = predictor.predict(posts)
+    # if len(posts) > 0:
+    #     posts = predictor.predict(posts)
 
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
+
+
+@app.route("/api/user_list")
+def get_user_list():
+    db = Database()
+    return jsonify(db.read_users())
 
 
 @app.route("/api/prices")
@@ -103,7 +109,7 @@ def get_coin_list():
 def get_source_list():
     sources = get_all_sources()
     return jsonify([{
-        "username": src.username,
+        "user": src.username,
         "source": src.source
     } for src in sources])
 
@@ -184,12 +190,6 @@ def get_source_info():
         "top_interacted_users": top_interacted_users,
         "relevant_coins": relevant_coins
     })
-
-
-@app.route("/api/prediction")
-def prediction():
-    # TODO implement
-    return jsonify({})
 
 
 @app.route("/user/login", methods=["POST"])

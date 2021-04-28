@@ -31,7 +31,8 @@ const formatDate = timeFormat("%b %d, '%y");
 // accessors
 const getDate = (d) => new Date(d.time * 1000);
 const getStockValue = (d) => d.price;
-const getPostVolumeValue= (d) => d.volume;
+const getPostVolumeValue = (d) => d.volume;
+const getPostCountValue = (d) => d.count; 
 const bisectDate = bisector(d => new Date(d.time * 1000)).left;
 
 const Graph = withTooltip(
@@ -49,7 +50,8 @@ const Graph = withTooltip(
     setSelectedRange,
     stock,
     postVolume,
-    showPostVolume
+    showPostVolume,
+    showPostCount
   }) => {
     const width = parentWidth
     const height = parentHeight
