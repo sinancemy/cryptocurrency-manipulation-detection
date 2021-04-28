@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
-
+import Link from "next/link"
 
 const color = "transparent"
 const borderColor = "gray-800"
@@ -36,9 +36,11 @@ export const SourceCard = ({
           ) }
           </div>
           <div className="truncate w-36">
+          <Link href={"/user-info?user=" + source}>
           <span className="hover:underline">
             { getShownSrc() }
             </span>
+            </Link>
           </div>
           <span className="flex-grow"></span>
           <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
