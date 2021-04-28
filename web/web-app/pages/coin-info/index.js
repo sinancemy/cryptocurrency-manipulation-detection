@@ -3,6 +3,7 @@ import cookie from "cookie";
 import { DashboardPanel } from "../../components/DashboardPanel"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PostOverview } from "../../components/PostOverview"
 
 // graph ekle
 
@@ -138,7 +139,7 @@ export default function CoinInfo({coinQuery}){
         </div>
 
         <div className="col-start-2 py-2 col-span-4">
-        <DashboardPanel collapsable={false}>
+        <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
             <div className="flex flex-justify-between font-light">
               <span class="flex-grow"></span>
@@ -168,29 +169,13 @@ export default function CoinInfo({coinQuery}){
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {sortedPosts.length > 0 ? (
-            <ul className="overflow-y-auto max-h-128">
+          {sortedPosts.length > 0 ? (
+            <div className="overflow-y-auto max-h-128">
               {sortedPosts.map((post, i) => (
-                <li
-                  key={i}
-                  className="grid grid-cols-5 gap-3 text-black border py-1 px-4 bg-white justify-between rounded-md mt-2"
-                >
-                  <div>
-                    <span className="font-semibold underline width-50">{post.user}</span><br /> 
-                    {post.source}
-                  </div>
-                  <div className="col-span-3">
-                    <p>{post.content}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm">{new Date(post.time*1000).toLocaleString('en-US', {hour12: false})}
-                    <br />
-                    Interaction: {post.interaction}</p>
-                  </div>
-                </li>
+                <PostOverview post={post} />
               ))}
-            </ul>
-            ): (
+            </div>
+            ) : (
               <div className="mt-2">There aren't any posts about this coin.</div>
             )}
           </DashboardPanel.Body>
