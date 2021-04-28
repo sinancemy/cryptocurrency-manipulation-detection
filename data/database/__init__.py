@@ -102,36 +102,37 @@ class Database(object):
     def read_prices_by_coin_type(self, coin_type: CoinType):
         return self.read_by("prices", [MatchSelector('coin_type', coin_type.value)], row_to_price)
 
-    def read_top_sources(self, coin_type: CoinType, limit: int, row_converter) -> list:
-        sql, params = generate_grouped_top_query("posts", group_by="source", group_selector="COUNT(id)", limit=limit,
-                                                 selectors=[MatchSelector("coin_type", coin_type.value)])
+    def read_tops(self, table_name: str, order_by: str, order_dir: str, limit: int, selectors: list, row_converter):
+        sql, params = generate_top_query(table_name, order_by=order_by, order_dir=order_dir, limit=limit,
+                                         selectors=selectors)
         cur = self.conn.cursor()
         cur.execute(sql, params)
         rows = cur.fetchall()
         return [row_converter(r) for r in rows]
+
+    def read_grouped_tops(self, table_name: str, group_by: str, group_selector: str, limit: int, selectors: list,
+                          row_converter):
+        sql, params = generate_grouped_top_query(table_name, group_by=group_by, group_selector=group_selector,
+                                                 limit=limit, selectors=selectors)
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return [row_converter(r) for r in rows]
+
+    def read_top_sources(self, coin_type: CoinType, limit: int, row_converter) -> list:
+        return self.read_grouped_tops("posts", "source", "COUNT(id)", limit,
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
 
     def read_top_active_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
-        sql, params = generate_grouped_top_query("posts", group_by="user", group_selector="COUNT(id)", limit=limit,
-                                                 selectors=[MatchSelector("coin_type", coin_type.value)])
-        cur = self.conn.cursor()
-        cur.execute(sql, params)
-        rows = cur.fetchall()
-        return [row_converter(r) for r in rows]
+        return self.read_grouped_tops("posts", "user", "COUNT(id)", limit,
+                                                 [MatchSelector("coin_type", coin_type.value)], row_converter)
 
     def read_top_interacted_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
-        sql, params = generate_grouped_top_query("posts", group_by="user", group_selector="SUM(interaction)", limit=limit,
-                                                 selectors=[MatchSelector("coin_type", coin_type.value)])
-        cur = self.conn.cursor()
-        cur.execute(sql, params)
-        rows = cur.fetchall()
-        return [row_converter(r) for r in rows]
+        return self.read_grouped_tops("posts", "user", "SUM(interaction)", limit,
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
 
     def read_last_price(self, coin_type: CoinType):
-        sql, params = generate_top_query("prices", order_by="time", order_dir="desc", limit=1,
-                                         selectors=[MatchSelector("coin_type", coin_type.value)])
-        cur = self.conn.cursor()
-        cur.execute(sql, params)
-        rows = cur.fetchall()
+        rows = self.read_tops("prices", "time", "desc", 1, [MatchSelector("coin_type", coin_type.value)], row_to_price)
         if len(rows) < 1:
             return None
-        return row_to_price(rows[0])
+        return rows[0]

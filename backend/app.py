@@ -145,15 +145,43 @@ def get_coin_info():
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     db = Database()
-    top_sources = db.read_top_sources(coin_type, top_source_limit, lambda row: {"count": row[0], "source": row[5]})
-    top_active_users = db.read_top_active_users(coin_type, top_user_limit, lambda row: {"count": row[0], "source": row[5], "user": row[3]})
-    top_interacted_users = db.read_top_interacted_users(coin_type, top_user_limit, lambda row: {"total_interaction": row[0], "source": row[5], "user": row[3]})
+    top_sources = db.read_top_sources(coin_type, top_source_limit,
+                                      lambda row: {"count": row[0], "source": row[5]})
+    top_active_users = db.read_top_active_users(coin_type, top_user_limit,
+                                                lambda row: {"count": row[0], "source": row[5], "user": row[3]})
+    top_interacted_users = db.read_top_interacted_users(coin_type, top_user_limit,
+                                                        lambda row: {"total_interaction": row[0], "source": row[5],
+                                                                     "user": row[3]})
     last_price = db.read_last_price(coin_type)
     return jsonify({
         "top_sources": top_sources,
         "top_active_users": top_active_users,
         "top_interacted_users": top_interacted_users,
         "last_price": dictify(last_price, excluded_keys={"type"})
+    })
+
+
+@app.route("/api/source_info")
+def get_source_info():
+    source = request.args.get("source", type=str, default=None)
+    top_user_limit = request.args.get("userlimit", type=int, default=5)
+    relevant_coin_limit = request.args.get("coinlimit", type=int, default=5)
+    if source is None:
+        return jsonify({"result": "error", "error_msg": "Invalid source."})
+    db = Database()
+    top_active_users = db.read_grouped_tops("posts", "user", "COUNT(id)", top_user_limit,
+                                            [MatchSelector("source", source)],
+                                            lambda row: {"msg_count": row[0], "user": row[3]})
+    top_interacted_users = db.read_grouped_tops("posts", "user", "SUM(interaction)", top_user_limit,
+                                            [MatchSelector("source", source)],
+                                            lambda row: {"msg_count": row[0], "user": row[3]})
+    relevant_coins = db.read_grouped_tops("posts", "coin_type", "COUNT(id)", relevant_coin_limit,
+                                            [MatchSelector("source", source)],
+                                            lambda row: {"msg_count": row[0], "coin_type": row[2]})
+    return jsonify({
+        "top_active_users": top_active_users,
+        "top_interacted_users": top_interacted_users,
+        "relevant_coins": relevant_coins
     })
 
 
