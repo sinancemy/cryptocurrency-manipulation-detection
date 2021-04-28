@@ -35,11 +35,11 @@ export default function Profile({ userInfo, token }) {
 
   return (
     <div className="animate-fade-in-down">
-      <div className="text-yellow-50 bg-gray-900 mt-4 border-t border-b border-yellow-50">
+      <div className="text-white bg-gray-900 mt-4">
         <div className="container mx-auto py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <img className="h-24 w-24" alt="profile picture" />
+              <img className="h-212 w-24" alt="profile picture" />
               <span className="text-xl ml-4">{userInfo?.user?.username}</span>
             </div>
           </div>
