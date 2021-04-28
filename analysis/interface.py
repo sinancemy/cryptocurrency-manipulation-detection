@@ -21,7 +21,7 @@ class Predictor:
 
     def predict(self, posts):
         for post, impact in zip(posts, predict(self.model, PredictSet(posts, self.vectorizer), self.device, 1024)):
-            post.impact = impact
+            post.impact = list(impact)
         return posts
 
 

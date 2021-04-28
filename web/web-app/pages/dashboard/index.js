@@ -16,6 +16,7 @@ import { dateToString, getCoinColor, getCoinIcon, getSourceColor, getSourceIcon 
 import { CoinCard } from "../../components/CoinCard"
 import { IoMdSettings } from "react-icons/io"
 import { Card } from "../../components/Card"
+import { Prediction } from "../../components/Prediction"
 
 
 export async function getServerSideProps(context) {
@@ -52,6 +53,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
   const [prices, setPrices] = useState([])
   const [posts, setPosts] = useState([])
   const [postVolume, setPostVolume] = useState([])
+  const [impactMap, setImpactMap] = useState(new Map())
   
   const [graphSettings, setGraphSettings] = useState(initialGraphSettings)
   const [showPostVolume, setShowPostVolume] = useState(true)
@@ -79,7 +81,6 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
 
   const getSelectedVolume = useCallback(() => {
     const date = parseInt(selectedRange.midDate.valueOf()/1000)
-    console.log(postVolume)
     return postVolume.find(p => date >= p.time && date < p.next_time)?.volume
   }, [postVolume, selectedRange])
 
@@ -91,7 +92,6 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
   }, [selectedRange, graphSettings])
 
   const updatePosts = useCallback((start, end) => {
-    console.log("updating...")
     const type = (showPostsOption === "all") ? "*" : graphSettings.coinType 
     const sourcesToConsider = (showPostsFromOption === "all") ? ["*@*"] : selectedSources
     const requests = sourcesToConsider.map(src_string => {
@@ -113,9 +113,33 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
         collected.push(...resp.data)
       });
       const collectedUniques = discardDuplicatePosts(collected)
+      console.log(collectedUniques)
       setPosts(collectedUniques)
       }))
     }, [[showPostsFromOption, showPostsOption, graphSettings, selectedSources]]);
+
+    useEffect(() => {
+      if(posts == null || posts.size == 0) return
+      console.log(posts)
+      let newImpactMap = new Map()
+      for (const p of posts) {
+        newImpactMap.set(p.coin_type, [])
+      }
+      for(const p of posts) {
+        newImpactMap.get(p.coin_type).push(p.impact)
+      }
+      const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
+
+      for(const p of newImpactMap.keys()) {
+        const first = average(newImpactMap.get(p).map(e => e[0]))
+        const second = average(newImpactMap.get(p).map(e => e[1]))
+        const third = average(newImpactMap.get(p).map(e => e[2]))
+        const fourth = average(newImpactMap.get(p).map(e => e[3]))
+        newImpactMap.set(p, [first, second, third, fourth])
+      }
+      console.log(newImpactMap)
+      setImpactMap(newImpactMap)
+    }, [posts])
 
     // Sorter (this effect will be updating the shown posts!)
     useEffect(() => {
@@ -436,7 +460,14 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             <div className="mt-2">
-              TBD
+              { [...impactMap.entries()].map(e => (
+                <div className="flex flex-row">
+                  <span className="mr-1">{e[0]}:</span>
+                  <span>
+                    <Prediction prediction={e[1]} />
+                  </span>
+                </div>
+              ))}
             </div>
           </DashboardPanel.Body>
         </DashboardPanel>

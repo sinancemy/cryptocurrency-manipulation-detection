@@ -45,7 +45,7 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
 
 
 # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-# predictor = Predictor("test_model", "Jun19_Feb21_Big")
+predictor = Predictor("test_model", "Jun19_Feb21_Big")
 
 
 @app.route("/api/posts")
@@ -67,7 +67,8 @@ def get_posts():
     posts = db.read_by("posts", selectors, row_to_post)
 
     # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-    # posts = predictor.predict(posts)
+    if len(posts) > 0:
+        posts = predictor.predict(posts)
 
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)

@@ -122,6 +122,7 @@ class CryptoSpeculationDataset(Dataset):
 class PredictSet(Dataset):
     def __init__(self, posts, vectorizer):
         self.X = []
+        self.posts = posts
         for post in posts:
             self.X.append(CryptoSpeculationX(post=post, vectorizer=vectorizer))
 
