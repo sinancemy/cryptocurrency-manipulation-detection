@@ -180,9 +180,8 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}
-                >
+                onClick={() => setSelectedSources([topSources.map(s => s.source)])}
+                disabled={() => selectedSources.length === topSources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
@@ -258,8 +257,8 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}
+                onClick={() => setSelectedSources([topActiveUsers.map(s => s.source)])}
+                disabled={() => selectedSources.length === topActiveUsers.length}
                 >
                 Select all
               </CuteButton>
@@ -299,8 +298,8 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}
+                onClick={() => setSelectedSources([topInteractedUsers.map(s => s.source)])}
+                disabled={() => selectedSources.length === topInteractedUsers.length}
                 >
                 Select all
               </CuteButton>

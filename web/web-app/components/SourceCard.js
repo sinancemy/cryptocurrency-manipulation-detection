@@ -36,7 +36,9 @@ export const SourceCard = ({
           ) }
           </div>
           <div className="truncate w-36">
+          <span className="hover:underline">
             { getShownSrc() }
+            </span>
           </div>
           <span className="flex-grow"></span>
           <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
