@@ -60,16 +60,11 @@ export async function getServerSideProps(context) {
   users.unshift(["twitter", twitter_users]);
 
   const res4 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin);
-  console.log(res4)
 
   let lastPrice = res4.data.last_price
-  console.log(lastPrice)
   let topActiveUsers = res4.data.top_active_users
-  console.log(topActiveUsers)
   let topInteractedUsers = res4.data.top_interacted_users
-  console.log(topInteractedUsers)
   let topSources = res4.data.top_sources
-  console.log(topSources)
 
   return {
     props: {
@@ -86,12 +81,11 @@ export async function getServerSideProps(context) {
 
 export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, topActiveUsers, topInteractedUsers}){
 
-    const [sortByOption, setSortByOption] = useState("time")
+    const [sortByOption, setSortByOption] = useState("interaction")
     const [sortOrderOption, setSortOrderOption] = useState("descending")
     const [posts, setPosts] = useState([])
     const [sortedPosts, setSortedPosts] = useState([])
-    const [showPostsFromOption, setShowPostsFromOption] = useState("all sources")
-    const [selectedSources, setSelectedSources] = useState(['*@*'])
+    const [selectedSources, setSelectedSources] = useState([])
 
     const discardDuplicatePosts = (posts) => {
         const dict = {}
@@ -106,10 +100,10 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
         const sourcesToConsider = selectedSources
         console.log(sourcesToConsider)
         const requests = sourcesToConsider.map(src_string => {
-          const [username, source] = src_string.split('@')
+            const [user, source] = src_string.split('@')
           return axios.get("http://127.0.0.1:5000/api/posts?type=" + coinQuery, {
             params: {
-              user: username,
+              user: user,
               source: source,
             }
           })
@@ -123,7 +117,7 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           const collectedUniques = discardDuplicatePosts(collected)
           setPosts(collectedUniques)
           }))
-        }, [[showPostsFromOption, selectedSources]]);  
+        }, [[selectedSources]]);  
 
     useEffect(() => {
         if(posts === null || posts.length === 0) {
@@ -142,7 +136,7 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
 
       useEffect(() => {
         updatePosts()
-      }, [showPostsFromOption, selectedSources])      
+      }, [selectedSources])
 
     return(
         <div className="animate-fade-in-down mx-10 grid grid-cols-6">
@@ -165,12 +159,12 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
                 <div className="mt-2">
                   <SourceCard 
                     source={"*@" + source.source}
-                    isSelected={() => selectedSources.includes(source.source)}
+                    isSelected={() => selectedSources.includes("*@" + source.source)}
                     onToggle={() => {
-                      if(selectedSources.includes(source.source)) {
-                        setSelectedSources(selectedSources.filter(x => x !== source.source))
+                      if(selectedSources.includes("*@" + source.source)) {
+                        setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
                       } else {
-                        setSelectedSources([...selectedSources, source.source])
+                        setSelectedSources([...selectedSources, "*@" + source.source])
                       }
                     }} />
                 </div>
@@ -180,7 +174,7 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([topSources.map(s => s.source)])}
+                onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
                 disabled={() => selectedSources.length === topSources.length}>
                 Select all
               </CuteButton>
@@ -242,35 +236,12 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
                 <div className="mt-2">
                   <SourceCard 
                     source={source.user +"@"+ source.source}
-                    isSelected={() => selectedSources.includes(source.source)}
-                    onToggle={() => {
-                      if(selectedSources.includes(source.source)) {
-                        setSelectedSources(selectedSources.filter(x => x !== source.source))
-                      } else {
-                        setSelectedSources([...selectedSources, source.source])
-                      }
-                    }} />
+                    isSelected={() => 1+1}
+                    onToggle={() => 1+1} />
                 </div>
               ))
             ) : ("There are no sources.")}
           </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-              <CuteButton
-                onClick={() => setSelectedSources([topActiveUsers.map(s => s.source)])}
-                disabled={() => selectedSources.length === topActiveUsers.length}
-                >
-                Select all
-              </CuteButton>
-              <span className="flex-grow"></span>
-              <CuteButton
-                onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}>
-                Unselect all
-              </CuteButton>
-              <span className="flex-grow"></span>
-             </div>  
-          </DashboardPanel.Footer>
         </DashboardPanel>
 
         <DashboardPanel>
@@ -283,35 +254,12 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
                 <div className="mt-2">
                   <SourceCard 
                     source={source.user +"@"+ source.source}
-                    isSelected={() => selectedSources.includes(source.source)}
-                    onToggle={() => {
-                      if(selectedSources.includes(source.source)) {
-                        setSelectedSources(selectedSources.filter(x => x !== source.source))
-                      } else {
-                        setSelectedSources([...selectedSources, source.source])
-                      }
-                    }} />
+                    isSelected={() => 1+1}
+                    onToggle={() => 1+1} />
                 </div>
               ))
             ) : ("There are no sources.")}
           </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-              <CuteButton
-                onClick={() => setSelectedSources([topInteractedUsers.map(s => s.source)])}
-                disabled={() => selectedSources.length === topInteractedUsers.length}
-                >
-                Select all
-              </CuteButton>
-              <span className="flex-grow"></span>
-              <CuteButton
-                onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}>
-                Unselect all
-              </CuteButton>
-              <span className="flex-grow"></span>
-             </div>  
-          </DashboardPanel.Footer>
         </DashboardPanel>
         </div>
 
