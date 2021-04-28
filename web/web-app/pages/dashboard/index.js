@@ -188,7 +188,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                       onClick={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
                       checked={graphSettings.coinType && graphSettings.coinType === coin.coin_type}
                     />
-                    <p className="ml-2">{coin.coin_type}</p>
+                    <Link href={"coin-info?coin=" + coin.coin_type}>
+                    <p className="ml-2 hover:underline">{coin.coin_type}</p>
+                    </Link>
                     </label>
                 </li>
               ))}
