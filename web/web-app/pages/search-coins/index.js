@@ -4,6 +4,7 @@ import Router from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { Field, Formik, Form } from "formik";
+import Link from "next/link"
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -125,9 +126,11 @@ export default function SearchCoins({ coins, userInfo, token }) {
                     <div className="col-start-2 bg-gray-200">
                       <img className="h-12 w-12" src={coin.image} alt="logo" />
                     </div>
+                    <Link href={"/coin-info?coin=" + coin.name}>
                     <div className="col-start-3 bg-gray-200 col-span-8 flex items-center">
-                      <p className="text-black ml-2">{coin.name}</p>
+                      <p className="text-black ml-2 hover:underline">{coin.name}</p>
                     </div>
+                    </Link>
                     <div className="col-start-11 bg-gray-200 flex items-center">
                       <Field
                         className="h-6 w-6"
