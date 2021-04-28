@@ -133,7 +133,7 @@ export default function CoinInfo({coinQuery}){
          <div className="col-start-3 py-5 col-span-2">
             <div className="col-start-2 bg-white border-b rounded">
                 <h1 className="font-bold text-center text-2xl py-2">
-                    {coinQuery}
+                    {coinQuery.toUpperCase()}
                 </h1>
             </div>
         </div>

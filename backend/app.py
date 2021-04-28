@@ -139,7 +139,22 @@ def calculate_post_volume():
 
 @app.route("/api/coin_info")
 def get_coin_info():
-    pass
+    coin_type = get_coin_type_arg()
+    top_user_limit = request.args.get("userlimit", type=int, default=5)
+    top_source_limit = request.args.get("sourcelimit", type=int, default=5)
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    db = Database()
+    top_sources = db.read_top_sources(coin_type, top_source_limit, lambda row: {"count": row[0], "source": row[5]})
+    top_active_users = db.read_top_active_users(coin_type, top_user_limit, lambda row: {"count": row[0], "source": row[5], "user": row[3]})
+    top_interacted_users = db.read_top_interacted_users(coin_type, top_user_limit, lambda row: {"total_interaction": row[0], "source": row[5], "user": row[3]})
+    last_price = db.read_last_price(coin_type)
+    return jsonify({
+        "top_sources": top_sources,
+        "top_active_users": top_active_users,
+        "top_interacted_users": top_interacted_users,
+        "last_price": dictify(last_price, excluded_keys={"type"})
+    })
 
 
 @app.route("/api/prediction")
