@@ -5,19 +5,15 @@ import { FiDollarSign } from "react-icons/fi"
 import { getCoinColor, getCoinIcon } from "../Helpers"
 import axios from "axios"
 import { CuteButton } from "./CuteButton"
+import { MultipurposeCard } from "./MultipurposeCard"
 
-const textColor = "gray-200"
 const mutedColor = "gray-500"
-
-const color = "gray-900"
-const borderColor = "gray-800"
-const innerColor = "gray-850"
-
 
 export const CoinOverview = ({ coin, button }) => {
 
   const [coinInfo, setCoinInfo] = useState(null)
 
+  // TODO parametrize!
   useEffect(() => {
     axios.get("http://127.0.0.1:5000/api/coin_info?type=" + coin)
       .then(resp => {
@@ -27,15 +23,14 @@ export const CoinOverview = ({ coin, button }) => {
   }, [coin])
 
   return (
-    <div className="flex flex-row mb-2">
-      <div className={`w-1.5 bg-${getCoinColor(coin)} rounded-l`}></div>
-      <div className={`flex flex-row items-center py-2 px-4 w-full text-${textColor} bg-${color} border border-${borderColor} rounded-r`}>
-        <div>
+    <MultipurposeCard badgeColor={getCoinColor(coin)}>
+      <MultipurposeCard.Left>
         <span className={`text-4xl text-${getCoinColor(coin)}`}>
-            {getCoinIcon(coin)}
+          {getCoinIcon(coin)}
         </span>
-        </div>
-        <div className={`flex flex-col ml-2`}>
+      </MultipurposeCard.Left>
+      <MultipurposeCard.Middle>
+        <div className={`flex flex-col`}>
           <div className={`py-1 flex flex-row items-center text-md text-${mutedColor}`}>
             <span>
               {coin.toUpperCase()}
@@ -52,11 +47,12 @@ export const CoinOverview = ({ coin, button }) => {
             </span>
           </div>
         </div>
-        <span className="flex-grow"></span>
+      </MultipurposeCard.Middle>
+      <MultipurposeCard.Right>
         <div className="w-24">
           { button }
-        </div> 
-      </div>
-    </div>
+        </div>
+      </MultipurposeCard.Right>
+    </MultipurposeCard>
     )
 }

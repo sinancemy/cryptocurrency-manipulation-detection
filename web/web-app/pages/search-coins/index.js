@@ -41,32 +41,36 @@ export async function getServerSideProps(context) {
   }
   return {
     props: {
-      coins: res.data,
+      allCoins: res.data,
       userInfo: userinfo,
     },
   };
 }
 
-export default function SearchCoins({ coins, userInfo, token }) {
+export default function SearchCoins({ allCoins, userInfo, token }) {
   const router = useRouter();
   if (userInfo === null) {
     useEffect(() => {
       router.push("/");
     });
   }
-
   const [query, setQuery] = useState("");
-  const filterCoins = (coins, query) => {
-    if (!query) {
-      return coins;
+  const [coins, setCoins] = useState(allCoins)
+  const [filteredCoins, setFilteredCoins] = useState([]);
+  const [followedCoins, setFollowedCoins] = useState(new Set(userInfo.followed_coins.map(coin => coin.coin_type)))
+
+  useEffect(() => {
+    if (!query || query.trim() === "") {
+      const rearranged = [...coins.filter(c => isFollowing(c.name)), ...coins.filter(c => !followedCoins.has(c.name))]
+      setFilteredCoins(rearranged)
+      return
     }
-    return coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()));
-  };
-  const filteredCoins = filterCoins(coins, query);
-  const [followedCoins, setFollowedCoins] = useState([...userInfo.followed_coins.map(coin => coin.coin_type)])
+    const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
+    setFilteredCoins(filtered)
+  }, [coins, query, followedCoins])
 
   const toggleFollow = useCallback((coin) => {
-    const alreadyFollowing = followedCoins.includes(coin)
+    const alreadyFollowing = followedCoins.has(coin)
     const unfollow = alreadyFollowing ? 1 : 0
     axios.get("http://127.0.0.1:5000/user/follow_coin?token=" + token 
                 + "&type=" + coin 
@@ -74,16 +78,16 @@ export default function SearchCoins({ coins, userInfo, token }) {
     .then(resp => {
       if(resp.data.result === "ok") {
         if(unfollow === 1) {
-          setFollowedCoins(followedCoins.filter(c => c !== coin))
+          setFollowedCoins(new Set([...followedCoins].filter(c => c !== coin)))
         } else {
-          setFollowedCoins([...followedCoins, coin])
+          setFollowedCoins(new Set([...followedCoins, coin]))
         }
       }
     })
   }, [followedCoins])
 
-  const isFollowing = useCallback((coin) => {
-    return followedCoins.includes(coin)
+  const isFollowing = useCallback((coinName) => {
+    return followedCoins.has(coinName)
   }, [followedCoins])
 
   return (
