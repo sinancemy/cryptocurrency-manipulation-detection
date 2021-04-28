@@ -11,6 +11,10 @@ import { VerticalSelector } from "../../components/VerticalSelector"
 import { SourceCard } from "../../components/SourceCard"
 import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
+import { PostOverview } from "../../components/PostOverview"
+import { dateToString } from "../../Helpers"
+import { CoinCard } from "../../components/CoinCard"
+import { IoMdSettings } from "react-icons/io"
 
 
 export async function getServerSideProps(context) {
@@ -170,41 +174,29 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
   }, [graphSettings])
 
   return (
-    <div className="animate-fade-in-down mx-10 grid grid-cols-6">
-      <div className="p-2 col-span-1">
+    <div className="animate-fade-in-down mx-10 md:flex md:flex-col lg:grid lg:grid-cols-6 mt-2">
+      <div className="p-1 col-span-1">
         <DashboardPanel>
           <DashboardPanel.Header>
               Followed Coins
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {userInfo && userInfo.followed_coins.length > 0 ? (
-            <ul className="mt-2 ">
-              {userInfo?.followed_coins.map((coin, i) => (
-                <li className="mt-2" key={i}>
-                  <label className="flex items-center hover:font-semibold">
-                    <input 
-                      type="radio" 
-                      name="coin-type"
-                      onClick={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
-                      checked={graphSettings.coinType && graphSettings.coinType === coin.coin_type}
-                    />
-                    <Link href={"coin-info?coin=" + coin.coin_type}>
-                    <p className="ml-2 hover:underline">{coin.coin_type}</p>
-                    </Link>
-                    </label>
-                </li>
-              ))}
-            </ul>
-            ) : ("Not following any coins.")}
+            {userInfo && userInfo.followed_coins.length > 0 ? 
+            userInfo?.followed_coins.map(coin => (
+              <div className="mt-2">
+                <CoinCard 
+                  coin={coin.coin_type}
+                  isSelected={() => graphSettings.coinType && graphSettings.coinType === coin.coin_type}
+                  onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})} />
+              </div>
+              )) : ("Not following any coins.")}
           </DashboardPanel.Body>
           <DashboardPanel.Footer>
             <div className="flex flex-row">
                 <span className="flex-grow"></span>
                 <Link href="/search-coins">
                 <CuteButton>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <IoMdSettings />
                 </CuteButton>
               </Link>
              </div>
@@ -216,9 +208,8 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {userInfo && userInfo.followed_sources.length > 0 ? (
-            <ul>
-              {userInfo.followed_sources.map((source, i) => (
-                <li className="mt-2" key={i}>
+              userInfo.followed_sources.map(source => (
+                <div className="mt-2">
                   <SourceCard 
                     source={source.source}
                     isSelected={() => selectedSources.includes(source.source)}
@@ -228,42 +219,36 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
                       } else {
                         setSelectedSources([...selectedSources, source.source])
                       }
-                    }}
-                  />
-                </li>
-              ))}
-            </ul>
+                    }} />
+                </div>
+              ))
             ) : ("Not following any sources.")}
           </DashboardPanel.Body>
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
                 onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}
-              >
+                disabled={() => selectedSources.length === userInfo.followed_sources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
               <CuteButton
                 onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}
-              >
+                disabled={() => selectedSources.length === 0}>
                 Unselect all
               </CuteButton>
               <span className="flex-grow"></span>
               <Link href="/search-sources">
                 <CuteButton>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <IoMdSettings />
                 </CuteButton>
               </Link>
              </div>  
           </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
-      <div className="p-2 col-span-4">
-        <div className="h-48 mb-5 overflow-hidden rounded-lg drop-shadow-2xl bg-blue-128">
+      <div className="p-1 col-span-4">
+        <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
         { userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
             <ResponsiveGraph 
               stock={prices}
@@ -271,8 +256,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               showPostVolume={showPostVolume}
               graphSettings={graphSettings} 
               selectedRange={selectedRange} 
-              setSelectedRange={setSelectedRange}
-            />
+              setSelectedRange={setSelectedRange} />
         ) : (
           <div className="p-5 text-gray-800">
             No price data found.
@@ -280,70 +264,55 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
         ) }
           </div>
         <div>
-        <DashboardPanel collapsable={false}>
+        <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
-            <div className="flex flex-justify-between font-light">
+            <div className="flex items-center flex-justify-between font-normal">
               { selectedRange && graphSettings.coinType && (
               <div>
                 <span>Showing new posts from{" "}</span>
-                <span className="font-semibold">{ new Date(getSelectedRange()[0]).toLocaleString() }</span>
+                <span className="font-semibold">{ dateToString(new Date(getSelectedRange()[0]), false) }</span>
                 <span>{" "}to{" "}</span>
-                <span className="font-semibold">{ new Date(getSelectedRange()[1]).toLocaleString() }</span>
+                <span className="font-semibold">{ dateToString(new Date(getSelectedRange()[1]), false) }</span>
               </div>
               )}
               <span class="flex-grow"></span>
-              <div className="flex">
-                <div className="border-r mr-2 px-2">
-                  sort by {" "}
+              <div className="flex text-xs items-center">
+                <div className="flex items-center border-r border-gray-780 mr-2 px-2">
+                  <span className="">sort by</span>
                     <SimpleDropdown 
                       options={['time', 'interaction', 'user']} 
                       selected={sortByOption} 
                       setSelected={setSortByOption} />
-                    {" "} in <SimpleDropdown 
+                    <span className="mx-1">in</span>
+                    <SimpleDropdown 
                       options={['ascending', 'descending']} 
                       selected={sortOrderOption} 
                       setSelected={setSortOrderOption} />
-                      {" "} order
+                    <span className="mx-1">order</span>
                 </div>
-                <div>
-                  show {" "}
+                <div className="flex items-center px-2">
+                  <span className="mx-1">show</span>
                     <SimpleDropdown 
                       options={['relevant', 'all']} 
                       selected={showPostsOption} 
                       setSelected={setShowPostsOption} />
-                    {" "} posts from {" "}
+                  <span className="mx-1">posts from</span>
                     <SimpleDropdown
                       options={['all', 'selected']}
                       selected={showPostsFromOption}
-                      setSelected={setShowPostsFromOption}
-                    />{" "} sources
+                      setSelected={setShowPostsFromOption} />
+                    <span className="mx-1">sources</span>
                 </div>
               </div>
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {sortedPosts.length > 0 ? (
-            <ul className="overflow-y-auto max-h-128">
+            <div className="overflow-y-auto max-h-128">
               {sortedPosts.map((post, i) => (
-                <li
-                  key={i}
-                  className="grid grid-cols-5 gap-3 text-black border py-1 px-4 bg-white justify-between rounded-md mt-2"
-                >
-                  <div>
-                    <span className="font-semibold underline width-50">{post.user}</span><br /> 
-                    {post.source}
-                  </div>
-                  <div className="col-span-3">
-                    <p>{post.content}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm">{new Date(post.time*1000).toLocaleString('en-US', {hour12: false})}
-                    <br />
-                    Interaction: {post.interaction}</p>
-                  </div>
-                </li>
+                <PostOverview post={post} />
               ))}
-            </ul>
+            </div>
             ) : (selectedRange) ? (
               <div className="mt-2">No new posts to show in the selected range.</div>
             ) : (
@@ -353,8 +322,8 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
         </DashboardPanel>
         </div>
       </div>
-      <div className="p-2 col-span-1">
-        <DashboardPanel>
+      <div className="p-1 col-span-1">
+        <DashboardPanel restrictedHeight={false}>
           <DashboardPanel.Header>
             Graph View
           </DashboardPanel.Header>
@@ -363,7 +332,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               <div className="font-bold">
                 Range
               </div>
-              <div className="ml-2">
+              <div>
                 <VerticalSelector
                   options={['day', 'week', 'month', 'year']}
                   getter={() => graphSettings.extent}
@@ -376,7 +345,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             <div className="font-bold">
               Time window
             </div>
-            <div className="ml-2">
+            <div>
               <VerticalSelector
                 options={[5, 10, 30, 60]}
                 getter={() => graphSettings.timeWindow}
@@ -385,7 +354,7 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               />
               </div>
           </div>
-          <div className="py-2 border-t">
+          <div className="py-2 border-t border-gray-780 py-3">
             <label className="flex items-center">
               <input 
                 type="checkbox"
@@ -394,40 +363,45 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
               />
               <p className="ml-2">Show post volume</p>
             </label>
+            <label className="flex items-center mt-2">
+              <input 
+                type="checkbox"
+              />
+              <p className="ml-2">Denote predictions</p>
+            </label>
           </div>
-          <div className="py-2 border-t">
+          <div className="pt-2 border-t border-gray-780">
             <div className="font-bold">
               Selection
             </div>
-            <div className="ml-2 text-sm">
-              { !selectedRange ? (
-                <span>No selection.</span>
-              ) : (
+            <div className="text-md">
+              <div className="px-4 py-4 mt-2 bg-gray-800 rounded-md">
+                {selectedRange ? (
+                <>
                 <div>
-                  <div>
-                    { new Date(selectedRange.midDate).toLocaleString() }
-                  </div>
-                  <div>
-                    <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
-                    <span>{ getSelectedPrice()?.toPrecision(5) } </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Posts (cumulative):{" "}</span>
-                    <span className="col-span-4">{ getSelectedVolume() }</span>
-                  </div>
-                  <div className="w-full pt-2 text-center">
-                    <CuteButton
-                      onClick={() => {
-                        setSelectedRange(null)
-                        setPosts(null)
-                      }}
-                      size={'md'}
-                    >
-                      Clear selection
-                    </CuteButton>
-                  </div>
+                  { dateToString(new Date(selectedRange.midDate)) }
                 </div>
-              )}
+                <div>
+                  <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
+                  <span>{ getSelectedPrice()?.toPrecision(5) } </span>
+                </div>
+                <div>
+                  <span className="font-semibold">Posts (cumulative):{" "}</span>
+                  <span className="col-span-4">{ getSelectedVolume() }</span>
+                </div>
+                <div className="w-full pt-2">
+                  <CuteButton
+                    onClick={() => {
+                      setSelectedRange(null)
+                      setPosts(null)
+                    }}
+                    size={'md'}
+                  >
+                    Clear selection
+                  </CuteButton>
+                </div>
+                </> ) : ("No selection") }
+              </div>
             </div>
           </div>
           </DashboardPanel.Body>
@@ -437,14 +411,9 @@ export default function Dashboard({coins, userInfo, loggedIn, initialGraphSettin
             Predictions
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <ul className="mt-2 h-64">
-              {coins.map((coin, i) => (
-                <li className="flex items-center mt-2" key={i}>
-                  <img className="h-12 w-12" src={coin.image} alt="logo" />
-                  <p className="ml-2">{coin.name}</p>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-2">
+              TBD
+            </div>
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>

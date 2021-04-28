@@ -70,9 +70,11 @@ def get_user_by_userid(db: Database, userid: str) -> Optional[UserInfo]:
 
 
 def populate_user_info(db: Database, userid: int, partial_user: UserInfo):
-    partial_user.followed_coins = db.read_by("followed_coins", [MatchSelector("userid", userid)], row_to_followed_coin)
-    partial_user.followed_sources = db.read_by("followed_sources", [MatchSelector("userid", userid)],
+    followed_coins = db.read_by("followed_coins", [MatchSelector("userid", userid)], row_to_followed_coin)
+    followed_sources = db.read_by("followed_sources", [MatchSelector("userid", userid)],
                                                row_to_followed_source)
+    partial_user.followed_coins = sorted(followed_coins, key=lambda x: x.coin_type)
+    partial_user.followed_sources = sorted(followed_sources, key=lambda x: x.source)
     return partial_user
 
 

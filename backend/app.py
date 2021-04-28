@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import misc
+from analysis.interface import Predictor
 from data.collector.sources import get_all_sources, is_valid_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource
@@ -43,6 +44,10 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
     return check_session(db, token)
 
 
+# TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
+# predictor = Predictor("test_model", "Jun19_Feb21_Big")
+
+
 @app.route("/api/posts")
 def get_posts():
     start = request.args.get("start", type=int, default=0)
@@ -60,6 +65,10 @@ def get_posts():
     # Connect to the database
     db = Database()
     posts = db.read_by("posts", selectors, row_to_post)
+
+    # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
+    # posts = predictor.predict(posts)
+
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
@@ -93,9 +102,9 @@ def get_coin_list():
 def get_source_list():
     sources = get_all_sources()
     return jsonify([{
-            "username": src.username,
-            "source": src.source
-        } for src in sources])
+        "username": src.username,
+        "source": src.source
+    } for src in sources])
 
 
 @app.route("/api/post_volume")
@@ -118,7 +127,7 @@ def calculate_post_volume():
         count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
         volume = count
         if i > 0:
-            volume += volumes[i-1]['volume']
+            volume += volumes[i - 1]['volume']
         volumes.append({
             'time': tick_start,
             'next_time': tick_end,
@@ -126,6 +135,11 @@ def calculate_post_volume():
             'count': count
         })
     return jsonify(volumes)
+
+
+@app.route("/api/coin_info")
+def get_coin_info():
+    pass
 
 
 @app.route("/api/prediction")

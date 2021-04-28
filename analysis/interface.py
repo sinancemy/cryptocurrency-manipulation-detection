@@ -20,14 +20,14 @@ class Predictor:
         self.device = device
 
     def predict(self, posts):
-        return predict(self.model, PredictSet(posts, self.vectorizer), self.device, 1024)
+        for post, impact in zip(posts, predict(self.model, PredictSet(posts, self.vectorizer), self.device, 1024)):
+            post.impact = impact
+        return posts
 
 
 def _example():
     pred = Predictor("test_model", "Jun19_Feb21_Big")
     posts = [Post(CoinType.BTC, "elonmusk", "Everyone should be selling right now.", "twitter", 2114, None, None),
              Post(CoinType.DOGE, "some_guy", "Everyone should be buying right now.", "reddit/dogecoin", 9, None, None)]
-    print(pred.predict(posts))
-
-
-_example()
+    print(pred.predict(posts)[0].impact)
+    print(pred.predict(posts)[1].impact)

@@ -1,59 +1,48 @@
 import { useCallback, useEffect, useState } from "react"
+import { getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
+
+
+const color = "transparent"
+const borderColor = "gray-800"
+const selectedColor = "gray-850"
+const textColor = "gray-100"
 
 export const SourceCard = ({ 
                             source,
                             checkbox = true,
                             isSelected,
-                            onToggle,
-                            nameColorMap =  [["twitter", "blue"], ["reddit", "red"]]
+                            onToggle
                           }) => {
 
-  const getSourceParts = useCallback(() => {
-    const [username, src] = source.split("@")
-    return [username, src]
-  }, [source])
-
-  const hasUser = useCallback(() => {
-    return getSourceParts()[0] !== "*"
-  }, [source])
-
-  const getColor = useCallback(() => {
-    for(const e of nameColorMap) {
-      if(getSourceParts()[1].includes(e[0])) return e[1]
-    }
-    return "gray"
+  const getShownSrc = useCallback(() => {
+    const hasUser = getSourceParts(source)[0] !== "*"
+    return hasUser ? source : getSourceParts(source)[1]
   }, [source])
 
   return (
       <label
-        className={`flex flex-row flex-justify-between shadow-sm border border-gray-200 text-sm w-full px-3 py-1 rounded rounded-md
-          bg-${getColor()}-${isSelected() ? '200' : '100'}
-          hover:bg-${getColor()}-200
-          ${isSelected() ? 'border border-gray-300' : ''}
-        `}
-      >
-        <div className="mr-2">
-          { checkbox && (<input 
-            type="checkbox"
-            onClick={onToggle}
-            checked={isSelected()}
-          />) }
+        className={`cursor-pointer border border-${borderColor} rounded-r-md flex flex-row text-${textColor} text-sm opacity-${isSelected() ? `100 bg-${selectedColor}` : '60 hover:opacity-100'}`}>
+        <div className={`rounded-l-md bg-${getSourceColor(source)} w-1.5`}>
         </div>
-        { hasUser() ? (
-          <>
-            <div className="truncate w-24">
-              { getSourceParts()[0] }
-            </div>
-            <div className="flex-grow"></div>
-            <div className="text-xs font-light align-bottom">
-              { getSourceParts()[1] }
-            </div>
-          </>
-        ) : 
-          <div class="">
-            { getSourceParts()[1] }
+        <span className="flex-grow"></span>
+        <div className={`px-4 py-2 flex flex-row bg-${color} rounded-r-md w-full`}>
+          <div className="">
+          { checkbox && (
+            <input 
+              type="checkbox"
+              className="hidden"
+              onClick={onToggle}
+              checked={isSelected()} />
+          ) }
           </div>
-        }
+          <div className="truncate w-36">
+            { getShownSrc() }
+          </div>
+          <span className="flex-grow"></span>
+          <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
+              { getSourceIcon(source) }
+          </div>
+          </div>
       </label>
   )
   }
