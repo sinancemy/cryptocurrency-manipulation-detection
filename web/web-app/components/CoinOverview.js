@@ -6,10 +6,13 @@ import { getCoinColor, getCoinIcon } from "../Helpers"
 import axios from "axios"
 import { CuteButton } from "./CuteButton"
 import { MultipurposeCard } from "./MultipurposeCard"
+import Link from "next/link"
 
-const mutedColor = "gray-500"
+const mutedTextColor = "gray-500"
+const bgColor = "gray-850"
 
-export const CoinOverview = ({ coin, button }) => {
+
+export const CoinOverview = ({ coin, button, singleLine = false }) => {
 
   const [coinInfo, setCoinInfo] = useState(null)
 
@@ -23,7 +26,7 @@ export const CoinOverview = ({ coin, button }) => {
   }, [coin])
 
   return (
-    <MultipurposeCard badgeColor={getCoinColor(coin)}>
+    <MultipurposeCard badgeColor={getCoinColor(coin)} colorizer={() => bgColor}>
       <MultipurposeCard.Left>
         <span className={`text-4xl text-${getCoinColor(coin)}`}>
           {getCoinIcon(coin)}
@@ -31,25 +34,29 @@ export const CoinOverview = ({ coin, button }) => {
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
         <div className={`flex flex-col`}>
-          <div className={`py-1 flex flex-row items-center text-md text-${mutedColor}`}>
-            <span>
-              {coin.toUpperCase()}
+          <div className={`py-1 flex flex-row items-center text-md`}>
+            <span className="hover:underline">
+              <Link href={`/coin-info?coin=${coin}`}>
+                {coin.toUpperCase()}
+              </Link>
             </span>
           </div>
-          <div className={`flex flex-row items-center text-xs text-${mutedColor}`}>
-            <span className="mr-1">
-              <FiDollarSign />
-            </span>
-            <span className={`text-xs text-${mutedColor} font-mono`}>
-              { (coinInfo && coinInfo.last_price) ? (
-                coinInfo.last_price.price.toPrecision(5)
-              ) : ("-")}
-            </span>
-          </div>
+          { !singleLine && (
+            <div className={`flex flex-row items-center text-xs text-${mutedTextColor}`}>
+              <span className="mr-1">
+                <FiDollarSign />
+              </span>
+              <span className={`text-xs text-${mutedTextColor} font-mono`}>
+                { (coinInfo && coinInfo.last_price) ? (
+                  coinInfo.last_price.price.toPrecision(5)
+                ) : ("-")}
+              </span>
+            </div>
+          )}
         </div>
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
-        <div className="w-24">
+        <div>
           { button }
         </div>
       </MultipurposeCard.Right>

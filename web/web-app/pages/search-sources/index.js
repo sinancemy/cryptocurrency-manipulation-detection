@@ -7,6 +7,7 @@ import { Field, Formik, Form } from "formik";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SourceOverview } from "../../components/SourceOverview";
 import { CuteButton } from "../../components/CuteButton";
+import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -69,23 +70,6 @@ export default function SearchSources({ allSources, userInfo, token }) {
   }, [sources, query, followedSources])
 
 
-  const toggleFollow = useCallback((source) => {
-    const alreadyFollowing = followedSources.has(source)
-    const unfollow = alreadyFollowing ? 1 : 0
-    axios.get("http://127.0.0.1:5000/user/follow_source?token=" + token 
-                + "&source=" + source 
-                + "&unfollow=" + unfollow)
-    .then(resp => {
-      if(resp.data.result === "ok") {
-        if(unfollow === 1) {
-          setFollowedSources(new Set([...followedSources].filter(s => s !== source)))
-        } else {
-          setFollowedSources(new Set([...followedSources, source]))
-        }
-      }
-    })
-  }, [followedSources])
-
   const isFollowing = useCallback((source) => {
     return followedSources.has(source)
   }, [followedSources])
@@ -114,14 +98,13 @@ export default function SearchSources({ allSources, userInfo, token }) {
                 <SourceOverview
                   source={source}
                   button={(
-                    <CuteButton
-                      onClick={() => toggleFollow(source)}
-                      textColor={ isFollowing(source) ? "yellow-400" : "green-400" }
-                      fullWidth={true}>
-                      { isFollowing(source) ? "Unfollow" : "Follow" }
-                    </CuteButton>
-                  )}
-                />
+                    <FollowButton
+                      queryUrl={"http://127.0.0.1:5000/user/follow_source"}
+                      queryParams={{token: token, source: source}}
+                      isFollowing={() => isFollowing(source)}
+                      onFollow={() => setFollowedSources(new Set([...followedSources, source]))}
+                      onUnfollow={() => setFollowedSources(new Set([...followedSources].filter(s => s !== source)))}/>
+                  )}/>
               ))}
             </div>
           </DashboardPanel.Body>

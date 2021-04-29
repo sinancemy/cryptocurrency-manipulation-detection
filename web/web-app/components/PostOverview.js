@@ -30,7 +30,7 @@ export const PostOverview = ({ post }) => {
       <MultipurposeCard.Left>
         <div className={`flex flex-col w-32`}>
           <span className="font-semibold width-50 truncate hover:underline">
-            <Link href={`/source-info?source=${post.user}@${post.source}`}>
+            <Link href={`/user-info?user=${post.user}@${post.source}`}>
               {post.user}
             </Link>
           </span>

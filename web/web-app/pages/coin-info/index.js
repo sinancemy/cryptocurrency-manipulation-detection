@@ -117,45 +117,45 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
               </div>
           </div>
         <div className="col-start-1 p-1 col-span-1">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-                Top Sources
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            { topSources.length > 0 ? (
-                topSources.map(source => (
-                <div className="mt-2">
-                  <SourceCard 
-                    source={"*@" + source.source}
-                    isSelected={() => selectedSources.includes("*@" + source.source)}
-                    onToggle={() => {
-                      if(selectedSources.includes("*@" + source.source)) {
-                        setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
-                      } else {
-                        setSelectedSources([...selectedSources, "*@" + source.source])
-                      }
-                    }} />
-                </div>
-              ))
-            ) : ("There are no sources.")}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-              <CuteButton
-                onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
-                disabled={() => selectedSources.length === topSources.length}>
-                Select all
-              </CuteButton>
-              <span className="flex-grow"></span>
-              <CuteButton
-                onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}>
-                Unselect all
-              </CuteButton>
-              <span className="flex-grow"></span>
-             </div>  
-          </DashboardPanel.Footer>
-        </DashboardPanel>
+          <DashboardPanel>
+            <DashboardPanel.Header>
+                  Top Sources
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+              { topSources.length > 0 ? (
+                  topSources.map(source => (
+                  <div className="mt-2">
+                    <SourceCard 
+                      source={"*@" + source.source}
+                      isSelected={() => selectedSources.includes("*@" + source.source)}
+                      onToggle={() => {
+                        if(selectedSources.includes("*@" + source.source)) {
+                          setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
+                        } else {
+                          setSelectedSources([...selectedSources, "*@" + source.source])
+                        }
+                      }} />
+                  </div>
+                ))
+              ) : ("There are no sources.")}
+            </DashboardPanel.Body>
+            <DashboardPanel.Footer>
+              <div className="flex flex-row">
+                <CuteButton
+                  onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
+                  disabled={() => selectedSources.length === topSources.length}>
+                  Select all
+                </CuteButton>
+                <span className="flex-grow"></span>
+                <CuteButton
+                  onClick={() => setSelectedSources([])}
+                  disabled={() => selectedSources.length === 0}>
+                  Unselect all
+                </CuteButton>
+                <span className="flex-grow"></span>
+              </div>  
+            </DashboardPanel.Footer>
+          </DashboardPanel>
         </div>
 
         <div className="col-start-2 py-1 col-span-4">

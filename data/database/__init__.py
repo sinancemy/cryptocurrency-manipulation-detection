@@ -55,7 +55,7 @@ class Database(object):
 
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter) -> list:
-        select_sql, params = generate_select_all_query(table, selectors)
+        select_sql, params = generate_select_query(table, selectors)
         cur = self.conn.cursor()
         cur.execute(select_sql, params)
         rows = cur.fetchall()
@@ -130,6 +130,30 @@ class Database(object):
     def read_top_interacted_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
         return self.read_grouped_tops("posts", "user", "SUM(interaction)", limit,
                                       [MatchSelector("coin_type", coin_type.value)], row_converter)
+
+    def read_num_source_followers(self, source: str):
+        sql, params = generate_select_query("followed_sources", [MatchSelector("source", "*@" + source)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def read_num_user_followers(self, user: str, source: str):
+        sql, params = generate_select_query("followed_sources", [MatchSelector("source", user + "@" + source)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def read_num_coin_followers(self, coin: CoinType):
+        sql, params = generate_select_query("followed_coins", [MatchSelector("coin_type", coin.value)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
 
     def read_last_price(self, coin_type: CoinType):
         rows = self.read_tops("prices", "time", "desc", 1, [MatchSelector("coin_type", coin_type.value)], row_to_price)

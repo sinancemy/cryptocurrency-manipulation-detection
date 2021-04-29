@@ -74,6 +74,10 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
     return Object.values(dict)
   }
 
+  const isGraphLoaded = useCallback(() => {
+    return prices.length > 0 && postVolume.length > 0
+  }, [prices, postVolume])
+
   const getSelectedPrice = useCallback(() => {
     const date = parseInt(selectedRange.midDate.valueOf()/1000)
     return prices.find(p => p.time === date)?.price
@@ -270,7 +274,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
       </div>
       <div className="p-1 col-span-4">
         <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
-        { userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
+        { isGraphLoaded() && userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
             <ResponsiveGraph 
               stock={prices}
               postVolume={postVolume}

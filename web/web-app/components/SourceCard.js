@@ -26,7 +26,7 @@ export const SourceCard = ({ source, isSelected, onToggle }) => {
                   { isUser() ? (
                     <div className="flex flex-row justify-between items-center">
                         <span className="hover:underline">
-                          <Link href={`/source-info?source=` + source}>
+                          <Link href={`/user-info?user=` + source}>
                            {getSourceParts(source)[0]}
                           </Link>
                         </span>

@@ -65,14 +65,14 @@ const Graph = withTooltip(
         range: [0, xMax],
       }), [stock, xMax]);
     const stockValueScale = useMemo(() => {
-      const high = (max(stock, getStockValue) || 0)
+      const high = max(stock, getStockValue) || 0
       return scaleLinear({
         domain: [0, high + high/8],
         range: [yMax, 0]
       })
     }, [stock, yMax]);
     const postVolumeScale = useMemo(() => {
-      const high = (max(postVolume, getPostVolumeValue) || 0)
+      const high = max(postVolume, getPostVolumeValue) || 0
       return scaleLinear({
         domain: [0, high + high/8],
         range: [yMax, 0]

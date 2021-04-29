@@ -4,8 +4,11 @@ import cookie from "cookie";
 import { SimpleDropdown } from "../../components/SimpleDropdown";
 import { PostOverview } from "../../components/PostOverview";
 import { useEffect, useState } from "react";
-import { FaRedditAlien, FaTwitter } from "react-icons/fa";
+import { TiAt } from "react-icons/ti"
 import { CuteButton } from "../../components/CuteButton";
+import { getSourceIcon, getSourceParts } from "../../Helpers";
+import Link from "next/link";
+import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -43,11 +46,16 @@ export async function getServerSideProps(context) {
     }
   });
 
+  const res4 = await axios.get(
+    "http://127.0.0.1:5000/api/source_info?source=" + splitted[1] + "&user=" + splitted[0]
+  );
+
   return {
     props: {
       sourceName: context.query.user,
       post: res2.data,
       isFollowingSource: isFollowing,
+      numFollowers: res4.data.num_followers
     },
   };
 }
@@ -56,9 +64,10 @@ export default function UserInfo({
   sourceName,
   post,
   isFollowingSource,
-  token,
-}) {
-  const [buttonBoolean, setButtonBoolean] = useState(isFollowingSource);
+  numFollowers,
+  token}) {
+  const [followerCount, setFollowerCount] = useState(numFollowers);
+  const [isFollowing, setIsFollowing] = useState(isFollowingSource);
   const [sortByOption, setSortByOption] = useState("interaction");
   const [sortOrderOption, setSortOrderOption] = useState("descending");
   const [posts, setPosts] = useState(post);
@@ -82,43 +91,44 @@ export default function UserInfo({
     setSortedPosts(sorted);
   }, [posts, sortOrderOption, sortByOption]);
 
-  const followUser = async () => {
-    if (buttonBoolean) {
-      await axios.get(
-        "http://127.0.0.1:5000/user/follow_source?token=" +
-          token +
-          "&source=" +
-          sourceName +
-          "&unfollow=1"
-      );
-    } else {
-      await axios.get(
-        "http://127.0.0.1:5000/user/follow_source?token=" +
-          token +
-          "&source=" +
-          sourceName +
-          "&unfollow=0"
-      );
+    const onFollow = () => {
+      setFollowerCount(followerCount + 1)
+      setIsFollowing(true);
     }
-    setButtonBoolean(!buttonBoolean);
-  };
+
+    const onUnfollow = () => {
+      setFollowerCount(followerCount -1)
+      setIsFollowing(false);
+    }
 
   return (
-    <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-4">
+    <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
       <div className="col-start-2 col-span-2">
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
             <div className="grid grid-cols-1 place-items-center">
-              {sourceName.includes("twitter") ? (
-                <FaTwitter className="h-12 w-12 items-center" />
-              ) : (
-                <FaRedditAlien className="h-12 w-12 items-center" />
-              )}
-              <span className="mt-2">{sourceName}</span>
+              <span className="text-4xl">
+                <TiAt />
+              </span>
+              <span className="mt-2">
+                { getSourceParts(sourceName)[0] }
+              </span>
+              <span className="mt-2 text-xs font-normal hover:underline">
+                <Link href={`/source-info?source=*@${getSourceParts(sourceName)[1]}`}>
+                  { getSourceParts(sourceName)[1] }
+                </Link>
+              </span>
+              <span className="mt-2 font-light">
+                {followerCount} Followers
+              </span>
               <div className="mt-2">
-                <CuteButton onClick={() => followUser()} disabled={() => false}>
-                  {buttonBoolean ? "Unfollow" : "Follow"}
-                </CuteButton>
+                <FollowButton
+                  queryUrl={"http://127.0.0.1:5000/user/follow_source"}
+                  queryParams={{token: token, source: sourceName}}
+                  isFollowing={() => isFollowing}
+                  onFollow={onFollow}
+                  onUnfollow={onUnfollow}
+                  />
               </div>
             </div>
           </DashboardPanel.Header>

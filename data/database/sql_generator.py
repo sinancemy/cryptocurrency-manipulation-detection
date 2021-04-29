@@ -109,8 +109,10 @@ def create_conditionals(selectors: list) -> (str, list):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_all_query(table_name, selectors: list) -> (str, list):
-    sql = "SELECT * FROM " + table_name
+def generate_select_query(table_name, selectors: list, cols=None) -> (str, list):
+    if cols is None:
+        cols = ['*']
+    sql = "SELECT " + ",".join(cols) + " FROM " + table_name
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
     return sql, cond_params

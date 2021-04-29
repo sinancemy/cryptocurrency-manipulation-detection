@@ -10,6 +10,7 @@ import { Card } from "../../components/Card";
 import { getCoinColor, getCoinIcon } from "../../Helpers";
 import { CoinOverview } from "../../components/CoinOverview";
 import { CuteButton } from "../../components/CuteButton";
+import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -69,23 +70,6 @@ export default function SearchCoins({ allCoins, userInfo, token }) {
     setFilteredCoins(filtered)
   }, [coins, query, followedCoins])
 
-  const toggleFollow = useCallback((coin) => {
-    const alreadyFollowing = followedCoins.has(coin)
-    const unfollow = alreadyFollowing ? 1 : 0
-    axios.get("http://127.0.0.1:5000/user/follow_coin?token=" + token 
-                + "&type=" + coin 
-                + "&unfollow=" + unfollow)
-    .then(resp => {
-      if(resp.data.result === "ok") {
-        if(unfollow === 1) {
-          setFollowedCoins(new Set([...followedCoins].filter(c => c !== coin)))
-        } else {
-          setFollowedCoins(new Set([...followedCoins, coin]))
-        }
-      }
-    })
-  }, [followedCoins])
-
   const isFollowing = useCallback((coinName) => {
     return followedCoins.has(coinName)
   }, [followedCoins])
@@ -117,12 +101,12 @@ export default function SearchCoins({ allCoins, userInfo, token }) {
                         setSelected={() => true}
                         coin={coin.name}
                         button={(
-                          <CuteButton
-                            onClick={() => toggleFollow(coin.name)}
-                            textColor={ isFollowing(coin.name) ? "yellow-400" : "green-400" }
-                            fullWidth={true}>
-                            { isFollowing(coin.name) ? "Unfollow" : "Follow" }
-                          </CuteButton>
+                          <FollowButton
+                            queryUrl={"http://127.0.0.1:5000/user/follow_coin"}
+                            queryParams={{token: token, type: coin.name}}
+                            isFollowing={() => isFollowing(coin.name)}
+                            onFollow={() => setFollowedCoins(new Set([...followedCoins, coin.name]))}
+                            onUnfollow={() => setFollowedCoins(new Set([...followedCoins].filter(c => c !== coin.name)))}/>
                         )}/>
                     </div>
                   ))}

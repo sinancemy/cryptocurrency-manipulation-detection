@@ -9,17 +9,14 @@ import {
   getCoinIcon,
   getSourceColor,
   getSourceIcon,
+  getSourceParts,
 } from "../../Helpers";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { IoChatbubblesSharp } from "react-icons/io5";
-import { FaRedditAlien, FaTwitter } from "react-icons/fa";
 import { CuteButton } from "../../components/CuteButton";
-
-const textColor = "gray-200";
-const mutedColor = "gray-500";
-const color = "gray-900";
-const borderColor = "gray-800";
+import { SourceOverview } from "../../components/SourceOverview"
+import { CoinOverview } from "../../components/CoinOverview"
+import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -34,7 +31,7 @@ export async function getServerSideProps(context) {
   const res = await axios.get(
     "http://127.0.0.1:5000/api/source_info?source=" +
       context.query.source.slice(2) +
-      "&userlimit=20&coinlimit=20"
+      "&userlimit=4&coinlimit=20"
   );
 
   const res2 = await axios.get(
@@ -65,6 +62,7 @@ export async function getServerSideProps(context) {
       relevantCoins: res.data.relevant_coins,
       topActiveUsers: res.data.top_active_users,
       topInteractedUsers: res.data.top_interacted_users,
+      numFollowers: res.data.num_followers,
       post: res2.data,
       isFollowingSource: isFollowing,
     },
@@ -76,11 +74,12 @@ export default function SourceInfo({
   relevantCoins,
   topActiveUsers,
   topInteractedUsers,
+  numFollowers,
   post,
   isFollowingSource,
-  token,
-}) {
-  const [buttonBoolean, setButtonBoolean] = useState(isFollowingSource);
+  token}) {
+  const [followerCount, setFollowerCount] = useState(numFollowers);
+  const [isFollowing, setIsFollowing] = useState(isFollowingSource);
   const [sortByOption, setSortByOption] = useState("interaction");
   const [sortOrderOption, setSortOrderOption] = useState("descending");
   const [posts, setPosts] = useState(post);
@@ -104,46 +103,35 @@ export default function SourceInfo({
     setSortedPosts(sorted);
   }, [posts, sortOrderOption, sortByOption]);
 
-  const followSource = async () => {
-    if (buttonBoolean) {
-      await axios.get(
-        "http://127.0.0.1:5000/user/follow_source?token=" +
-          token +
-          "&source=" +
-          sourceName +
-          "&unfollow=1"
-      );
-    } else {
-      await axios.get(
-        "http://127.0.0.1:5000/user/follow_source?token=" +
-          token +
-          "&source=" +
-          sourceName +
-          "&unfollow=0"
-      );
+    const onFollow = () => {
+      setFollowerCount(followerCount + 1)
+      setIsFollowing(true);
     }
-    setButtonBoolean(!buttonBoolean);
-  };
+
+    const onUnfollow = () => {
+      setFollowerCount(followerCount -1)
+      setIsFollowing(false);
+    }
 
   return (
-    <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-4">
+    <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
       <div className="col-start-2 col-span-2">
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
-            <div className="grid grid-cols-1 place-items-center">
-              {sourceName.includes("twitter") ? (
-                <FaTwitter className="h-12 w-12 items-center" />
-              ) : (
-                <FaRedditAlien className="h-12 w-12 items-center" />
-              )}
+            <div className="grid grid-cols-1 mt-2 place-items-center">
+              <span className="text-4xl">{ getSourceIcon(sourceName) }</span>
               <span className="mt-2">{sourceName.slice(2)}</span>
+              <span className="mt-2 font-light">
+                {followerCount} Followers
+              </span>
               <div className="mt-2">
-                <CuteButton
-                  onClick={() => followSource()}
-                  disabled={() => false}
-                >
-                  {buttonBoolean ? "Unfollow" : "Follow"}
-                </CuteButton>
+                <FollowButton
+                  queryUrl={"http://127.0.0.1:5000/user/follow_source"}
+                  queryParams={{token: token, source: sourceName}}
+                  isFollowing={() => isFollowing}
+                  onFollow={onFollow}
+                  onUnfollow={onUnfollow}
+                  />
               </div>
             </div>
           </DashboardPanel.Header>
@@ -151,52 +139,18 @@ export default function SourceInfo({
         </DashboardPanel>
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
-            <p>Top Active Users</p>
+            <p className="text-center">Relevant Coins</p>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <ul>
-              {topActiveUsers.map((user, index) => (
-                <li className="flex flex-row mb-2" key={index}>
-                  <div
-                    className={`w-1.5 bg-${getSourceColor(
-                      user.user + "@" + sourceName.slice(2)
-                    )} rounded-l`}
-                  ></div>
-                  <div
-                    className={`grid grid-cols-6 gap-1 py-2 px-4 w-full text-${textColor} bg-${color} border border-${borderColor} rounded-r`}
-                  >
-                    <div className={`flex flex-col`}>
-                      <span className="font-semibold width-50">
-                        {user.user}
-                      </span>
-                      <div
-                        className={`py-1 flex flex-row items-center text-xs text-${mutedColor}`}
-                      >
-                        <span className="mr-1">
-                          {getSourceIcon(user.user + "@" + sourceName.slice(2))}
-                        </span>
-                        <span>{sourceName.slice(2)}</span>
-                      </div>
-                      <div
-                        className={`flex flex-row items-center text-xs text-${mutedColor}`}
-                      ></div>
-                    </div>
-                    <div className={"col-span-4"}>
-                      <p></p>
-                    </div>
-                    <div className={`flex flex-col`}>
-                      <div
-                        className={`px-2 py-1 flex flex-row items-center justify-end text-${mutedColor}`}
-                      >
-                        <IoChatbubblesSharp />
-                        <span className="ml-1">{user.msg_count}</span>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {relevantCoins.length > 0
+              ? relevantCoins.map(coin => (
+                  <CoinOverview 
+                    coin={coin.coin_type}
+                    singleLine={true} />
+                ))
+              : "No Relevant Coins Found."}
           </DashboardPanel.Body>
+          <DashboardPanel.Footer></DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="col-start-4 col-span-6">
@@ -241,81 +195,30 @@ export default function SourceInfo({
         </DashboardPanel>
       </div>
       <div className="col-start-10 col-span-2">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-            <p className="text-center">Relevant Coins</p>
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            {relevantCoins.length > 0
-              ? relevantCoins.map((coin) => (
-                  <Link href={`/coin-info?coin=` + coin.coin_type}>
-                    <div className="mt-2">
-                      <Card
-                        badgeColor={getCoinColor(coin.coin_type)}
-                        icon={getCoinIcon(coin.coin_type)}
-                        isSelected={() => true}
-                      >
-                        <Card.Title>
-                          <span className="hover:underline">
-                            {coin.coin_type.toUpperCase()}
-                          </span>
-                        </Card.Title>
-                        <Card.Input></Card.Input>
-                      </Card>
-                    </div>
-                  </Link>
-                ))
-              : "No Relevant Coins Found."}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer></DashboardPanel.Footer>
-        </DashboardPanel>
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
             <p>Top Interacted Users</p>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <ul>
-              {topInteractedUsers.map((user, index) => (
-                <li className="flex flex-row mb-2" key={index}>
-                  <div
-                    className={`w-1.5 bg-${getSourceColor(
-                      user.user + "@" + sourceName.slice(2)
-                    )} rounded-l`}
-                  ></div>
-                  <div
-                    className={`grid grid-cols-6 gap-1 py-2 px-4 w-full text-${textColor} bg-${color} border border-${borderColor} rounded-r`}
-                  >
-                    <div className={`flex flex-col`}>
-                      <span className="font-semibold width-50">
-                        {user.user}
-                      </span>
-                      <div
-                        className={`py-1 flex flex-row items-center text-xs text-${mutedColor}`}
-                      >
-                        <span className="mr-1">
-                          {getSourceIcon(user.user + "@" + sourceName.slice(2))}
-                        </span>
-                        <span>{sourceName.slice(2)}</span>
-                      </div>
-                      <div
-                        className={`flex flex-row items-center text-xs text-${mutedColor}`}
-                      ></div>
-                    </div>
-                    <div className={"col-span-4"}>
-                      <p></p>
-                    </div>
-                    <div className={`flex flex-col`}>
-                      <div
-                        className={`px-2 py-1 flex flex-row items-center justify-end text-${mutedColor}`}
-                      >
-                        <IoChatbubblesSharp />
-                        <span className="ml-1">{user.msg_count}</span>
-                      </div>
-                    </div>
-                  </div>
-                </li>
+              {topInteractedUsers.map(user => (
+                <SourceOverview
+                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  button={<>{user.total_interaction}</>} 
+                  singleLine={true} />
               ))}
-            </ul>
+          </DashboardPanel.Body>
+        </DashboardPanel>
+        <DashboardPanel collapsable={false}>
+          <DashboardPanel.Header>
+            <p>Top Active Users</p>
+          </DashboardPanel.Header>
+          <DashboardPanel.Body>
+            {topActiveUsers.map(user => (
+                <SourceOverview
+                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  button={<>{user.total_msg}</>}
+                  singleLine={true} />
+              ))}
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>
