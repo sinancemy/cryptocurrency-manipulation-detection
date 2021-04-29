@@ -43,7 +43,7 @@ export const PostOverview = ({ post }) => {
             <span className="mr-1">
               <FaCode />
             </span>
-            <span className={`text-xs text-${mutedColor} font-mono`}>
+            <span className={`text-xs text-${mutedColor} font-mono truncate`}>
               { post.unique_id.slice(2) }
             </span>
           </div>

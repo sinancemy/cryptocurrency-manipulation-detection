@@ -8,67 +8,36 @@ import { CuteButton } from "../../components/CuteButton"
 import { SourceCard } from "../../components/SourceCard"
 
 export async function getServerSideProps(context) {
-    if (context.req.headers.cookie == null) {
-      return {
-        redirect: {
-          destination: "/",
-          permanent: false,
-        },
-      };
-    }
-    const res = await axios.get("http://127.0.0.1:5000/api/source_list");
-    
-    const cookies = cookie.parse(context.req.headers.cookie);
-    const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
-      params: {
-        token: cookies.token,
+  if (context.req.headers.cookie == null) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
       },
-    });
-    var userinfo = null;
-    if (res2.data.result === "ok") {
-      userinfo = res2.data.userinfo;
-    }
-    var reddit_source = res.data
-    .filter((source) => source.source.includes("reddit"))
-    .sort((a, b) => a.source.localeCompare(b.source));
+    };
+  }
+  const res = await axios.get("http://127.0.0.1:5000/api/source_list");
+  
+  const cookies = cookie.parse(context.req.headers.cookie);
+  const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
+    params: {
+      token: cookies.token,
+    },
+  });
+  var userinfo = null;
+  if (res2.data.result === "ok") {
+    userinfo = res2.data.userinfo;
+  }
+  
+  const res3 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin);
 
-  let users = [];
-
-  await Promise.all(
-    reddit_source.map(async (source) => {
-      let reddit_users = new Set();
-      const res3 = await axios.get(
-        "http://127.0.0.1:5000/api/posts?source=" + source.source
-      );
-      res3.data.forEach((entry) => {
-        reddit_users.add(entry.user);
-      });
-      reddit_users = Array.from(reddit_users).sort();
-      reddit_users.unshift("Follow All Sources");
-      users.push([source.source, reddit_users]);
-    })
-  );
-
-  let twitter_users = [];
-  res.data
-    .filter((source) => source.source.includes("twitter"))
-    .forEach((source) => twitter_users.push(source.username));
-
-  twitter_users.sort();
-  twitter_users.unshift("Follow All Sources");
-  users = users.sort((a, b) => a[0].localeCompare(b[0]));
-  users.unshift(["twitter", twitter_users]);
-
-  const res4 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin);
-
-  let lastPrice = res4.data.last_price
-  let topActiveUsers = res4.data.top_active_users
-  let topInteractedUsers = res4.data.top_interacted_users
-  let topSources = res4.data.top_sources
+  let lastPrice = res3.data.last_price
+  let topActiveUsers = res3.data.top_active_users
+  let topInteractedUsers = res3.data.top_interacted_users
+  let topSources = res3.data.top_sources
 
   return {
     props: {
-      users: users,
       userInfo: userinfo,
       coinQuery: context.query.coin,
       topSources: topSources,
@@ -140,14 +109,13 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
 
     return(
         <div className="animate-fade-in-down mx-10 grid grid-cols-6">
-         <div className="col-start-3 py-5 col-span-2">
-            <div className="col-start-2 bg-white border-b rounded">
-                <h1 className="font-bold text-center text-2xl py-2">
-                    {coinQuery.toUpperCase() + " - Current Price:  $" + lastPrice.price}
-                </h1>
-            </div>
-        </div>
-
+          <div className="col-start-3 py-5 col-span-2">
+              <div className="col-start-2 bg-white border-b rounded">
+                  <h1 className="font-bold text-center text-2xl py-2">
+                      {coinQuery.toUpperCase() + " - Current Price:  $" + lastPrice.price}
+                  </h1>
+              </div>
+          </div>
         <div className="col-start-1 p-1 col-span-1">
         <DashboardPanel>
           <DashboardPanel.Header>
@@ -190,7 +158,7 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
         </DashboardPanel>
         </div>
 
-        <div className="col-start-2 py-2 col-span-4">
+        <div className="col-start-2 py-1 col-span-4">
         <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
             <div className="flex flex-justify-between font-light">

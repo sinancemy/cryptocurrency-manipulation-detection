@@ -207,26 +207,10 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
             {userInfo && userInfo.followed_coins.length > 0 ? 
             userInfo?.followed_coins.map(coin => (
               <div className="mt-2"> 
-                <Card
+                <CoinCard 
+                  onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
                   isSelected={() => graphSettings.coinType && graphSettings.coinType === coin.coin_type}
-                  badgeColor={getCoinColor(coin.coin_type)}
-                  icon={getCoinIcon(coin.coin_type)}>
-                  <Card.Title>
-                    <Link href={`/coin-info?coin=` + coin}>
-                        <span className="hover:underline">
-                          { coin.coin_type.toUpperCase() }
-                        </span>
-                      </Link>
-                  </Card.Title>
-                  <Card.Input>
-                    <input 
-                        type="radio"
-                        className="hidden"
-                        name="coin-type"
-                        onClick={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
-                        checked={graphSettings.coinType && graphSettings.coinType === coin.coin_type} />
-                  </Card.Input>
-                </Card>
+                  coin={coin.coin_type} />
               </div>
               )) : ("Not following any coins.")}
           </DashboardPanel.Body>
@@ -249,25 +233,14 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
             {userInfo && userInfo.followed_sources.length > 0 ? (
               userInfo.followed_sources.map(source => (
                 <div className="mt-2">
-                  <Card
+                  <SourceCard 
+                    onToggle={() => {if(selectedSources.includes(source.source)) {
+                                      setSelectedSources(selectedSources.filter(x => x !== source.source))
+                                    } else {
+                                      setSelectedSources([...selectedSources, source.source])
+                                    }}}
                     isSelected={() => selectedSources.includes(source.source)}
-                    badgeColor={getSourceColor(source.source)}
-                    icon={getSourceIcon(source.source)}>
-                    <Card.Title>
-                      { source.source }
-                    </Card.Title>
-                    <Card.Input>
-                      <input 
-                        type="checkbox"
-                        className="hidden"
-                        onClick={() => {if(selectedSources.includes(source.source)) {
-                                          setSelectedSources(selectedSources.filter(x => x !== source.source))
-                                        } else {
-                                          setSelectedSources([...selectedSources, source.source])
-                                        }}}
-                        checked={selectedSources.includes(source.source)} />
-                    </Card.Input>
-                  </Card>
+                    source={source.source} />
                 </div>
               ))
             ) : ("Not following any sources.")}
