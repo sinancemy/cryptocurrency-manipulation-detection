@@ -133,13 +133,13 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
       const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
 
       for(const p of newImpactMap.keys()) {
+        console.log(newImpactMap)
         const first = average(newImpactMap.get(p).map(e => e[0]))
         const second = average(newImpactMap.get(p).map(e => e[1]))
         const third = average(newImpactMap.get(p).map(e => e[2]))
         const fourth = average(newImpactMap.get(p).map(e => e[3]))
         newImpactMap.set(p, [first, second, third, fourth])
       }
-      console.log(newImpactMap)
       setImpactMap(newImpactMap)
     }, [posts])
 
@@ -438,8 +438,8 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
           <DashboardPanel.Body>
             <div className="mt-2">
               { [...impactMap.entries()].map(e => (
-                <div className="flex flex-row">
-                  <span className="mr-1">{e[0]}:</span>
+                <div className="flex flex-col">
+                  <span className="mr-1">{e[0].toUpperCase()}</span>
                   <span>
                     <Prediction prediction={e[1]} />
                   </span>
