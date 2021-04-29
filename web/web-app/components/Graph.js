@@ -4,9 +4,7 @@ import { curveMonotoneX } from '@vx/curve';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { GridRows, GridColumns } from '@vx/grid';
 import { withTooltip, Tooltip, defaultStyles } from '@vx/tooltip';
-import { WithTooltipProvidedProps } from '@vx/tooltip/lib/enhancers/withTooltip';
 import { localPoint } from '@vx/event';
-import { LinearGradient } from '@vx/gradient';
 import { max, extent, bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 
@@ -35,7 +33,7 @@ const getPostVolumeValue = (d) => d.volume;
 const getPostCountValue = (d) => d.count; 
 const bisectDate = bisector(d => new Date(d.time * 1000)).left;
 
-const Graph = withTooltip(
+export const Graph = withTooltip(
   ({
     parentWidth,
     parentHeight,
@@ -50,9 +48,8 @@ const Graph = withTooltip(
     setSelectedRange,
     stock,
     postVolume,
-    showPostVolume,
-    showPostCount
-  }) => {
+    showPostVolume = false,
+    showPostCount = false}) => {
     const width = parentWidth
     const height = parentHeight
     if (width < 10) return null;
@@ -112,7 +109,6 @@ const Graph = withTooltip(
           selectedVolumePoint: vd,
           selectedPoint: d
         }
-        console.log(postVolumeScale(getPostVolumeValue(vd)))
         showTooltip({
           tooltipData: data,
           tooltipLeft: x,
@@ -394,5 +390,3 @@ const Graph = withTooltip(
       </div>)
   },
 )
-
-export default Graph

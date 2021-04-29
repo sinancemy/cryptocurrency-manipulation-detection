@@ -34,7 +34,7 @@ export const CoinOverview = ({ coin, button, singleLine = false }) => {
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
         <div className={`flex flex-col`}>
-          <div className={`py-1 flex flex-row items-center text-md`}>
+          <div className={`py-1 flex flex-row items-center`}>
             <span className="hover:underline">
               <Link href={`/coin-info?coin=${coin}`}>
                 {coin.toUpperCase()}

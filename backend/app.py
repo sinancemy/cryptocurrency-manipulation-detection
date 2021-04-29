@@ -155,9 +155,9 @@ def get_coin_info():
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     db = Database()
     top_sources = db.read_top_sources(coin_type, top_source_limit,
-                                      lambda row: {"count": row[0], "source": row[5]})
+                                      lambda row: {"total_msg": row[0], "source": row[5]})
     top_active_users = db.read_top_active_users(coin_type, top_user_limit,
-                                                lambda row: {"count": row[0], "source": row[5], "user": row[3]})
+                                                lambda row: {"total_msg": row[0], "source": row[5], "user": row[3]})
     top_interacted_users = db.read_top_interacted_users(coin_type, top_user_limit,
                                                         lambda row: {"total_interaction": row[0], "source": row[5],
                                                                      "user": row[3]})

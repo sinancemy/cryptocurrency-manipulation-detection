@@ -1,7 +1,6 @@
 import { useRouter } from "next/router"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
-import Graph from "../../components/Graph"
-import { withParentSize } from "@vx/responsive"
+import { Graph } from "../../components/Graph"
 import axios from "axios"
 import { DashboardPanel } from "../../components/DashboardPanel"
 import cookie from "cookie"
@@ -15,7 +14,7 @@ import { PostOverview } from "../../components/PostOverview"
 import { dateToString, getCoinColor, getCoinIcon, getSourceColor, getSourceIcon } from "../../Helpers"
 import { CoinCard } from "../../components/CoinCard"
 import { IoMdSettings } from "react-icons/io"
-import { Card } from "../../components/Card"
+import { withParentSize } from '@vx/responsive';
 import { Prediction } from "../../components/Prediction"
 
 
@@ -49,7 +48,6 @@ export async function getServerSideProps(context) {
 }
 
 export default function Dashboard({userInfo, initialGraphSettings}) {  
-  const ResponsiveGraph = withParentSize(Graph)
   const [prices, setPrices] = useState([])
   const [posts, setPosts] = useState([])
   const [postVolume, setPostVolume] = useState([])
@@ -199,6 +197,8 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
       setPostVolume(res.data)
     }) 
   }, [graphSettings])
+
+  const ResponsiveGraph = withParentSize(Graph)
 
   return (
     <div className="animate-fade-in-down mx-10 md:flex md:flex-col lg:grid lg:grid-cols-6 mt-2">

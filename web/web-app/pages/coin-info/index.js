@@ -6,6 +6,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PostOverview } from "../../components/PostOverview"
 import { CuteButton } from "../../components/CuteButton"
 import { SourceCard } from "../../components/SourceCard"
+import { SourceOverview } from "../../components/SourceOverview";
+import { getCoinIcon } from "../../Helpers";
+import { FollowButton } from "../../components/FollowButton";
+import { SimpleGraph } from "../../components/SimpleGraph"
+import { withParentSize } from '@vx/responsive';
 
 export async function getServerSideProps(context) {
   if (context.req.headers.cookie == null) {
@@ -29,12 +34,22 @@ export async function getServerSideProps(context) {
     userinfo = res2.data.userinfo;
   }
   
-  const res3 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin);
+  const res3 = await axios.get("http://127.0.0.1:5000/api/coin_info?type=" + context.query.coin + "&userlimit=4");
 
   let lastPrice = res3.data.last_price
   let topActiveUsers = res3.data.top_active_users
   let topInteractedUsers = res3.data.top_interacted_users
   let topSources = res3.data.top_sources
+  let numFollowers = res3.data.num_followers
+
+  let isFollowingCoin = false;
+  userinfo.followed_coins.forEach((coin) => {
+    if (coin.coin_type.includes(context.query.coin)) {
+      isFollowingCoin = true;
+    }
+  });
+
+  const res4 = await axios.get("http://127.0.0.1:5000/api/prices?type=" + context.query.coin)
 
   return {
     props: {
@@ -42,19 +57,25 @@ export async function getServerSideProps(context) {
       coinQuery: context.query.coin,
       topSources: topSources,
       lastPrice: lastPrice,
+      numFollowers: numFollowers,
       topActiveUsers: topActiveUsers,
       topInteractedUsers: topInteractedUsers,
+      isFollowingCoin: isFollowingCoin,
+      prices: res4.data.reverse()
     },
   };
   }
 
-export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, topActiveUsers, topInteractedUsers}){
+export default function CoinInfo({token, prices, coinQuery, numFollowers, isFollowingCoin, userInfo, topSources, lastPrice, topActiveUsers, topInteractedUsers}){
 
     const [sortByOption, setSortByOption] = useState("interaction")
     const [sortOrderOption, setSortOrderOption] = useState("descending")
     const [posts, setPosts] = useState([])
     const [sortedPosts, setSortedPosts] = useState([])
     const [selectedSources, setSelectedSources] = useState([])
+
+    const [followerCount, setFollowerCount] = useState(numFollowers);
+    const [isFollowing, setIsFollowing] = useState(isFollowingCoin);  
 
     const discardDuplicatePosts = (posts) => {
         const dict = {}
@@ -101,136 +122,167 @@ export default function CoinInfo({coinQuery, userInfo, topSources, lastPrice, to
           sorted.reverse()
         }
         setSortedPosts(sorted)
-      }, [posts, sortOrderOption, sortByOption])
+    }, [posts, sortOrderOption, sortByOption])
 
-      useEffect(() => {
-        updatePosts()
-      }, [selectedSources])
+    useEffect(() => {
+      updatePosts()
+    }, [selectedSources])
+
+    const onFollow = () => {
+      setFollowerCount(followerCount + 1)
+      setIsFollowing(true);
+    }
+
+    const onUnfollow = () => {
+      setFollowerCount(followerCount -1)
+      setIsFollowing(false);
+    }
+
+    const SimpleResponsiveGraph = withParentSize(SimpleGraph)
 
     return(
-        <div className="animate-fade-in-down mx-10 grid grid-cols-6">
-          <div className="col-start-3 py-5 col-span-2">
-              <div className="col-start-2 bg-white border-b rounded">
-                  <h1 className="font-bold text-center text-2xl py-2">
-                      {coinQuery.toUpperCase() + " - Current Price:  $" + lastPrice.price}
-                  </h1>
-              </div>
-          </div>
-        <div className="col-start-1 p-1 col-span-1">
-          <DashboardPanel>
-            <DashboardPanel.Header>
-                  Top Sources
-            </DashboardPanel.Header>
-            <DashboardPanel.Body>
-              { topSources.length > 0 ? (
-                  topSources.map(source => (
+      <>
+        <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
+          <div className="col-start-2 col-span-2">
+            <DashboardPanel collapsable={false}>
+              <DashboardPanel.Header>
+                <div className="grid grid-cols-1 mt-2 place-items-center">
+                  <span className="text-4xl">{ getCoinIcon(coinQuery) }</span>
+                  <span className="mt-2">{coinQuery.toUpperCase()}</span>
+                  <span className="mt-2 font-light">
+                    {followerCount} Followers
+                  </span>
                   <div className="mt-2">
-                    <SourceCard 
-                      source={"*@" + source.source}
-                      isSelected={() => selectedSources.includes("*@" + source.source)}
-                      onToggle={() => {
-                        if(selectedSources.includes("*@" + source.source)) {
-                          setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
-                        } else {
-                          setSelectedSources([...selectedSources, "*@" + source.source])
-                        }
-                      }} />
+                    <FollowButton
+                      queryUrl={"http://127.0.0.1:5000/user/follow_coin"}
+                      queryParams={{token: token, type: coinQuery}}
+                      isFollowing={() => isFollowing}
+                      onFollow={onFollow}
+                      onUnfollow={onUnfollow} />
                   </div>
-                ))
-              ) : ("There are no sources.")}
-            </DashboardPanel.Body>
-            <DashboardPanel.Footer>
-              <div className="flex flex-row">
-                <CuteButton
-                  onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
-                  disabled={() => selectedSources.length === topSources.length}>
-                  Select all
-                </CuteButton>
-                <span className="flex-grow"></span>
-                <CuteButton
-                  onClick={() => setSelectedSources([])}
-                  disabled={() => selectedSources.length === 0}>
-                  Unselect all
-                </CuteButton>
-                <span className="flex-grow"></span>
-              </div>  
-            </DashboardPanel.Footer>
-          </DashboardPanel>
-        </div>
-
-        <div className="col-start-2 py-1 col-span-4">
-        <DashboardPanel collapsable={false} restrictedHeight={false}>
-          <DashboardPanel.Header>
-            <div className="flex flex-justify-between font-light">
-              <span class="flex-grow"></span>
-              <div className="flex">
-                <div className="mr-2 px-2">
-                  sort by {" "}
-                    <SimpleDropdown 
-                      options={['time', 'interaction', 'user']} 
-                      selected={sortByOption} 
-                      setSelected={setSortByOption} />
-                    {" "} in <SimpleDropdown 
-                      options={['ascending', 'descending']} 
-                      selected={sortOrderOption} 
-                      setSelected={setSortOrderOption} />
-                      {" "} order
                 </div>
-              </div>
+              </DashboardPanel.Header>
+              <DashboardPanel.Body></DashboardPanel.Body>
+            </DashboardPanel>
+            <DashboardPanel collapsable={false}>
+              <DashboardPanel.Header>
+                    Top Relevant Sources
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                { topSources.length > 0 ? (
+                    topSources.map(source => (
+                    <div className="mt-2">
+                      <SourceCard 
+                        source={"*@" + source.source}
+                        isSelected={() => selectedSources.includes("*@" + source.source)}
+                        onToggle={() => {
+                          if(selectedSources.includes("*@" + source.source)) {
+                            setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
+                          } else {
+                            setSelectedSources([...selectedSources, "*@" + source.source])
+                          }
+                        }} />
+                    </div>
+                  ))
+                ) : ("There are no sources.")}
+              </DashboardPanel.Body>
+              <DashboardPanel.Footer>
+                <div className="flex flex-row">
+                  <CuteButton
+                    onClick={() => setSelectedSources(topSources.map(s => "*@"+s.source))}
+                    disabled={() => selectedSources.length === topSources.length}>
+                    Select all
+                  </CuteButton>
+                  <span className="flex-grow"></span>
+                  <CuteButton
+                    onClick={() => setSelectedSources([])}
+                    disabled={() => selectedSources.length === 0}>
+                    Unselect all
+                  </CuteButton>
+                  <span className="flex-grow"></span>
+                </div>  
+              </DashboardPanel.Footer>
+            </DashboardPanel >
+          </div>
+          <div className="col-start-4 col-span-6">
+            <div className="h-48 bg-gray-900 rounded-md overflow-hidden mb-2">
+              <SimpleResponsiveGraph
+                selectedRange={null}
+                setSelectedRange={() => null}
+                stock={prices}
+                lastPrice={lastPrice.price}
+              />
             </div>
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-          {sortedPosts.length > 0 ? (
-            <div className="overflow-y-auto max-h-128">
-              {sortedPosts.map((post, i) => (
-                <PostOverview post={post} />
-              ))}
-            </div>
-            ) : (
-              <div className="mt-2">There aren't any posts about this coin.</div>
-            )}
-          </DashboardPanel.Body>
-        </DashboardPanel>
-        </div>
-
-        <div className="col-start-6 p-1 col-span-1">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-                Top Active Users
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            { topActiveUsers.length > 0 ? (
-                topActiveUsers.map(source => (
-                <div className="mt-2">
-                  <SourceCard 
-                    source={source.user +"@"+ source.source}
-                    isSelected={() => 1+1}
-                    onToggle={() => 1+1} />
+            <DashboardPanel collapsable={false} restrictedHeight={false}>
+              <DashboardPanel.Header>
+                <div className="flex flex-justify-between font-light">
+                  <span class="flex-grow"></span>
+                  <div className="flex">
+                    <div className="mr-2 px-2">
+                      sort by {" "}
+                        <SimpleDropdown 
+                          options={['time', 'interaction', 'user']} 
+                          selected={sortByOption} 
+                          setSelected={setSortByOption} />
+                        {" "} in <SimpleDropdown 
+                          options={['ascending', 'descending']} 
+                          selected={sortOrderOption} 
+                          setSelected={setSortOrderOption} />
+                          {" "} order
+                    </div>
+                  </div>
                 </div>
-              ))
-            ) : ("There are no sources.")}
-          </DashboardPanel.Body>
-        </DashboardPanel>
-
-        <DashboardPanel>
-          <DashboardPanel.Header>
-                Top Interacted Users
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            { topInteractedUsers.length > 0 ? (
-                topInteractedUsers.map(source => (
-                <div className="mt-2">
-                  <SourceCard 
-                    source={source.user +"@"+ source.source}
-                    isSelected={() => 1+1}
-                    onToggle={() => 1+1} />
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+              {sortedPosts.length > 0 ? (
+                <div className="overflow-y-auto max-h-128">
+                  {sortedPosts.map((post, i) => (
+                    <PostOverview post={post} />
+                  ))}
                 </div>
-              ))
-            ) : ("There are no sources.")}
-          </DashboardPanel.Body>
-        </DashboardPanel>
+                ) : (
+                  <div className="mt-2">There aren't any posts about this coin.</div>
+                )}
+              </DashboardPanel.Body>
+            </DashboardPanel>
+          </div>
+          <div className="col-start-10 col-span-2">
+            <DashboardPanel collapsable={false}>
+              <DashboardPanel.Header>
+                    Top Active Users
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                { topActiveUsers.length > 0 ? (
+                    topActiveUsers.map(user => (
+                    <div className="mt-2">
+                      <SourceOverview 
+                        source={user.user +"@"+ user.source}
+                        button={<>{user.total_msg}</>} 
+                        singleLine={true} />
+                    </div>
+                  ))
+                ) : ("There are no sources.")}
+              </DashboardPanel.Body>
+            </DashboardPanel>
+            <DashboardPanel collapsable={false}>
+              <DashboardPanel.Header>
+                    Top Interacted Users
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                { topInteractedUsers.length > 0 ? (
+                    topInteractedUsers.map(user => (
+                    <div className="mt-2">
+                      <SourceOverview 
+                        source={user.user +"@"+ user.source}
+                        button={<>{user.total_interaction}</>}
+                        singleLine={true} />
+                    </div>
+                  ))
+                ) : ("There are no sources.")}
+              </DashboardPanel.Body>
+            </DashboardPanel>
+          </div>
         </div>
-
-    </div>
+    </>
     );
 }
