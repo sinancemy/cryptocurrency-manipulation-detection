@@ -22,7 +22,7 @@ export const SourceOverview = ({ source, button, singleLine = false }) => {
         </span>
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
-        <div className={`flex flex-col`}>
+        <div className={`flex flex-col ml-2`}>
           <div className={`py-1 flex flex-row items-center`}>
             <span className="hover:underline">
             { hasUsername() ? (

@@ -253,13 +253,13 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
             <div className="flex flex-row">
               <CuteButton
                 onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                disabled={() => selectedSources.length === userInfo.followed_sources.length}>
+                isDisabled={() => selectedSources.length === userInfo.followed_sources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
               <CuteButton
                 onClick={() => setSelectedSources([])}
-                disabled={() => selectedSources.length === 0}>
+                isDisabled={() => selectedSources.length === 0}>
                 Unselect all
               </CuteButton>
               <span className="flex-grow"></span>

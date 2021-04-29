@@ -1,12 +1,9 @@
 import axios from "axios";
 import cookie from "cookie";
-import Router from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { Field, Formik, Form } from "formik";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SourceOverview } from "../../components/SourceOverview";
-import { CuteButton } from "../../components/CuteButton";
 import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
@@ -66,7 +63,8 @@ export default function SearchSources({ allSources, userInfo, token }) {
       return
     }
     const filtered = sources.filter((s) => s.toLowerCase().includes(query.toLowerCase()))
-    setFilteredSources(filtered.slice(0, 20))
+    const sorted = [...filtered].sort((a, b) => a.localeCompare(b))
+    setFilteredSources(sorted.slice(0, 20))
   }, [sources, query, followedSources])
 
 

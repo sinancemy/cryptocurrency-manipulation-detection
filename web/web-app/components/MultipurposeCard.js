@@ -20,10 +20,10 @@ export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defau
         <div class="flex-none">
             { left && left.props.children }
         </div>
-        <div className="pl-2 flex-grow">
+        <div className="flex-grow">
             { middle && middle.props.children }
         </div>
-        <div className="pl-2 flex-none">
+        <div className="flex-none">
             { right && right.props.children }
         </div> 
       </div>

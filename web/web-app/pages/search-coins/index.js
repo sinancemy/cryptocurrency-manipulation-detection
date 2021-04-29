@@ -1,15 +1,9 @@
 import axios from "axios";
 import cookie from "cookie";
-import Router from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { Field, Formik, Form } from "formik";
 import { DashboardPanel } from "../../components/DashboardPanel";
-import { CoinCard } from "../../components/CoinCard";
-import { Card } from "../../components/Card";
-import { getCoinColor, getCoinIcon } from "../../Helpers";
 import { CoinOverview } from "../../components/CoinOverview";
-import { CuteButton } from "../../components/CuteButton";
 import { FollowButton } from "../../components/FollowButton";
 
 export async function getServerSideProps(context) {
@@ -67,7 +61,8 @@ export default function SearchCoins({ allCoins, userInfo, token }) {
       return
     }
     const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
-    setFilteredCoins(filtered)
+    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+    setFilteredCoins(sorted)
   }, [coins, query, followedCoins])
 
   const isFollowing = useCallback((coinName) => {
