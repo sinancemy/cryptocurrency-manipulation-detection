@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react"
 import { IoChatbubblesSharp } from "react-icons/io5"
 import { FaCode } from "react-icons/fa"
-import { dateToString, getSourceColor, getSourceIcon } from "../Helpers"
+import { dateToString, getCoinIcon, getSourceColor, getSourceIcon } from "../Helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
+import Link from "next/link"
 
 const mutedColor = "gray-500"
 const innerColor = "gray-850"
@@ -28,23 +29,29 @@ export const PostOverview = ({ post }) => {
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} disperse={true}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col w-32`}>
-          <span className="font-semibold width-50 truncate">
-            {post.user}
+          <span className="font-semibold width-50 truncate hover:underline">
+            <Link href={`/source-info?source=${post.user}@${post.source}`}>
+              {post.user}
+            </Link>
           </span>
           <div className={`py-1 flex flex-row items-center text-xs text-${mutedColor}`}>
             <span className="mr-1">
-              {getSourceIcon(post.user + '@' + post.source)}
+                {getSourceIcon(post.user + '@' + post.source)}
             </span>
-            <span className="truncate">
-              {post.source}
+            <span className="truncate hover:underline">
+              <Link href={`/source-info?source=*@${post.source}`}>
+                {post.source}
+              </Link>
             </span>
           </div>
           <div className={`flex flex-row items-center text-xs text-${mutedColor}`}>
             <span className="mr-1">
-              <FaCode />
+              { getCoinIcon(post.coin_type) }
             </span>
-            <span className={`text-xs text-${mutedColor} font-mono truncate`}>
-              { post.unique_id.slice(2) }
+            <span className={`text-xs text-${mutedColor} truncate hover:underline`}>
+              <Link href={`/coin-info?coin=${post.coin_type}`}>
+                { post.coin_type.toUpperCase() }
+              </Link>
             </span>
           </div>
         </div>

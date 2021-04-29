@@ -70,6 +70,8 @@ def get_posts():
     # if len(posts) > 0:
     #     posts = predictor.predict(posts)
 
+    for p in posts:
+        p.impact = [0, 0., 0.]
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
