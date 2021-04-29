@@ -21,7 +21,6 @@ app.config["CORS_SUPPORTS_CREDENTIALS"] = True
 
 CORS(app)
 
-
 def get_coin_type_arg() -> Optional[misc.CoinType]:
     coin_type = request.args.get("type", type=str, default=None)
     if coin_type is None:
@@ -45,7 +44,7 @@ def get_user_from_token(db: Database) -> Optional[UserInfo]:
 
 
 # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-# predictor = Predictor("test_model", "Jun19_Feb21_Big")
+predictor = Predictor("test_model", "Jun19_Feb21_Big")
 
 
 @app.route("/api/posts")
@@ -67,11 +66,8 @@ def get_posts():
     posts = db.read_by("posts", selectors, row_to_post)
 
     # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-    # if len(posts) > 0:
-    #     posts = predictor.predict(posts)
-
-    for p in posts:
-        p.impact = [0, 0., 0.]
+    if len(posts) > 0:
+        posts = predictor.predict(posts)
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
