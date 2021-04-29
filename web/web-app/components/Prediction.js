@@ -5,14 +5,14 @@ import {MultipurposeCard} from "./MultipurposeCard";
 import {RiCoinFill} from "react-icons/ri";
 import React from "react";
 
-const positiveColor = "green-500 "
+const positiveColor = "green-500"
 const neutralColor = "yellow-500"
-const negativeColor = "red-400"
+const negativeColor = "red-500"
 
 const borderColor = "gray-900"
 const fullWidth = false
 
-export const Prediction = ({ prediction }) => {
+export const Prediction = ({ prediction, coin }) => {
     let colors = []
     let arrows = []
     for (const p of prediction){
@@ -30,31 +30,18 @@ export const Prediction = ({ prediction }) => {
         }
     }
     return (
-    <>
-        <div className = {`flex flex-row items-center py-1 px-3 border border-${colors[0]} rounded bg-${colors[0]}`}
-                style={{marginBottom: '.25rem'}}>
-            <div> {prediction[0].toPrecision(4)} </div>
-            <span className="flex-grow"></span>
-            <div className={`text-xl`}>{arrows[0]}</div>
+    <div className="flex flex-col rounded-md">
+        <div className="flex flex-row items-center font-semibold text-md mb-2">
+            <span>{getCoinIcon(coin)}</span>
+            <span className="ml-2">{coin.toUpperCase()}</span>
         </div>
-        <div className = {`flex flex-row items-center py-1 px-3 border border-${colors[1]} rounded bg-${colors[1]}`}
-                style={{marginBottom: '.25rem'}}>
-            <div> {prediction[1].toPrecision(4)} </div>
-            <span className="flex-grow"></span>
-            <div className={`text-xl`}>{arrows[1]}</div>
-        </div>
-        <div className = {`flex flex-row items-center py-1 px-3 border border-${colors[2]} rounded bg-${colors[2]}`}
-                style={{marginBottom: '.25rem'}}>
-            <div> {prediction[2].toPrecision(4)} </div>
-            <span className="flex-grow"></span>
-            <div className={`text-xl`}>{arrows[2]}</div>
-        </div>
-        <div className = {`flex flex-row items-center py-1 px-3 border border-${colors[3]} rounded bg-${colors[3]}`}
-                style={{marginBottom: '.25rem'}}>
-            <div> {prediction[3].toPrecision(4)} </div>
-            <span className="flex-grow"></span>
-            <div className={`text-xl`}>{arrows[3]}</div>
-        </div>
-    </>
+        { prediction.map(p => (
+            <div className = {`flex flex-row text-black items-center py-1 px-3 mb-1 border border-${colors[0]} rounded bg-${colors[0]}`}>
+                <div className="font-mono text-sm"> {prediction[0].toPrecision(4)} </div>
+                <span className="flex-grow"></span>
+                <div className={`text-xl`}>{arrows[0]}</div>
+            </div>
+        )) }
+    </div>
   );
 }

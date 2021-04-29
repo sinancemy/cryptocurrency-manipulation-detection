@@ -438,12 +438,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
           <DashboardPanel.Body>
             <div className="mt-2">
               { [...impactMap.entries()].map(e => (
-                <div className="flex flex-col">
-                  <span className="mr-1">{e[0].toUpperCase()}</span>
-                  <span>
-                    <Prediction prediction={e[1]} />
-                  </span>
-                </div>
+                <Prediction prediction={e[1]} coin={e[0]} />
               ))}
             </div>
           </DashboardPanel.Body>
