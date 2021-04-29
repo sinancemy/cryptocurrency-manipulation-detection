@@ -78,4 +78,4 @@ class CryptoSpeculationModel(nn.Module):
         torch.save(self.state_dict(), os.path.join(MODELS_DIR, self.name + ".pt"))
 
     def load(self):
-        self.load_state_dict(torch.load(os.path.join(MODELS_DIR, self.name + ".pt")))
+        self.load_state_dict(torch.load(os.path.join(MODELS_DIR, self.name + ".pt"), map_location=torch.device("cpu")))

@@ -4,19 +4,18 @@ import { curveMonotoneX } from '@vx/curve';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { GridRows, GridColumns } from '@vx/grid';
 import { withTooltip, Tooltip, defaultStyles } from '@vx/tooltip';
-import { WithTooltipProvidedProps } from '@vx/tooltip/lib/enhancers/withTooltip';
 import { localPoint } from '@vx/event';
-import { LinearGradient } from '@vx/gradient';
 import { max, extent, bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 
-export const background = '#3b6978';
-export const background2 = '#204051';
-export const accentColor = '#edffea';
-export const gridColor = '#08141D';
-export const selectedPortionColor = '#C20000';
-export const tooltipColor = "#DE781F";
-export const volumeLineColor = "#fff"
+export const background = 'transparent';
+export const stockColor = '#1F85DE';
+export const stockStrokeColor = "white"
+export const gridColor = '#fff';
+export const selectionColor = 'orange';
+export const tooltipColor = "orange";
+export const tooltipReflectionColor = "orange"
+export const volumeLineColor = "red"
 const tooltipStyles = {
   ...defaultStyles,
   background,
@@ -30,10 +29,11 @@ const formatDate = timeFormat("%b %d, '%y");
 // accessors
 const getDate = (d) => new Date(d.time * 1000);
 const getStockValue = (d) => d.price;
-const getPostVolumeValue= (d) => d.volume;
+const getPostVolumeValue = (d) => d.volume;
+const getPostCountValue = (d) => d.count; 
 const bisectDate = bisector(d => new Date(d.time * 1000)).left;
 
-const Graph = withTooltip(
+export const Graph = withTooltip(
   ({
     parentWidth,
     parentHeight,
@@ -48,8 +48,9 @@ const Graph = withTooltip(
     setSelectedRange,
     stock,
     postVolume,
-    showPostVolume
-  }) => {
+    showPostVolume = false,
+    showPostCount = false,
+    impactScore}) => {
     const width = parentWidth
     const height = parentHeight
     if (width < 10) return null;
@@ -62,14 +63,14 @@ const Graph = withTooltip(
         range: [0, xMax],
       }), [stock, xMax]);
     const stockValueScale = useMemo(() => {
-      const high = (max(stock, getStockValue) || 0)
+      const high = max(stock, getStockValue) || 0
       return scaleLinear({
         domain: [0, high + high/8],
         range: [yMax, 0]
       })
     }, [stock, yMax]);
     const postVolumeScale = useMemo(() => {
-      const high = (max(postVolume, getPostVolumeValue) || 0)
+      const high = max(postVolume, getPostVolumeValue) || 0
       return scaleLinear({
         domain: [0, high + high/8],
         range: [yMax, 0]
@@ -109,7 +110,6 @@ const Graph = withTooltip(
           selectedVolumePoint: vd,
           selectedPoint: d
         }
-        console.log(postVolumeScale(getPostVolumeValue(vd)))
         showTooltip({
           tooltipData: data,
           tooltipLeft: x,
@@ -186,11 +186,8 @@ const Graph = withTooltip(
             y={0}
             width={width}
             height={height}
-            rx={14}
-            fill="url(#area-background-gradient)"
+            fill="transparent"
           />
-          <LinearGradient id="area-background-gradient" from={background} to={background2} />
-          <LinearGradient id="area-gradient" from={accentColor} to={accentColor} toOpacity={0.1} />
           <GridRows
             scale={stockValueScale}
             width={xMax}
@@ -207,37 +204,36 @@ const Graph = withTooltip(
             strokeOpacity={0.3}
             pointerEvents="none"
           />
-          {tooltipData && (
-          <AreaClosed
-            data={tooltipData.priceTimeWindow}
-            x={d => dateScale(getDate(d))}
-            y={d => stockValueScale(getStockValue(d))}
-            yScale={stockValueScale}
-            strokeWidth={2}
-            stroke={tooltipColor}
-            fill={tooltipColor}
-          />
-          )}
-          {selectedRange && (
-          <AreaClosed
-            data={getSelectedRange()}
-            x={d => dateScale(getDate(d))}
-            y={d => stockValueScale(getStockValue(d))}
-            yScale={stockValueScale}
-            strokeWidth={2}
-            stroke={selectedPortionColor}
-            fill={selectedPortionColor}
-          />
-          )}
           <AreaClosed
             data={stock}
             x={d => dateScale(getDate(d))}
             y={d => stockValueScale(getStockValue(d))}
             yScale={stockValueScale}
-            strokeWidth={1}
-            stroke="url(#area-gradient)"
-            fill="url(#area-gradient)"
+            strokeWidth={2}
+            stroke={stockStrokeColor}
+            fill={stockColor}
+            opacity={0.5}
           />
+          {tooltipData && (
+          <LinePath
+            data={tooltipData.priceTimeWindow}
+            x={d => dateScale(getDate(d))}
+            y={d => stockValueScale(getStockValue(d))}
+            yScale={stockValueScale}
+            strokeWidth={2}
+            stroke={tooltipReflectionColor}
+          />
+          )}
+          {selectedRange && (
+          <LinePath
+            data={getSelectedRange()}
+            x={d => dateScale(getDate(d))}
+            y={d => stockValueScale(getStockValue(d))}
+            yScale={stockValueScale}
+            strokeWidth={2}
+            stroke={selectionColor}
+          />
+          )}
           {showPostVolume && (
             <>
             <LinePath
@@ -245,9 +241,9 @@ const Graph = withTooltip(
               x={d => dateScale(getDate(d))}
               y={d => postVolumeScale(getPostVolumeValue(d))}
               yScale={postVolumeScale}
-              strokeWidth={2}
+              strokeWidth={1}
               stroke={volumeLineColor}
-              opacity={0.4}
+              opacity={0.8}
             />
             { tooltipData && (
               <LinePath
@@ -256,7 +252,7 @@ const Graph = withTooltip(
                 y={d => postVolumeScale(getPostVolumeValue(d))}
                 yScale={postVolumeScale}
                 strokeWidth={2}
-                stroke={tooltipColor}
+                stroke={tooltipReflectionColor}
                 opacity={0.8}
                 fill="transparent"
               /> 
@@ -268,7 +264,7 @@ const Graph = withTooltip(
                 y={d => postVolumeScale(getPostVolumeValue(d))}
                 yScale={postVolumeScale}
                 strokeWidth={2}
-                stroke={selectedPortionColor}
+                stroke={selectionColor}
                 opacity={0.8}
                 fill="transparent"
               /> 
@@ -298,7 +294,7 @@ const Graph = withTooltip(
                 from={{ x: tooltipLeft, y: 0 }}
                 to={{ x: tooltipLeft, y: yMax }}
                 stroke={tooltipColor}
-                strokeWidth={2}
+                strokeWidth={1}
                 pointerEvents="none"
                 strokeDasharray="5,2"
               />
@@ -329,8 +325,8 @@ const Graph = withTooltip(
               <Line
                 from={{ x: dateScale(selectedRange.midDate), y: 0 }}
                 to={{ x: dateScale(selectedRange.midDate), y: yMax }}
-                stroke={selectedPortionColor}
-                strokeWidth={2}
+                stroke={selectionColor}
+                strokeWidth={1}
                 pointerEvents="none"
                 strokeDasharray="5,2"
               />
@@ -338,7 +334,7 @@ const Graph = withTooltip(
                 cx={dateScale(selectedRange.midDate)}
                 cy={stockValueScale(getStockValue(getPricePointWithDate(selectedRange.midDate)))}
                 r={4}
-                fill={selectedPortionColor}
+                fill={selectionColor}
                 stroke="white"
                 strokeWidth={2}
                 pointerEvents="none"
@@ -348,7 +344,7 @@ const Graph = withTooltip(
                     cx={dateScale(selectedRange.midDate)}
                     cy={postVolumeScale(getPostVolumeValue(getVolumePointWithDate(selectedRange.midDate)))}
                     r={4}
-                    fill={selectedPortionColor}
+                    fill={selectionColor}
                     stroke="white"
                     strokeWidth={2}
                     pointerEvents="none"
@@ -395,5 +391,3 @@ const Graph = withTooltip(
       </div>)
   },
 )
-
-export default Graph

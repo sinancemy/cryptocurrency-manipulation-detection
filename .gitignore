@@ -6,3 +6,8 @@
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+
+# Ignore these allah icin
+__pycache__/
+.idea/
+.DS_Store

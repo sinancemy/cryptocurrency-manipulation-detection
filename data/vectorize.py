@@ -55,7 +55,7 @@ class DiscreteDomain:
 
 class Vocabulary(DiscreteDomain):
     def __init__(self, sentences, max_vocab_size=10000, min_count_to_include=15,
-                 sentence_length_range=(4, 128), max_word_length=25):
+                 sentence_length_range=(0, 128), max_word_length=25):
         self.ALLOWED_CHAR_SET = set(string.ascii_lowercase + string.digits + string.punctuation)
         self.UNK = "<unk>"
         self.min_sentence_length = sentence_length_range[0]
@@ -134,6 +134,7 @@ class Vectorizer:
     def load(self, load_dir):
         load_file = open(load_dir, "rb")
         data = load_file.read()
+        decompressed = zlib.decompress(data).decode()
         data = eval(zlib.decompress(data).decode())
         self.domains = list()
         for domain_data in data:

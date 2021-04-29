@@ -109,11 +109,17 @@ def create_conditionals(selectors: list) -> (str, list):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors: list) -> (str, list):
-    sql = "SELECT * FROM " + table_name
+def generate_select_query(table_name, selectors: list, cols=None) -> (str, list):
+    if cols is None:
+        cols = ['*']
+    sql = "SELECT " + ",".join(cols) + " FROM " + table_name
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
     return sql, cond_params
+
+
+def generate_select_distinct_query(table_name: str, cols: list) -> str:
+    return "SELECT DISTINCT " + ",".join(cols) + " FROM " + table_name
 
 
 # Creates a DELETE query with given predicates in the form of selector objects.
@@ -121,4 +127,23 @@ def generate_delete_query(table_name, selectors: list):
     sql = "DELETE FROM " + table_name
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
+    return sql, cond_params
+
+
+def generate_top_query(table_name, order_by, order_dir: str, limit: int, selectors: list):
+    sql = "SELECT * FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    sql += " ORDER BY " + order_by + " " + order_dir
+    sql += " LIMIT " + str(limit)
+    return sql, cond_params
+
+
+def generate_grouped_top_query(table_name, group_by, group_selector: str, limit: int, selectors: list):
+    sql = "SELECT " + group_selector + ",* FROM " + table_name
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    sql += " GROUP BY " + group_by
+    sql += " ORDER BY " + group_selector + " DESC"
+    sql += " LIMIT " + str(limit)
     return sql, cond_params

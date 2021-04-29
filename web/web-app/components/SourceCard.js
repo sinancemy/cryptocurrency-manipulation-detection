@@ -1,59 +1,59 @@
 import { useCallback, useEffect, useState } from "react"
+import { getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
+import Link from "next/link"
+import { MultipurposeCard } from "./MultipurposeCard"
+import { TiAt } from "react-icons/ti"
 
-export const SourceCard = ({ 
-                            source,
-                            checkbox = true,
-                            isSelected,
-                            onToggle,
-                            nameColorMap =  [["twitter", "blue"], ["reddit", "red"]]
-                          }) => {
+const color = "transparent"
+const selectedColor = "gray-850"
+const textColor = "gray-100"
 
-  const getSourceParts = useCallback(() => {
-    const [username, src] = source.split("@")
-    return [username, src]
-  }, [source])
+export const SourceCard = ({ source, isSelected, onToggle }) => {
 
-  const hasUser = useCallback(() => {
-    return getSourceParts()[0] !== "*"
-  }, [source])
-
-  const getColor = useCallback(() => {
-    for(const e of nameColorMap) {
-      if(getSourceParts()[1].includes(e[0])) return e[1]
-    }
-    return "gray"
-  }, [source])
+  const isUser = useCallback(() => getSourceParts(source)[0] !== "*", [source])
 
   return (
+    <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
       <label
-        className={`flex flex-row flex-justify-between shadow-sm border border-gray-200 text-sm w-full px-3 py-1 rounded rounded-md
-          bg-${getColor()}-${isSelected() ? '200' : '100'}
-          hover:bg-${getColor()}-200
-          ${isSelected() ? 'border border-gray-300' : ''}
-        `}
-      >
-        <div className="mr-2">
-          { checkbox && (<input 
-            type="checkbox"
-            onClick={onToggle}
-            checked={isSelected()}
-          />) }
-        </div>
-        { hasUser() ? (
-          <>
-            <div className="truncate w-24">
-              { getSourceParts()[0] }
+        className={`cursor-pointer text-${textColor} text-sm`}>
+        <MultipurposeCard badgeColor={getSourceColor(source)} colorizer={() => isSelected() ? selectedColor : color}>
+          <MultipurposeCard.Left>
+            <div className="w-24 truncate">
+              <input 
+                type="checkbox"
+                className="hidden"
+                onClick={onToggle}
+                checked={isSelected()} />
+                    { isUser() ? (
+                      <span className="hover:underline">
+                        <Link href={`/user-info?user=` + source}>
+                          {getSourceParts(source)[0]}
+                        </Link>
+                      </span>
+                    ) : (
+                      <span className="hover:underline">
+                        <Link href={`/source-info?source=` + source}>
+                          {getSourceParts(source)[1]}
+                        </Link>
+                      </span>
+                    )}
+              </div>
+          </MultipurposeCard.Left>
+          <MultipurposeCard.Middle>
+            { isUser() && (
+              <div className="flex flex-row items-center w-16 truncate">
+                  <span className="ml-2 text-xs opacity-30">{getSourceIcon(source)}</span>
+                  <span className="ml-1 text-xs opacity-30">{getSourceParts(source)[1]}</span>  
+                </div>            
+            )}
+          </MultipurposeCard.Middle>
+          <MultipurposeCard.Right>
+            <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
+                { isUser() ?  <TiAt /> : getSourceIcon(source) }
             </div>
-            <div className="flex-grow"></div>
-            <div className="text-xs font-light align-bottom">
-              { getSourceParts()[1] }
-            </div>
-          </>
-        ) : 
-          <div class="">
-            { getSourceParts()[1] }
-          </div>
-        }
+          </MultipurposeCard.Right>
+        </MultipurposeCard>
       </label>
-  )
+    </div>
+    )
   }

@@ -45,7 +45,7 @@ class TwitterCrawler(Collector):
 
     @staticmethod
     def get_all_sources() -> list:
-        return [username + "@twitter" for username in usernames]
+        return ["*@twitter"] + [username + "@twitter" for username in usernames]
 
     def collect(self, time_range: TimeRange):
         for username in usernames:

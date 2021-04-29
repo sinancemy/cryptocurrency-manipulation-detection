@@ -21,7 +21,6 @@ app.config["CORS_SUPPORTS_CREDENTIALS"] = True
 
 CORS(app)
 
-
 def get_coin_type_arg() -> Optional[misc.CoinType]:
     coin_type = request.args.get("type", type=str, default=None)
     if coin_type is None:
@@ -67,11 +66,17 @@ def get_posts():
     posts = db.read_by("posts", selectors, row_to_post)
 
     # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-    posts = predictor.predict(posts)
-
+    if len(posts) > 0:
+        posts = predictor.predict(posts)
     # Sort by time.
     posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
+
+
+@app.route("/api/user_list")
+def get_user_list():
+    db = Database()
+    return jsonify(db.read_users())
 
 
 @app.route("/api/prices")
@@ -102,9 +107,9 @@ def get_coin_list():
 def get_source_list():
     sources = get_all_sources()
     return jsonify([{
-            "username": src.username,
-            "source": src.source
-        } for src in sources])
+        "user": src.username,
+        "source": src.source
+    } for src in sources])
 
 
 @app.route("/api/post_volume")
@@ -127,7 +132,7 @@ def calculate_post_volume():
         count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
         volume = count
         if i > 0:
-            volume += volumes[i-1]['volume']
+            volume += volumes[i - 1]['volume']
         volumes.append({
             'time': tick_start,
             'next_time': tick_end,
@@ -137,10 +142,62 @@ def calculate_post_volume():
     return jsonify(volumes)
 
 
-@app.route("/api/prediction")
-def prediction():
-    # TODO implement
-    return jsonify({})
+@app.route("/api/coin_info")
+def get_coin_info():
+    coin_type = get_coin_type_arg()
+    top_user_limit = request.args.get("userlimit", type=int, default=5)
+    top_source_limit = request.args.get("sourcelimit", type=int, default=5)
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    db = Database()
+    top_sources = db.read_top_sources(coin_type, top_source_limit,
+                                      lambda row: {"total_msg": row[0], "source": row[5]})
+    top_active_users = db.read_top_active_users(coin_type, top_user_limit,
+                                                lambda row: {"total_msg": row[0], "source": row[5], "user": row[3]})
+    top_interacted_users = db.read_top_interacted_users(coin_type, top_user_limit,
+                                                        lambda row: {"total_interaction": row[0], "source": row[5],
+                                                                     "user": row[3]})
+    last_price = db.read_last_price(coin_type)
+    num_followers = db.read_num_coin_followers(coin_type)
+    return jsonify({
+        "num_followers": num_followers,
+        "top_sources": top_sources,
+        "top_active_users": top_active_users,
+        "top_interacted_users": top_interacted_users,
+        "last_price": dictify(last_price, excluded_keys={"type"})
+    })
+
+
+@app.route("/api/source_info")
+def get_source_info():
+    source = request.args.get("source", type=str, default=None)
+    user = request.args.get("user", type=str, default=None)
+    top_user_limit = request.args.get("userlimit", type=int, default=5)
+    relevant_coin_limit = request.args.get("coinlimit", type=int, default=5)
+    if source is None:
+        return jsonify({"result": "error", "error_msg": "Invalid source."})
+    db = Database()
+    if user is not None:
+        num_followers = db.read_num_user_followers(user, source)
+        return jsonify({
+            "num_followers": num_followers
+        })
+    top_active_users = db.read_grouped_tops("posts", "user", "COUNT(id)", top_user_limit,
+                                            [MatchSelector("source", source)],
+                                            lambda row: {"total_msg": row[0], "user": row[3]})
+    top_interacted_users = db.read_grouped_tops("posts", "user", "SUM(interaction)", top_user_limit,
+                                                [MatchSelector("source", source)],
+                                                lambda row: {"total_interaction": row[0], "user": row[3]})
+    relevant_coins = db.read_grouped_tops("posts", "coin_type", "COUNT(id)", relevant_coin_limit,
+                                          [MatchSelector("source", source)],
+                                          lambda row: {"msg_count": row[0], "coin_type": row[2]})
+    num_followers = db.read_num_source_followers(source)
+    return jsonify({
+        "num_followers": num_followers,
+        "top_active_users": top_active_users,
+        "top_interacted_users": top_interacted_users,
+        "relevant_coins": relevant_coins
+    })
 
 
 @app.route("/user/login", methods=["POST"])

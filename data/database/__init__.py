@@ -20,11 +20,13 @@ def recreate_database():
 
 class Database(object):
     conn = None
+
     def __init__(self):
         try:
             self.conn = sqlite3.connect(DATABASE_FILE)
         except Exception as e:
             print("Could not connect to the database", e)
+
     # Adds the given models into the specified table.
     # Fields that are named as 'id' are discarded.
     def create(self, table, models: list, ignore=True):
@@ -99,3 +101,69 @@ class Database(object):
 
     def read_prices_by_coin_type(self, coin_type: CoinType):
         return self.read_by("prices", [MatchSelector('coin_type', coin_type.value)], row_to_price)
+
+    def read_tops(self, table_name: str, order_by: str, order_dir: str, limit: int, selectors: list, row_converter):
+        sql, params = generate_top_query(table_name, order_by=order_by, order_dir=order_dir, limit=limit,
+                                         selectors=selectors)
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return [row_converter(r) for r in rows]
+
+    def read_grouped_tops(self, table_name: str, group_by: str, group_selector: str, limit: int, selectors: list,
+                          row_converter):
+        sql, params = generate_grouped_top_query(table_name, group_by=group_by, group_selector=group_selector,
+                                                 limit=limit, selectors=selectors)
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return [row_converter(r) for r in rows]
+
+    def read_top_sources(self, coin_type: CoinType, limit: int, row_converter) -> list:
+        return self.read_grouped_tops("posts", "source", "COUNT(id)", limit,
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
+
+    def read_top_active_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
+        return self.read_grouped_tops("posts", "user", "COUNT(id)", limit,
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
+
+    def read_top_interacted_users(self, coin_type: CoinType, limit: int, row_converter) -> list:
+        return self.read_grouped_tops("posts", "user", "SUM(interaction)", limit,
+                                      [MatchSelector("coin_type", coin_type.value)], row_converter)
+
+    def read_num_source_followers(self, source: str):
+        sql, params = generate_select_query("followed_sources", [MatchSelector("source", "*@" + source)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def read_num_user_followers(self, user: str, source: str):
+        sql, params = generate_select_query("followed_sources", [MatchSelector("source", user + "@" + source)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def read_num_coin_followers(self, coin: CoinType):
+        sql, params = generate_select_query("followed_coins", [MatchSelector("coin_type", coin.value)],
+                                            ["COUNT(userid)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def read_last_price(self, coin_type: CoinType):
+        rows = self.read_tops("prices", "time", "desc", 1, [MatchSelector("coin_type", coin_type.value)], row_to_price)
+        if len(rows) < 1:
+            return None
+        return rows[0]
+
+    def read_users(self):
+        sql = generate_select_distinct_query("posts", ["user", "source"])
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return [{"user": r[0], "source": r[1]} for r in rows]
