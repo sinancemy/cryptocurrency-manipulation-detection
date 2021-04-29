@@ -49,7 +49,8 @@ export const Graph = withTooltip(
     stock,
     postVolume,
     showPostVolume = false,
-    showPostCount = false}) => {
+    showPostCount = false,
+    impactScore}) => {
     const width = parentWidth
     const height = parentHeight
     if (width < 10) return null;

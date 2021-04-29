@@ -13,17 +13,17 @@ export const MiniImpact = ({ impact }) => {
           onMouseEnter={() => setFocused(true)}
           onMouseLeave={() => setFocused(false)}>
             { !focused && (
-              <div className={`flex flex-row border border-transparent px-1 items-center text-${getImpactColor(avgImpact)}`}>
+              <div className={`flex flex-row border border-transparent items-center text-${getImpactColor(avgImpact)}`}>
+                <span className="mr-1">{avgImpact.toFixed(1)}</span>
                 <span>{getImpactIcon(avgImpact)}</span>
-                <span className="ml-1">{avgImpact.toFixed(1)}</span>
               </div>
             )}
         { focused && (
-          <div className={`flex flex-row items-center rounded px-1 bg-${tooltipColor} border border-${getImpactColor(avgImpact)}`}>
+          <div className={`flex flex-row items-center rounded bg-${tooltipColor} border border-${getImpactColor(avgImpact)}`}>
             {impact.map(pred => (
                 <div className={`flex flex-row items-center text-${getImpactColor(pred)}`}>
-                  <span className="ml-1">{getImpactIcon(pred)}</span>
                   <span className="ml-1">{pred.toFixed(1)}</span>
+                  <span className="ml-1">{getImpactIcon(pred)}</span>
                 </div>
                 )
             )}

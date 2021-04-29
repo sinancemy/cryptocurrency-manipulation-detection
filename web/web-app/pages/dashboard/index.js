@@ -11,7 +11,7 @@ import { SourceCard } from "../../components/SourceCard"
 import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
 import { PostOverview } from "../../components/PostOverview"
-import { dateToString, getCoinColor, getCoinIcon, getSourceColor, getSourceIcon } from "../../Helpers"
+import { dateToString, getAvgImpact, getCoinColor, getCoinIcon, getSourceColor, getSourceIcon } from "../../Helpers"
 import { CoinCard } from "../../components/CoinCard"
 import { IoMdSettings } from "react-icons/io"
 import { withParentSize } from '@vx/responsive';
@@ -149,9 +149,10 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
         setSortedPosts([])
         return
       }
-      const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time : 
-                      (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction :
-                                                          (a, b) => ('' + a.user).localeCompare(b.user)
+      const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time
+                    : (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction
+                    : (sortByOption === "impact") ? (a, b) => getAvgImpact(a.impact) - getAvgImpact(b.impact)
+                    : (a, b) => ('' + a.user).localeCompare(b.user)
       const sorted = [...posts].sort(sorter)
       if(sortOrderOption === "descending") {
         sorted.reverse()
@@ -305,7 +306,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
                 <div className="flex items-center border-r border-gray-780 mr-2 px-2">
                   <span className="">sort by</span>
                     <SimpleDropdown 
-                      options={['time', 'interaction', 'user']} 
+                      options={['time', 'interaction', 'user', 'impact']} 
                       selected={sortByOption} 
                       setSelected={setSortByOption} />
                     <span className="mx-1">in</span>

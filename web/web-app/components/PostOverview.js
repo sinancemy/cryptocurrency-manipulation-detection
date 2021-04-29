@@ -60,7 +60,7 @@ export const PostOverview = ({ post }) => {
       <MultipurposeCard.Middle>
         <div className="px-4">
           <div 
-            className={`${!selected && 'max-h-16'} overflow-hidden bg-${innerColor} border border-${innerBorderColor} 
+            className={`${!selected ? 'h-16' : ''} overflow-hidden bg-${innerColor} border border-${innerBorderColor} 
               px-4 py-2 rounded ${!selected && 'cursor-pointer'}`}
             onClick={() => setSelected(!selected)}>
             <p>
@@ -72,12 +72,12 @@ export const PostOverview = ({ post }) => {
       <MultipurposeCard.Right>
         <div className={`flex flex-col w-32`}>
           <div className={`px-2 py-1 flex flex-row items-center justify-end text-${getInteractionColor(post.interaction)}`}>
-            <IoChatbubblesSharp />
-            <span className="ml-1">
+            <span className="mr-1">
               {post.interaction}
             </span>
+            <IoChatbubblesSharp />
           </div>
-          <div className={`px-2 py-1 flex flex-row justify-end text-${mutedColor}`}>
+          <div className={`px-2 flex flex-row justify-end text-${mutedColor}`}>
             <MiniImpact impact={ post.impact } />
           </div>
           <div className={`flex py-1 items-center flex-row justify-end text-xs text-${mutedColor}`}>

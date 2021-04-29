@@ -66,3 +66,5 @@ export const getImpactColor = (impact) => (impact > 1) ? positiveImpactColor
 export const getImpactIcon = (impact) => (impact > 1) ? positiveImpactIcon 
                                         : (impact < -1 ) ? negativeImpactIcon
                                         : neutralImpactIcon
+
+export const getAvgImpact = (impact) => (impact[0] + impact[1] + impact[2] + impact[3])/4
