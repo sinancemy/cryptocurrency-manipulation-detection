@@ -1,3 +1,4 @@
+import { BsArrowDownRight, BsArrowRight, BsArrowUpRight } from "react-icons/bs"
 import { FaRedditAlien, FaTwitter, FaEthereum, FaBitcoin } from "react-icons/fa"
 import { RiCoinFill } from "react-icons/ri"
 
@@ -48,3 +49,20 @@ export const getCoinIcon = (coin) => {
   }
   return <RiCoinFill />
 }
+
+
+const positiveImpactColor = "green-500"
+const neutralImpactColor = "yellow-500"
+const negativeImpactColor = "red-500"
+
+const positiveImpactIcon = <BsArrowUpRight />
+const negativeImpactIcon = <BsArrowDownRight />
+const neutralImpactIcon = <BsArrowRight/>
+
+export const getImpactColor = (impact) => (impact > 1) ? positiveImpactColor 
+                                        : (impact < -1 ) ? negativeImpactColor
+                                        : neutralImpactColor
+
+export const getImpactIcon = (impact) => (impact > 1) ? positiveImpactIcon 
+                                        : (impact < -1 ) ? negativeImpactIcon
+                                        : neutralImpactIcon

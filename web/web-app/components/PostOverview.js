@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react"
 import { IoChatbubblesSharp } from "react-icons/io5"
-import { FaCode } from "react-icons/fa"
 import { dateToString, getCoinIcon, getSourceColor, getSourceIcon } from "../Helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
+import { MiniImpact } from "./MiniImpact"
+import { MdDateRange } from "react-icons/md"
 import Link from "next/link"
 
 const mutedColor = "gray-500"
@@ -76,7 +77,10 @@ export const PostOverview = ({ post }) => {
               {post.interaction}
             </span>
           </div>
-          <div className={`px-2 py-1 flex flex-row text-xs justify-end text-${mutedColor}`}>
+          <div className={`px-2 py-1 flex flex-row justify-end text-${mutedColor}`}>
+            <MiniImpact impact={ post.impact } />
+          </div>
+          <div className={`flex py-1 items-center flex-row justify-end text-xs text-${mutedColor}`}>
             <span>
               {dateToString(new Date(post.time*1000))}
             </span>
