@@ -1,148 +1,171 @@
+import { DashboardPanel } from "../../components/DashboardPanel";
 import axios from "axios";
 import cookie from "cookie";
-import { DashboardPanel } from "../../components/DashboardPanel"
-import { SimpleDropdown } from "../../components/SimpleDropdown"
-import { useCallback, useEffect, useRef, useState } from "react";
-import { PostOverview } from "../../components/PostOverview"
-import { CuteButton } from "../../components/CuteButton"
-import { SourceCard } from "../../components/SourceCard"
+import { SimpleDropdown } from "../../components/SimpleDropdown";
+import { PostOverview } from "../../components/PostOverview";
+import { useEffect, useState } from "react";
+import { FaRedditAlien, FaTwitter } from "react-icons/fa";
+import { CuteButton } from "../../components/CuteButton";
 
 export async function getServerSideProps(context) {
-    if (context.req.headers.cookie == null) {
-      return {
-        redirect: {
-          destination: "/",
-          permanent: false,
-        },
-      };
-    }
-    const res = await axios.get("http://127.0.0.1:5000/api/source_list");
-    
-    const cookies = cookie.parse(context.req.headers.cookie);
-    const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
-      params: {
-        token: cookies.token,
+  if (context.req.headers.cookie == null) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
       },
-    });
-    var userinfo = null;
-    if (res2.data.result === "ok") {
-      userinfo = res2.data.userinfo;
-    }
-    var reddit_source = res.data
-    .filter((source) => source.source.includes("reddit"))
-    .sort((a, b) => a.source.localeCompare(b.source));
+    };
+  }
 
-  let users = [];
-
-  await Promise.all(
-    reddit_source.map(async (source) => {
-      let reddit_users = new Set();
-      const res3 = await axios.get(
-        "http://127.0.0.1:5000/api/posts?source=" + source.source
-      );
-      res3.data.forEach((entry) => {
-        reddit_users.add(entry.user);
-      });
-      reddit_users = Array.from(reddit_users).sort();
-      reddit_users.unshift("Follow All Sources");
-      users.push([source.source, reddit_users]);
-    })
+  const splitted = context.query.user.split("@");
+  const res2 = await axios.get(
+    "http://127.0.0.1:5000/api/posts?source=" +
+      splitted[1] +
+      "&user=" +
+      splitted[0]
   );
 
-  let twitter_users = [];
-  res.data
-    .filter((source) => source.source.includes("twitter"))
-    .forEach((source) => twitter_users.push(source.username));
+  const cookies = cookie.parse(context.req.headers.cookie);
+  const res3 = await axios.get("http://127.0.0.1:5000/user/info", {
+    params: {
+      token: cookies.token,
+    },
+  });
+  var userinfo = null;
+  if (res3.data.result === "ok") {
+    userinfo = res3.data.userinfo;
+  }
 
-  twitter_users.sort();
-  twitter_users.unshift("Follow All Sources");
-  users = users.sort((a, b) => a[0].localeCompare(b[0]));
-  users.unshift(["twitter", twitter_users]);
-
-
-  let source = context.query.user.substring(context.query.user.indexOf("@")+1)
-  let user = context.query.user.substring(0, context.query.user.indexOf("@"))
-  const res4 = await axios.get("http://127.0.0.1:5000/api/posts?source=" + source + "&user=" + user);
-
-  let post = res4.data
+  let isFollowing = false;
+  userinfo.followed_sources.forEach((source) => {
+    if (source.source.includes(context.query.user)) {
+      isFollowing = true;
+    }
+  });
 
   return {
     props: {
-      users: users,
-      userInfo: userinfo,
-      userQuery: context.query.user,
-      post: post,
+      sourceName: context.query.user,
+      post: res2.data,
+      isFollowingSource: isFollowing,
     },
   };
-  }
+}
 
-export default function CoinInfo({userQuery, userInfo, post}){
+export default function UserInfo({
+  sourceName,
+  post,
+  isFollowingSource,
+  token,
+}) {
+  const [buttonBoolean, setButtonBoolean] = useState(isFollowingSource);
+  const [sortByOption, setSortByOption] = useState("interaction");
+  const [sortOrderOption, setSortOrderOption] = useState("descending");
+  const [posts, setPosts] = useState(post);
+  const [sortedPosts, setSortedPosts] = useState([]);
 
-    const [sortByOption, setSortByOption] = useState("interaction")
-    const [sortOrderOption, setSortOrderOption] = useState("descending")
-    const [posts, setPosts] = useState([])
-    const [sortedPosts, setSortedPosts] = useState([])
+  useEffect(() => {
+    if (posts === null || posts.length === 0) {
+      setSortedPosts([]);
+      return;
+    }
+    const sorter =
+      sortByOption === "time"
+        ? (a, b) => a.time - b.time
+        : sortByOption === "interaction"
+        ? (a, b) => a.interaction - b.interaction
+        : (a, b) => ("" + a.user).localeCompare(b.user);
+    const sorted = [...posts].sort(sorter);
+    if (sortOrderOption === "descending") {
+      sorted.reverse();
+    }
+    setSortedPosts(sorted);
+  }, [posts, sortOrderOption, sortByOption]);
 
-    useEffect(() => {
-        if(posts === null || posts.length === 0) {
-          setSortedPosts([])
-          return
-        }
-        const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time : 
-                        (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction :
-                                                            (a, b) => ('' + a.user).localeCompare(b.user)
-        const sorted = [...posts].sort(sorter)
-        if(sortOrderOption === "descending") {
-          sorted.reverse()
-        }
-        setSortedPosts(sorted)
-      }, [posts, sortOrderOption, sortByOption])
+  const followUser = async () => {
+    if (buttonBoolean) {
+      await axios.get(
+        "http://127.0.0.1:5000/user/follow_source?token=" +
+          token +
+          "&source=" +
+          sourceName +
+          "&unfollow=1"
+      );
+    } else {
+      await axios.get(
+        "http://127.0.0.1:5000/user/follow_source?token=" +
+          token +
+          "&source=" +
+          sourceName +
+          "&unfollow=0"
+      );
+    }
+    setButtonBoolean(!buttonBoolean);
+  };
 
-    return(
-        <div className="animate-fade-in-down mx-10 grid grid-cols-6">
-         <div className="col-start-3 py-5 col-span-2">
-            <div className="col-start-2 bg-white border-b rounded">
-                <h1 className="font-bold text-center text-2xl py-2">
-                    {userQuery.substring(0, userQuery.indexOf("@"))} - {userQuery.substring(userQuery.indexOf("@")+1)}
-                </h1>
+  return (
+    <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-4">
+      <div className="col-start-2 col-span-2">
+        <DashboardPanel collapsable={false}>
+          <DashboardPanel.Header>
+            <div className="grid grid-cols-1 place-items-center">
+              {sourceName.includes("twitter") ? (
+                <FaTwitter className="h-12 w-12 items-center" />
+              ) : (
+                <FaRedditAlien className="h-12 w-12 items-center" />
+              )}
+              <span className="mt-2">{sourceName}</span>
+              <div className="mt-2">
+                <CuteButton onClick={() => followUser()} disabled={() => false}>
+                  {buttonBoolean ? "Unfollow" : "Follow"}
+                </CuteButton>
+              </div>
             </div>
-        </div>
-
-        <div className="col-start-2 py-2 col-span-4">
+          </DashboardPanel.Header>
+          <DashboardPanel.Body></DashboardPanel.Body>
+        </DashboardPanel>
+      </div>
+      <div className="col-start-4 col-span-7">
         <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
-            <div className="flex flex-justify-between font-light">
+            <div className="flex items-center flex-justify-between font-normal">
+              <div>
+                <span>Showing all posts from </span>
+                <span className="font-semibold">{sourceName}</span>
+              </div>
               <span class="flex-grow"></span>
-              <div className="flex">
-                <div className="mr-2 px-2">
-                  sort by {" "}
-                    <SimpleDropdown 
-                      options={['time', 'interaction', 'user']} 
-                      selected={sortByOption} 
-                      setSelected={setSortByOption} />
-                    {" "} in <SimpleDropdown 
-                      options={['ascending', 'descending']} 
-                      selected={sortOrderOption} 
-                      setSelected={setSortOrderOption} />
-                      {" "} order
+              <div className="flex text-xs items-center">
+                <div className="flex items-center border-gray-780 mr-2 px-2">
+                  <span className="">sort by</span>
+                  <SimpleDropdown
+                    options={["time", "interaction"]}
+                    selected={sortByOption}
+                    setSelected={setSortByOption}
+                  />
+                  <span className="mx-1">in</span>
+                  <SimpleDropdown
+                    options={["ascending", "descending"]}
+                    selected={sortOrderOption}
+                    setSelected={setSortOrderOption}
+                  />
+                  <span className="mx-1">order</span>
                 </div>
               </div>
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-          {post.length > 0 ? (
-            <div className="overflow-y-auto max-h-128">
-              {post.map((post, i) => (
-                <PostOverview post={post} />
-              ))}
-            </div>
+            {sortedPosts.length > 0 ? (
+              <div className="overflow-y-auto max-h-128">
+                {sortedPosts.map((post, i) => (
+                  <PostOverview post={post} />
+                ))}
+              </div>
             ) : (
-              <div className="mt-2">There aren't any posts from this user.</div>
+              <div className="mt-2">No posts to show.</div>
             )}
           </DashboardPanel.Body>
         </DashboardPanel>
-        </div>
-
+      </div>
     </div>
-    );
+  );
 }
