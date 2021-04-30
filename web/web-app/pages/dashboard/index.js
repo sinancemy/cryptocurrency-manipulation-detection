@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Graph } from "../../components/Graph"
 import axios from "axios"
 import { DashboardPanel } from "../../components/DashboardPanel"
@@ -9,26 +9,21 @@ import { SourceCard } from "../../components/SourceCard"
 import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
 import { PostOverview } from "../../components/PostOverview"
-import { dateToString, getAvgImpact } from "../../Helpers"
+import { dateToString, getAvgImpact } from "../../helpers"
 import { CoinCard } from "../../components/CoinCard"
 import { IoMdSettings } from "react-icons/io"
 import { withParentSize } from '@vx/responsive';
 import { Prediction } from "../../components/Prediction"
-import { useRequireLogin, useUser } from "../../user-helpers"
+import { useRequireLogin, useUser } from "../../user-hook"
+import { useApiData } from "../../api-hook"
 
 export default function Dashboard() {  
   useRequireLogin()
   const { user } = useUser()
-
-  const [prices, setPrices] = useState([])
-  const [postVolume, setPostVolume] = useState([])
-  const [posts, setPosts] = useState([])
-  const [impactMap, setImpactMap] = useState(new Map())
   
   const [graphSettings, setGraphSettings] = useState(null)
   const [showPostVolume, setShowPostVolume] = useState(true)
-  const [selectedRange, setSelectedRange] = useState(null)
-  const [sortedPosts, setSortedPosts] = useState([])
+  const [selectedPoint, setSelectedPoint] = useState(null)
   const [selectedSources, setSelectedSources] = useState([])
 
   const [sortByOption, setSortByOption] = useState("time")
@@ -36,58 +31,87 @@ export default function Dashboard() {
   const [showPostsOption, setShowPostsOption] = useState("relevant")
   const [showPostsFromOption, setShowPostsFromOption] = useState("selected")
 
-  const discardDuplicatePosts = (posts) => {
-    const dict = {}
-    posts.forEach(p => {
-      dict[p.unique_id] = p
-    });
-    return Object.values(dict)
-  }
+  const [sortedPosts, setSortedPosts] = useState([])
 
-  const getSelectedPrice = useCallback(() => {
-    const date = parseInt(selectedRange.midDate.valueOf()/1000)
-    return prices.find(p => p.time === date)?.price
-  }, [prices, selectedRange])
-
-  const getSelectedVolume = useCallback(() => {
-    const date = parseInt(selectedRange.midDate.valueOf()/1000)
-    return postVolume.find(p => date >= p.time && date < p.next_time)?.volume
-  }, [postVolume, selectedRange])
-
-  const getSelectedRange = useCallback(() => {
-    if(!selectedRange || !graphSettings) return [0, 0]
-    const pw0 = selectedRange.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-    const pw1 = selectedRange.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+  const selectedPostRange = useMemo(() => {
+    if(!selectedPoint || !graphSettings) return [0, 0]
+    const pw0 = selectedPoint.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+    const pw1 = selectedPoint.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
     return [pw0, pw1]
-  }, [selectedRange, graphSettings])
+  }, [selectedPoint, graphSettings])
 
-  const updatePosts = useCallback((start, end) => {
-    if(!graphSettings) return
-    const type = (showPostsOption === "all") ? "*" : graphSettings.coinType 
-    const sourcesToConsider = (showPostsFromOption === "all") ? ["*@*"] : selectedSources
-    const requests = sourcesToConsider.map(src_string => {
-      const [username, source] = src_string.split('@')
-      return axios.get("http://127.0.0.1:5000/api/posts", {
-        params: {
-          start: start,
-          end: end,
-          type: type,
-          user: username,
-          source: source
-        }
-      })
-    })
-    // Get the posts.
-    axios.all(requests).then(axios.spread((...resps) => {
-      const collected = []
-      resps.forEach(resp => {
-        collected.push(...resp.data)
-      });
-      const collectedUniques = discardDuplicatePosts(collected)
-      console.log(collectedUniques)
-      setPosts(collectedUniques)
-      }))
-  }, [showPostsFromOption, showPostsOption, graphSettings, selectedSources]);
+  const selectedPriceRange = useMemo(() => {
+    if(!graphSettings) return [0, 0]
+    const decrement = 60 * 60 * 24 * ((graphSettings.extent === "day") ? 1 : 
+                                      (graphSettings.extent === "month") ? 30 :
+                                      (graphSettings.extent === "week") ? 7 : 365)
+    const winHigh = 1583625601
+    const winLow = winHigh - decrement
+    return [winLow, winHigh]
+  }, [graphSettings])
+
+  // Indicating changes in which states will result in a refetch of the posts.
+  const postsDependencies = [showPostsFromOption, showPostsOption, graphSettings, selectedSources, selectedPostRange]
+  // Indicating when to refetch the posts.
+  const shouldRefetchPosts = useCallback(() => {
+    return graphSettings && !(showPostsFromOption === "selected" && selectedSources.length === 0)
+  }, [graphSettings, showPostsFromOption, selectedSources])  
+  // Fetching the posts.
+  const posts = useApiData([], "posts", {
+    source: (showPostsFromOption === "selected") ? selectedSources.join(";") : null,
+    type: (showPostsOption === "relevant") ? graphSettings?.coinType : null,
+    start: parseInt(selectedPostRange[0]/1000),
+    end: parseInt(selectedPostRange[1]/1000)
+  }, postsDependencies, shouldRefetchPosts)
+  // Impact map will be calculated from the posts.
+  const impactMap = useMemo(() => {
+    if(posts == null || posts.size == 0) return new Map()
+    let newImpactMap = new Map()
+    for (const p of posts) {
+      newImpactMap.set(p.coin_type, [])
+    }
+    for(const p of posts) {
+      newImpactMap.get(p.coin_type).push(p.impact)
+    }
+    const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
+    for(const p of newImpactMap.keys()) {
+      const first = average(newImpactMap.get(p).map(e => e[0]))
+      const second = average(newImpactMap.get(p).map(e => e[1]))
+      const third = average(newImpactMap.get(p).map(e => e[2]))
+      const fourth = average(newImpactMap.get(p).map(e => e[3]))
+      newImpactMap.set(p, [first, second, third, fourth])
+    }
+    return newImpactMap
+  }, [posts])
+
+  // Indicating when to refetch the prices.
+  const shouldRefetchPrices = useCallback(() => graphSettings && selectedPriceRange[0] !== selectedPriceRange[1])
+  // Fetching the prices.
+  const prices = useApiData([], "prices", {
+    start: selectedPriceRange[0],
+    end: selectedPriceRange[1],
+    type: graphSettings?.coinType
+  }, [selectedPriceRange, graphSettings], shouldRefetchPrices,
+      (prices) => prices?.reverse())
+  // Fetching the post volume.
+  const postVolume = useApiData([], "post_volume", {
+    start: selectedPriceRange[0],
+    end: selectedPriceRange[1],
+    type: graphSettings?.coinType,
+    ticks: 1000
+  }, [selectedPriceRange, graphSettings], shouldRefetchPrices)
+
+  const selectedPrice = useMemo(() => {
+    if(!selectedPoint) return 0
+    const date = parseInt(selectedPoint.midDate.valueOf()/1000)
+    return prices.find(p => p.time === date)?.price
+  }, [prices, selectedPoint])
+
+  const selectedVolume = useMemo(() => {
+    if(!selectedPoint) return 0
+    const date = parseInt(selectedPoint.midDate.valueOf()/1000)
+    return postVolume.find(p => date >= p.time && date < p.next_time)?.volume
+  }, [postVolume, selectedPoint])
 
   // Set the initial graph settings.
   useEffect(() => {
@@ -98,31 +122,9 @@ export default function Dashboard() {
       timeWindow: 30,
     })
   }, [user])
-  // Calculate the impact map.
-  useEffect(() => {
-    if(posts == null || posts.size == 0) return
-    let newImpactMap = new Map()
-    for (const p of posts) {
-      newImpactMap.set(p.coin_type, [])
-    }
-    for(const p of posts) {
-      newImpactMap.get(p.coin_type).push(p.impact)
-    }
-    const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
-
-    for(const p of newImpactMap.keys()) {
-      console.log(newImpactMap)
-      const first = average(newImpactMap.get(p).map(e => e[0]))
-      const second = average(newImpactMap.get(p).map(e => e[1]))
-      const third = average(newImpactMap.get(p).map(e => e[2]))
-      const fourth = average(newImpactMap.get(p).map(e => e[3]))
-      newImpactMap.set(p, [first, second, third, fourth])
-    }
-    setImpactMap(newImpactMap)
-  }, [posts])
   // Sorter (this effect will be updating the shown posts!)
   useEffect(() => {
-    if(posts === null || posts.length === 0) {
+    if(posts.length === 0) {
       setSortedPosts([])
       return
     }
@@ -136,47 +138,16 @@ export default function Dashboard() {
     }
     setSortedPosts(sorted)
   }, [posts, sortOrderOption, sortByOption])
-  // Listen to changes in the relevant settings and refetch the posts.
+  // Clear the posts when no source is chosen.
   useEffect(() => {
-    if(selectedRange == null) return
-    const [pw0, pw1] = getSelectedRange()
-    updatePosts(parseInt(pw0/1000), parseInt(pw1/1000))
-  }, [showPostsOption, showPostsFromOption, selectedRange, graphSettings, selectedSources])
-  // Listen to changes in the relevant settings and refetch the prices shown on the graph.
-  useEffect(() => {
-    if(!graphSettings) return
-    const decrement = 60 * 60 * 24 * ((graphSettings.extent === "day") ? 1 : 
-                                      (graphSettings.extent === "month") ? 30 :
-                                      (graphSettings.extent === "week") ? 7 : 365)
-    const winHigh = 1583625601
-    const winLow = winHigh - decrement
-    // Fetch the prices.
-    axios.get("http://127.0.0.1:5000/api/prices", {
-      params: {
-        start: winLow,
-        end: winHigh,
-        type: graphSettings.coinType
-      }
-    }).then(res => {
-      const prices = res.data?.reverse()
-      setPrices(prices)
-    })
-    // Fetch the post volume.
-    axios.get("http://127.0.0.1:5000/api/post_volume", {
-      params: {
-        start: winLow,
-        end: winHigh,
-        type: graphSettings.coinType,
-        ticks: 1000
-      }
-    }).then(res => {
-      setPostVolume(res.data)
-    }) 
-  }, [graphSettings])
+    if(!selectedSources || selectedSources.length === 0) {
+      setSortedPosts([])
+    }
+  }, [selectedSources])
 
   const ResponsiveGraph = withParentSize(Graph)
 
-  return (
+  return (graphSettings &&
     <div className="animate-fade-in-down mx-10 md:flex md:flex-col lg:grid lg:grid-cols-6 mt-2">
       <div className="p-1 col-span-1">
         <DashboardPanel>
@@ -256,8 +227,8 @@ export default function Dashboard() {
               postVolume={postVolume}
               showPostVolume={showPostVolume}
               graphSettings={graphSettings} 
-              selectedRange={selectedRange} 
-              setSelectedRange={setSelectedRange} />
+              selectedRange={selectedPoint} 
+              setSelectedRange={setSelectedPoint} />
         ) : (
           <div className="p-5 text-gray-800">
             No price data found.
@@ -268,12 +239,12 @@ export default function Dashboard() {
         <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
             <div className="flex items-center flex-justify-between font-normal">
-              { selectedRange && graphSettings && (
+              { selectedPoint && graphSettings && (
               <div>
                 <span>Showing new posts from{" "}</span>
-                <span className="font-semibold">{ dateToString(new Date(getSelectedRange()[0]), false) }</span>
+                <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]), false) }</span>
                 <span>{" "}to{" "}</span>
-                <span className="font-semibold">{ dateToString(new Date(getSelectedRange()[1]), false) }</span>
+                <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]), false) }</span>
               </div>
               )}
               <span class="flex-grow"></span>
@@ -314,7 +285,7 @@ export default function Dashboard() {
                 <PostOverview post={post} />
               ))}
             </div>
-            ) : (selectedRange) ? (
+            ) : (selectedPoint) ? (
               <div className="mt-2">No new posts to show in the selected range.</div>
             ) : (
               <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
@@ -377,23 +348,23 @@ export default function Dashboard() {
             </div>
             <div className="text-md">
               <div className="px-4 py-4 mt-2 bg-gray-800 rounded-md">
-                {selectedRange ? (
+                {selectedPoint ? (
                 <>
                 <div>
-                  { dateToString(new Date(selectedRange.midDate)) }
+                  { dateToString(new Date(selectedPoint.midDate)) }
                 </div>
                 <div>
                   <span className="font-semibold">{ graphSettings?.coinType?.toUpperCase() }/USD:{" "}</span>
-                  <span>{ getSelectedPrice()?.toPrecision(5) } </span>
+                  <span>{ selectedPrice?.toPrecision(5) } </span>
                 </div>
                 <div>
                   <span className="font-semibold">Posts (cumulative):{" "}</span>
-                  <span className="col-span-4">{ getSelectedVolume() }</span>
+                  <span className="col-span-4">{ selectedVolume }</span>
                 </div>
                 <div className="w-full pt-2">
                   <CuteButton
                     onClick={() => {
-                      setSelectedRange(null)
+                      setSelectedPoint(null)
                       setPosts(null)
                     }}
                     size={'md'}

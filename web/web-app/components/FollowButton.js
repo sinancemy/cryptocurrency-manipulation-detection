@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { useRequireLogin, useUser } from "../user-helpers";
+import { useRequireLogin, useUser } from "../user-hook";
 import { CuteButton } from "./CuteButton";
 
 export const FollowButton = ({ followEndpoint, params, isFollowing }) => {

@@ -22,16 +22,17 @@ export default function SourceInfo() {
   }, [sourceName])
   const { user, isFollowingSource } = useUser()
   // Fetch the source info and update it when the user changes.
-  const sourceInfo = useApiData(null, "source_info", { 
-    source: getSourceParts(sourceName)[1]
-  }, [user, sourceName], [sourceName])
+  const sourceInfo = useApiData(null, "source_stats", { 
+    source: sourceName
+  }, [user, sourceName], () => sourceName != null)
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
+  // Fetch the posts from the source.
   const posts = useApiData([], "posts", {
-    source: getSourceParts(sourceName)[1]
-  }, [sourceName], [sourceName])
+    source: sourceName
+  }, [sourceName], () => sourceName != null)
   const [sortedPosts, setSortedPosts] = useState([])
-
+  // Sorter.
   useEffect(() => {
     if (posts === null || posts.length === 0) {
       setSortedPosts([]);
@@ -136,7 +137,7 @@ export default function SourceInfo() {
           <DashboardPanel.Body>
               {sourceInfo?.top_interacted_users && sourceInfo.top_interacted_users.map(user => (
                 <SourceOverview
-                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  source={user.source}
                   button={<>{user.total_interaction}</>} 
                   singleLine={true} />
               ))}
@@ -149,7 +150,7 @@ export default function SourceInfo() {
           <DashboardPanel.Body>
             {sourceInfo?.top_active_users && sourceInfo.top_active_users.map(user => (
                 <SourceOverview
-                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  source={user.source}
                   button={<>{user.total_msg}</>}
                   singleLine={true} />
               ))}

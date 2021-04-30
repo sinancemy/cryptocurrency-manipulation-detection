@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { getCoinColor, getCoinIcon, getSourceParts } from "../Helpers"
+import { getCoinColor, getCoinIcon, getSourceParts } from "../helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
 
 

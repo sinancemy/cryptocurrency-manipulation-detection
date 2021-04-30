@@ -7,9 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { TiAt } from "react-icons/ti"
 import Link from "next/link";
 import { FollowButton } from "../../components/FollowButton";
-import { useRequireLogin, useUser } from "../../user-helpers";
-import { getSourceParts } from "../../Helpers";
-import { useApiData } from "../../api-helpers";
+import { useRequireLogin, useUser } from "../../user-hook";
+import { getSourceParts } from "../../helpers";
+import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
 
 export default function UserInfo() {
@@ -23,17 +23,16 @@ export default function UserInfo() {
     }
   }, [sourceName])
   const { user, isFollowingSource } = useUser()
-  // Fetch the source info.
-  const userInfo  = useApiData(null, "source_info", { 
-    source: getSourceParts(sourceName)[1],
-    user: getSourceParts(sourceName)[0]
-  }, [user, sourceName], [sourceName])  
+  // Fetch the user stats from the source stats endpoint.
+  const userInfo  = useApiData(null, "source_stats", { 
+    source: sourceName
+  }, [user, sourceName], () => sourceName != null)  
   const [sortByOption, setSortByOption] = useState("interaction");
   const [sortOrderOption, setSortOrderOption] = useState("descending");
+  // Fetch the user's posts.
   const posts = useApiData([], "posts", {
-    source: getSourceParts(sourceName)[1],
-    user: getSourceParts(sourceName)[0]
-  }, [sourceName], [sourceName]);
+    source: sourceName
+  }, [sourceName], () => sourceName != null);
   const [sortedPosts, setSortedPosts] = useState([]);
 
   useEffect(() => {

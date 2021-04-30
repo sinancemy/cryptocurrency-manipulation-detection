@@ -20,45 +20,16 @@ export default function CoinInfo() {
   const router = useRouter()
   const coinName = router.query.coin
   const { user, isFollowingCoin } = useUser()
-  const coinInfo = useApiData(null, "coin_info", { type: coinName }, [coinName, user], [coinName])
-  const prices = useApiData(null, "prices", {type: coinName}, [coinName], [coinName], (coins) => coins?.reverse())
+  const coinStats = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
+  const prices = useApiData(null, "prices", {type: coinName}, [coinName], () => coinName != null, (coins) => coins?.reverse())
+  const [selectedSources, setSelectedSources] = useState([])
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
   // Will be dynamically updated depending on the selected sources.
-  const [posts, setPosts] = useState([])
+  const posts = useApiData([], "posts", {
+    source: selectedSources.join(";")
+  }, [selectedSources], () => selectedSources != null && selectedSources.length > 0)
   const [sortedPosts, setSortedPosts] = useState([])
-  const [selectedSources, setSelectedSources] = useState([])
-
-  const discardDuplicatePosts = (posts) => {
-    const dict = {}
-    posts.forEach(p => {
-      dict[p.unique_id] = p
-    });
-    return Object.values(dict)
-  }
-
-  const updatePosts = useCallback(() => {
-    const sourcesToConsider = selectedSources
-    console.log(sourcesToConsider)
-    const requests = sourcesToConsider.map(src_string => {
-      const [user, source] = src_string.split('@')
-      return axios.get("http://127.0.0.1:5000/api/posts?type=" + coinName, {
-        params: {
-          user: user,
-          source: source,
-        }
-      })
-    })
-    // Get the posts.
-    axios.all(requests).then(axios.spread((...resps) => {
-      const collected = []
-      resps.forEach(resp => {
-        collected.push(...resp.data)
-      });
-      const collectedUniques = discardDuplicatePosts(collected)
-      setPosts(collectedUniques)
-      }))
-    }, [selectedSources]);  
 
   useEffect(() => {
       if(posts === null || posts.length === 0) {
@@ -76,7 +47,9 @@ export default function CoinInfo() {
   }, [posts, sortOrderOption, sortByOption])
 
   useEffect(() => {
-    updatePosts()
+    if(!selectedSources || selectedSources.length == 0) {
+      setSortedPosts([])
+    }
   }, [selectedSources])
 
   const SimpleResponsiveGraph = withParentSize(SimpleGraph)
@@ -90,7 +63,7 @@ export default function CoinInfo() {
               <span className="text-4xl">{ getCoinIcon(coinName) }</span>
               <span className="mt-2">{coinName.toUpperCase()}</span>
               <span className="mt-2 font-light">
-                {coinInfo?.num_followers && coinInfo.num_followers} Followers
+                {coinStats?.num_followers && coinStats.num_followers} Followers
               </span>
               <div className="mt-2">
                 <FollowButton
@@ -107,17 +80,17 @@ export default function CoinInfo() {
                 Top Relevant Sources
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            { coinInfo?.top_sources && coinInfo.top_sources.length > 0 ? (
-                coinInfo.top_sources.map(source => (
+            { coinStats?.top_sources && coinStats.top_sources.length > 0 ? (
+                coinStats.top_sources.map(source => (
                 <div className="mt-2">
                   <SourceCard 
-                    source={"*@" + source.source}
-                    isSelected={() => selectedSources.includes("*@" + source.source)}
+                    source={source.source}
+                    isSelected={() => selectedSources.includes(source.source)}
                     onToggle={() => {
-                      if(selectedSources.includes("*@" + source.source)) {
-                        setSelectedSources(selectedSources.filter(x => x !== "*@" + source.source))
+                      if(selectedSources.includes(source.source)) {
+                        setSelectedSources(selectedSources.filter(x => x !== source.source))
                       } else {
-                        setSelectedSources([...selectedSources, "*@" + source.source])
+                        setSelectedSources([...selectedSources, source.source])
                       }
                     }} />
                 </div>
@@ -127,8 +100,8 @@ export default function CoinInfo() {
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources(coinInfo?.top_sources?.map(s => "*@"+s.source))}
-                disabled={() => coinInfo?.top_sources == null || selectedSources.length === coinInfo.top_sources.length}>
+                onClick={() => setSelectedSources(coinStats?.top_sources?.map(s => s.source))}
+                disabled={() => coinStats?.top_sources == null || selectedSources.length === coinStats.top_sources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
@@ -144,9 +117,9 @@ export default function CoinInfo() {
       </div>
       <div className="col-start-4 col-span-6">
         <div className="h-48 bg-gray-900 rounded-md overflow-hidden mb-2">
-          {prices && coinInfo?.last_price && coinInfo && <SimpleResponsiveGraph
+          {prices && coinStats?.last_price && coinStats && <SimpleResponsiveGraph
             stock={prices}
-            lastPrice={coinInfo.last_price.price}
+            lastPrice={coinStats.last_price.price}
           />}
         </div>
         <DashboardPanel collapsable={false} restrictedHeight={false}>
@@ -188,11 +161,11 @@ export default function CoinInfo() {
                 Top Active Users
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            { coinInfo?.top_active_users && coinInfo.top_active_users.length > 0 ? (
-                coinInfo.top_active_users.map(user => (
+            { coinStats?.top_active_users && coinStats.top_active_users.length > 0 ? (
+                coinStats.top_active_users.map(user => (
                 <div className="mt-2">
                   <SourceOverview 
-                    source={user.user +"@"+ user.source}
+                    source={user.source}
                     button={<>{user.total_msg}</>} 
                     singleLine={true} />
                 </div>
@@ -205,11 +178,11 @@ export default function CoinInfo() {
                 Top Interacted Users
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            { coinInfo?.top_interacted_users && coinInfo.top_interacted_users.length > 0 ? (
-                coinInfo.top_interacted_users.map(user => (
+            { coinStats?.top_interacted_users && coinStats.top_interacted_users.length > 0 ? (
+                coinStats.top_interacted_users.map(user => (
                 <div className="mt-2">
                   <SourceOverview 
-                    source={user.user +"@"+ user.source}
+                    source={user.source}
                     button={<>{user.total_interaction}</>}
                     singleLine={true} />
                 </div>

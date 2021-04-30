@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
+import { getSourceColor, getSourceIcon, getSourceParts } from "../helpers"
 import Link from "next/link"
 import { MultipurposeCard } from "./MultipurposeCard"
 import { TiAt } from "react-icons/ti"

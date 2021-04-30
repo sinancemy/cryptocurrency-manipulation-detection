@@ -1,5 +1,5 @@
 
-import {getCoinIcon, getImpactColor, getImpactIcon} from "../Helpers";
+import {getCoinIcon, getImpactColor, getImpactIcon} from "../helpers";
 import React from "react";
 
 

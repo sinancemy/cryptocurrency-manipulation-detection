@@ -11,19 +11,7 @@ import Link from "next/link"
 const mutedTextColor = "gray-500"
 const bgColor = "gray-850"
 
-
 export const CoinOverview = ({ coin, button, singleLine = false }) => {
-
-  const [coinInfo, setCoinInfo] = useState(null)
-
-  // TODO parametrize!
-  useEffect(() => {
-    axios.get("http://127.0.0.1:5000/api/coin_info?type=" + coin)
-      .then(resp => {
-        console.log(resp.data)
-        setCoinInfo(resp.data)
-      })
-  }, [coin])
 
   return (coin &&
     <MultipurposeCard badgeColor={getCoinColor(coin)} colorizer={() => bgColor}>
@@ -47,9 +35,7 @@ export const CoinOverview = ({ coin, button, singleLine = false }) => {
                 <FiDollarSign />
               </span>
               <span className={`text-xs text-${mutedTextColor} font-mono`}>
-                { (coinInfo && coinInfo.last_price) ? (
-                  coinInfo.last_price.price.toPrecision(5)
-                ) : ("-")}
+                Not implemented.
               </span>
             </div>
           )}

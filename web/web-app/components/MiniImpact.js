@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { getImpactColor, getImpactIcon } from "../Helpers"
+import { getImpactColor, getImpactIcon } from "../helpers"
 
 const tooltipColor = "gray-900"
 
