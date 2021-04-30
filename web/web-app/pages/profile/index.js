@@ -6,7 +6,7 @@ import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
 import { IoMdSettings } from "react-icons/io"
 import { SourceCard } from "../../components/SourceCard"
-import { useRequireLogin, useUser } from "../../user-helpers"
+import { useRequireLogin, useUser } from "../../user-hook"
 
 export default function Profile() {
   useRequireLogin()

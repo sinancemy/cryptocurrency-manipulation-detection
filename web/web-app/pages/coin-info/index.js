@@ -7,12 +7,12 @@ import { PostOverview } from "../../components/PostOverview"
 import { CuteButton } from "../../components/CuteButton"
 import { SourceCard } from "../../components/SourceCard"
 import { SourceOverview } from "../../components/SourceOverview";
-import { getCoinIcon } from "../../Helpers";
+import { getCoinIcon } from "../../helpers";
 import { FollowButton } from "../../components/FollowButton";
 import { SimpleGraph } from "../../components/SimpleGraph"
 import { withParentSize } from '@vx/responsive';
-import { useRequireLogin, useUser, useUserInfo } from "../../user-helpers";
-import { useApiData } from "../../api-helpers";
+import { useRequireLogin, useUser } from "../../user-hook";
+import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
 
 export default function CoinInfo() {

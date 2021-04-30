@@ -1,7 +1,7 @@
 import "../styles/globals.css"
 import Layout from "../components/Layout"
 import { useCookies } from "react-cookie"
-import { UserProvider } from "../user-helpers"
+import { UserProvider } from "../user-hook"
 
 function MyApp({ Component, pageProps }) {
 

@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useRouter } from "next/router"
-import { useRequireGuest } from "../../user-helpers"
+import { useRequireGuest } from "../../user-hook"
 
 export default function Login() {
   useRequireGuest()

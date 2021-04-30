@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { useRequireGuest } from "../../user-helpers";
+import { useRequireGuest } from "../../user-hook";
 
 export default function Signup() {
   useRequireGuest()

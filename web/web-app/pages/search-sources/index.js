@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SourceOverview } from "../../components/SourceOverview";
 import { FollowButton } from "../../components/FollowButton";
-import { useApiData } from "../../api-helpers";
-import { useRequireLogin, useUser } from "../../user-helpers";
+import { useApiData } from "../../api-hook";
+import { useRequireLogin, useUser } from "../../user-hook";
 
 
 export default function SearchSources() {
   useRequireLogin()
   const { user, isFollowingSource } = useUser()
   const [query, setQuery] = useState("");  
-  const sources = useApiData([], "source_list", {}, [], [], (res) => res.map(s => s.user + '@' + s.source))
+  const sources = useApiData([], "source_list", {}, [], () => true, (res) => res.map(s => s.user + '@' + s.source))
   const [filteredSources, setFilteredSources] = useState([])
 
   useEffect(() => {

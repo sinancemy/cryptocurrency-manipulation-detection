@@ -1,13 +1,13 @@
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SimpleDropdown } from "../../components/SimpleDropdown";
 import { PostOverview } from "../../components/PostOverview";
-import { getSourceIcon, getSourceParts } from "../../Helpers";
+import { getSourceIcon, getSourceParts } from "../../helpers";
 import { useEffect, useMemo, useState } from "react";
 import { SourceOverview } from "../../components/SourceOverview";
 import { CoinOverview } from "../../components/CoinOverview";
 import { FollowButton } from "../../components/FollowButton";
-import { useApiData } from "../../api-helpers";
-import { useRequireLogin, useUser } from "../../user-helpers";
+import { useApiData } from "../../api-hook";
+import { useRequireLogin, useUser } from "../../user-hook";
 import { useRouter } from "next/router";
 
 export default function SourceInfo() {
