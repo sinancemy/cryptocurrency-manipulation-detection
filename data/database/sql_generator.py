@@ -63,10 +63,11 @@ CREATE TABLE "sessions" (
 
 
 class RangeSelector:
-    def __init__(self, col, low, high):
+    def __init__(self, col, low, high, closed=True):
         self.col = col
         self.low = low
         self.high = high
+        self.closed = closed
 
 
 class MatchSelector:
@@ -102,9 +103,19 @@ def create_conditionals(selectors: list) -> (str, list):
     sql = ""
     for (i, selector) in enumerate(selectors):
         if isinstance(selector, RangeSelector):
-            cond = "(" + selector.col + " <= ? AND " + selector.col + " >= ?)"
+            inner_conds = []
+            inner_params = []
+            gt = ">=" if selector.closed else ">"
+            st = "<=" if selector.closed else "<"
+            if selector.high is not None:
+                inner_conds.append("(" + selector.col + (" %s ?)" % st))
+                inner_params.append(selector.high)
+            if selector.low is not None:
+                inner_conds.append("(" + selector.col + (" %s ?)" % gt))
+                inner_params.append(selector.low)
+            cond = "(" + (" AND ".join(inner_conds)) + ")"
             conds.append(cond)
-            params += [selector.high, selector.low]
+            params += inner_params
         elif isinstance(selector, MatchSelector):
             cond = "(" + selector.col + " = ?)"
             conds.append(cond)
@@ -131,12 +142,19 @@ def create_conditionals(selectors: list) -> (str, list):
 
 
 # Creates a SELECT query with given predicates in the form of selector objects.
-def generate_select_query(table_name, selectors: list, cols=None) -> (str, list):
+def generate_select_query(table_name, selectors: list, cols=None, limit=-1, order_by=None, desc=0) -> (str, list):
     if cols is None:
         cols = ['*']
     sql = "SELECT " + ",".join(cols) + " FROM " + table_name
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
+    if order_by is not None:
+        # WARNING! Possible SQL injection vector ahead.
+        sql += " ORDER BY " + order_by + " " + ("ASC" if desc == 0 else "DESC")
+    if limit > 0:
+        sql += " LIMIT ?"
+        cond_params.append(limit)
+    print(sql)
     return sql, cond_params
 
 

@@ -54,8 +54,8 @@ class Database(object):
         self.conn.commit()
 
     # Generic reading method.
-    def read_by(self, table, selectors: list, row_converter) -> list:
-        select_sql, params = generate_select_query(table, selectors)
+    def read_by(self, table, selectors: list, row_converter, limit=-1, order_by=None, desc=0) -> list:
+        select_sql, params = generate_select_query(table, selectors, limit=limit, order_by=order_by, desc=desc)
         cur = self.conn.cursor()
         cur.execute(select_sql, params)
         rows = cur.fetchall()

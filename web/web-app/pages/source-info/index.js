@@ -9,12 +9,14 @@ import { FollowButton } from "../../components/FollowButton";
 import { useApiData } from "../../api-hook";
 import { useRequireLogin, useUser } from "../../user-hook";
 import { useRouter } from "next/router";
+import { PostList } from "../../components/PostList";
+import { SortSelector } from "../../components/SortSelector";
 
 export default function SourceInfo() {
   useRequireLogin()
   const router = useRouter()
   const sourceName = router.query.source
-  // Redirect if the given sourceName does not denote a full source.
+  // Redirect if the given sourceName does not represent a full source.
   useEffect(() => {
     if(sourceName && !sourceName.startsWith('*')) {
       router.push("/user-info?user=" + sourceName)
@@ -27,30 +29,7 @@ export default function SourceInfo() {
   }, [user, sourceName], () => sourceName != null)
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
-  // Fetch the posts from the source.
-  const posts = useApiData([], "posts", {
-    source: sourceName
-  }, [sourceName], () => sourceName != null)
-  const [sortedPosts, setSortedPosts] = useState([])
-  // Sorter.
-  useEffect(() => {
-    if (posts === null || posts.length === 0) {
-      setSortedPosts([]);
-      return;
-    }
-    const sorter =
-      sortByOption === "time"
-        ? (a, b) => a.time - b.time
-        : sortByOption === "interaction"
-        ? (a, b) => a.interaction - b.interaction
-        : (a, b) => ("" + a.user).localeCompare(b.user);
-    const sorted = [...posts].sort(sorter);
-    if (sortOrderOption === "descending") {
-      sorted.reverse();
-    }
-    setSortedPosts(sorted);
-  }, [posts, sortOrderOption, sortByOption]);
-  
+
   return (!sourceName ? "..." :
     <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
       <div className="col-start-2 col-span-2">
@@ -89,44 +68,33 @@ export default function SourceInfo() {
         </DashboardPanel>
       </div>
       <div className="col-start-4 col-span-6">
-        <DashboardPanel collapsable={false} restrictedHeight={false}>
+        <DashboardPanel restrictedHeight={false} collapsable={false}>
           <DashboardPanel.Header>
             <div className="flex items-center flex-justify-between font-normal">
               <div>
-                <span>Showing all posts from </span>
-                <span className="font-semibold">{sourceName.slice(2)}</span>
+                <span>Showing posts from{" "}</span>
+                <span className="font-semibold">{ getSourceParts(sourceName)[1] }</span>
               </div>
               <span class="flex-grow"></span>
-              <div className="flex text-xs items-center">
-                <div className="flex items-center border-gray-780 mr-2 px-2">
-                  <span className="">sort by</span>
-                  <SimpleDropdown
-                    options={["time", "interaction", "user"]}
-                    selected={sortByOption}
-                    setSelected={setSortByOption}
-                  />
-                  <span className="mx-1">in</span>
-                  <SimpleDropdown
-                    options={["ascending", "descending"]}
-                    selected={sortOrderOption}
-                    setSelected={setSortOrderOption}
-                  />
-                  <span className="mx-1">order</span>
-                </div>
-              </div>
+              <SortSelector
+                minimal={true}
+                sortByState={[sortByOption, setSortByOption]}
+                sortOrderState={[sortOrderOption, setSortOrderOption]} />
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {sortedPosts.length > 0 ? (
-              <div className="overflow-y-auto max-h-128">
-                {sortedPosts.map((post, i) => (
-                  <PostOverview post={post} />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-2">No posts to show.</div>
-            )}
+            <PostList
+              coinType={null}
+              selectedSources={[sourceName]}
+              sortBy={sortByOption}
+              sortOrder={sortOrderOption}
+              allSources={false}
+              showIrrelevant={true}
+              selectedRange={null}
+              allTime={true} />
           </DashboardPanel.Body>
+          <DashboardPanel.Footer>
+          </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="col-start-10 col-span-2">

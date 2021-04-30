@@ -1,9 +1,6 @@
-import axios from "axios";
-import cookie from "cookie";
 import { DashboardPanel } from "../../components/DashboardPanel"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PostOverview } from "../../components/PostOverview"
 import { CuteButton } from "../../components/CuteButton"
 import { SourceCard } from "../../components/SourceCard"
 import { SourceOverview } from "../../components/SourceOverview";
@@ -14,6 +11,8 @@ import { withParentSize } from '@vx/responsive';
 import { useRequireLogin, useUser } from "../../user-hook";
 import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
+import { PostList } from "../../components/PostList";
+import { SortSelector } from "../../components/SortSelector";
 
 export default function CoinInfo() {
   useRequireLogin()
@@ -25,32 +24,11 @@ export default function CoinInfo() {
   const [selectedSources, setSelectedSources] = useState([])
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
-  // Will be dynamically updated depending on the selected sources.
-  const posts = useApiData([], "posts", {
-    source: selectedSources.join(";")
-  }, [selectedSources], () => selectedSources != null && selectedSources.length > 0)
-  const [sortedPosts, setSortedPosts] = useState([])
 
   useEffect(() => {
-      if(posts === null || posts.length === 0) {
-        setSortedPosts([])
-        return
-      }
-      const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time : 
-                      (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction :
-                                                          (a, b) => ('' + a.user).localeCompare(b.user)
-      const sorted = [...posts].sort(sorter)
-      if(sortOrderOption === "descending") {
-        sorted.reverse()
-      }
-      setSortedPosts(sorted)
-  }, [posts, sortOrderOption, sortByOption])
-
-  useEffect(() => {
-    if(!selectedSources || selectedSources.length == 0) {
-      setSortedPosts([])
-    }
-  }, [selectedSources])
+    if(!coinStats) return
+    setSelectedSources(coinStats.top_sources.map(s => s.source))
+  }, [coinStats])
 
   const SimpleResponsiveGraph = withParentSize(SimpleGraph)
 
@@ -117,42 +95,39 @@ export default function CoinInfo() {
       </div>
       <div className="col-start-4 col-span-6">
         <div className="h-48 bg-gray-900 rounded-md overflow-hidden mb-2">
-          {prices && coinStats?.last_price && coinStats && <SimpleResponsiveGraph
+          {prices && coinStats?.last_price && coinStats && 
+          <SimpleResponsiveGraph
             stock={prices}
             lastPrice={coinStats.last_price.price}
           />}
         </div>
-        <DashboardPanel collapsable={false} restrictedHeight={false}>
+        <DashboardPanel restrictedHeight={false} collapsable={false}>
           <DashboardPanel.Header>
-            <div className="flex flex-justify-between font-light">
-              <span class="flex-grow"></span>
-              <div className="flex">
-                <div className="mr-2 px-2">
-                  sort by {" "}
-                    <SimpleDropdown 
-                      options={['time', 'interaction', 'user']} 
-                      selected={sortByOption} 
-                      setSelected={setSortByOption} />
-                    {" "} in <SimpleDropdown 
-                      options={['ascending', 'descending']} 
-                      selected={sortOrderOption} 
-                      setSelected={setSortOrderOption} />
-                      {" "} order
-                </div>
+            <div className="flex items-center flex-justify-between font-normal">
+              <div>
+                <span>Showing posts for{" "}</span>
+                <span className="font-semibold">{ coinName.toUpperCase() }</span>
               </div>
+              <span class="flex-grow"></span>
+              <SortSelector
+                minimal={true}
+                sortByState={[sortByOption, setSortByOption]}
+                sortOrderState={[sortOrderOption, setSortOrderOption]} />
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-          {sortedPosts.length > 0 ? (
-            <div className="overflow-y-auto max-h-128">
-              {sortedPosts.map((post, i) => (
-                <PostOverview post={post} />
-              ))}
-            </div>
-            ) : (
-              <div className="mt-2">There aren't any posts about this coin.</div>
-            )}
+            <PostList
+              coinType={coinName}
+              selectedSources={selectedSources}
+              sortBy={sortByOption}
+              sortOrder={sortOrderOption}
+              allSources={false}
+              showIrrelevant={false}
+              selectedRange={null}
+              allTime={true} />
           </DashboardPanel.Body>
+          <DashboardPanel.Footer>
+          </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="col-start-10 col-span-2">

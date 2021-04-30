@@ -67,20 +67,46 @@ def get_posts():
     coin_type = get_coin_type_arg()
     selectors = [RangeSelector("time", start, end)]
     source = request.args.get("source", type=str, default=None)
+    order_by = request.args.get("sort", type=str, default=None)
+    desc = request.args.get("desc", type=int, default=0)
+    limit = request.args.get("limit", type=int, default=100)
+    # We return 50 posts per request at most.
+    limit = min(limit, 50)
     if coin_type is not None:
         selectors.append(MatchSelector("coin_type", coin_type.value))
-    if source is not None:
+    if source is not None and "@" in source:
         sources = source.split(";")
         selectors.append(SourceSelector(sources))
+    # Disallow invalid sorting options to prevent SQL injections.
+    if order_by is not None and order_by not in ["interaction", "impact", "time", "user"]:
+        order_by = None
+    # Handle the parameters for infinite scrolling.
+    from_interaction = request.args.get("from_interaction", type=int, default=None)
+    from_time = request.args.get("from_time", type=int, default=None)
+    from_user = request.args.get("from_user", type=str, default=None)
+    if from_interaction is not None:
+        selectors.append(RangeSelector("interaction",
+                                       from_interaction if desc == 0 else None,
+                                       from_interaction if desc == 1 else None,
+                                       closed=False))
+    if from_time is not None:
+        selectors.append(RangeSelector("time",
+                                       from_time if desc == 0 else None,
+                                       from_time if desc == 1 else None,
+                                       closed=False))
+    if from_user is not None:
+        selectors.append(RangeSelector("user",
+                                       from_user if desc == 0 else None,
+                                       from_user if desc == 1 else None,
+                                       closed=False))
     # Connect to the database
     db = Database()
-    posts = db.read_by("posts", selectors, row_to_post)
+    posts = db.read_by("posts", selectors, row_to_post, order_by=order_by, desc=desc, limit=limit)
 
     # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
     if len(posts) > 0:
         posts = predictor.predict(posts)
     # Sort by time.
-    posts = sorted(posts, key=lambda p: p.time, reverse=True)
     return jsonify([post_to_dict(p) for p in posts])
 
 

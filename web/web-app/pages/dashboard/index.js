@@ -16,29 +16,51 @@ import { withParentSize } from '@vx/responsive';
 import { Prediction } from "../../components/Prediction"
 import { useRequireLogin, useUser } from "../../user-hook"
 import { useApiData } from "../../api-hook"
+import { PostList } from "../../components/PostList"
+import { SortSelector } from "../../components/SortSelector"
 
 export default function Dashboard() {  
   useRequireLogin()
   const { user } = useUser()
   
-  const [graphSettings, setGraphSettings] = useState(null)
-  const [showPostVolume, setShowPostVolume] = useState(true)
-  const [selectedPoint, setSelectedPoint] = useState(null)
-  const [selectedSources, setSelectedSources] = useState([])
-
   const [sortByOption, setSortByOption] = useState("time")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
   const [showPostsOption, setShowPostsOption] = useState("relevant")
   const [showPostsFromOption, setShowPostsFromOption] = useState("selected")
 
-  const [sortedPosts, setSortedPosts] = useState([])
+  const [graphSettings, setGraphSettings] = useState(null)
+  const [showPostVolume, setShowPostVolume] = useState(true)
+  const [selectedPoint, setSelectedPoint] = useState(null)
+  const [selectedSources, setSelectedSources] = useState([])
 
   const selectedPostRange = useMemo(() => {
     if(!selectedPoint || !graphSettings) return [0, 0]
     const pw0 = selectedPoint.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
     const pw1 = selectedPoint.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-    return [pw0, pw1]
+    return [parseInt(pw0/1000), parseInt(pw1/1000)]
   }, [selectedPoint, graphSettings])
+
+  const [impactMap, setImpactMap] = useState(new Map())
+
+  const calculateImpactMap = useCallback((posts) => {
+    if(posts == null || posts.size == 0) setImpactMap(new Map())
+    let newImpactMap = new Map()
+    for (const p of posts) {
+      newImpactMap.set(p.coin_type, [])
+    }
+    for(const p of posts) {
+      newImpactMap.get(p.coin_type).push(p.impact)
+    }
+    const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
+    for(const p of newImpactMap.keys()) {
+      const first = average(newImpactMap.get(p).map(e => e[0]))
+      const second = average(newImpactMap.get(p).map(e => e[1]))
+      const third = average(newImpactMap.get(p).map(e => e[2]))
+      const fourth = average(newImpactMap.get(p).map(e => e[3]))
+      newImpactMap.set(p, [first, second, third, fourth])
+    }
+    setImpactMap(newImpactMap)
+  })
 
   const selectedPriceRange = useMemo(() => {
     if(!graphSettings) return [0, 0]
@@ -49,40 +71,6 @@ export default function Dashboard() {
     const winLow = winHigh - decrement
     return [winLow, winHigh]
   }, [graphSettings])
-
-  // Indicating changes in which states will result in a refetch of the posts.
-  const postsDependencies = [showPostsFromOption, showPostsOption, graphSettings, selectedSources, selectedPostRange]
-  // Indicating when to refetch the posts.
-  const shouldRefetchPosts = useCallback(() => {
-    return graphSettings && !(showPostsFromOption === "selected" && selectedSources.length === 0)
-  }, [graphSettings, showPostsFromOption, selectedSources])  
-  // Fetching the posts.
-  const posts = useApiData([], "posts", {
-    source: (showPostsFromOption === "selected") ? selectedSources.join(";") : null,
-    type: (showPostsOption === "relevant") ? graphSettings?.coinType : null,
-    start: parseInt(selectedPostRange[0]/1000),
-    end: parseInt(selectedPostRange[1]/1000)
-  }, postsDependencies, shouldRefetchPosts)
-  // Impact map will be calculated from the posts.
-  const impactMap = useMemo(() => {
-    if(posts == null || posts.size == 0) return new Map()
-    let newImpactMap = new Map()
-    for (const p of posts) {
-      newImpactMap.set(p.coin_type, [])
-    }
-    for(const p of posts) {
-      newImpactMap.get(p.coin_type).push(p.impact)
-    }
-    const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
-    for(const p of newImpactMap.keys()) {
-      const first = average(newImpactMap.get(p).map(e => e[0]))
-      const second = average(newImpactMap.get(p).map(e => e[1]))
-      const third = average(newImpactMap.get(p).map(e => e[2]))
-      const fourth = average(newImpactMap.get(p).map(e => e[3]))
-      newImpactMap.set(p, [first, second, third, fourth])
-    }
-    return newImpactMap
-  }, [posts])
 
   // Indicating when to refetch the prices.
   const shouldRefetchPrices = useCallback(() => graphSettings && selectedPriceRange[0] !== selectedPriceRange[1])
@@ -122,28 +110,6 @@ export default function Dashboard() {
       timeWindow: 30,
     })
   }, [user])
-  // Sorter (this effect will be updating the shown posts!)
-  useEffect(() => {
-    if(posts.length === 0) {
-      setSortedPosts([])
-      return
-    }
-    const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time
-                  : (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction
-                  : (sortByOption === "impact") ? (a, b) => getAvgImpact(a.impact) - getAvgImpact(b.impact)
-                  : (a, b) => ('' + a.user).localeCompare(b.user)
-    const sorted = [...posts].sort(sorter)
-    if(sortOrderOption === "descending") {
-      sorted.reverse()
-    }
-    setSortedPosts(sorted)
-  }, [posts, sortOrderOption, sortByOption])
-  // Clear the posts when no source is chosen.
-  useEffect(() => {
-    if(!selectedSources || selectedSources.length === 0) {
-      setSortedPosts([])
-    }
-  }, [selectedSources])
 
   const ResponsiveGraph = withParentSize(Graph)
 
@@ -221,77 +187,52 @@ export default function Dashboard() {
       </div>
       <div className="p-1 col-span-4">
         <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
-        { prices && postVolume && prices.length > 0 && postVolume.length > 0 && graphSettings ? (
-            <ResponsiveGraph 
-              stock={prices}
-              postVolume={postVolume}
-              showPostVolume={showPostVolume}
-              graphSettings={graphSettings} 
-              selectedRange={selectedPoint} 
-              setSelectedRange={setSelectedPoint} />
-        ) : (
+          { prices && postVolume && prices.length > 0 && postVolume.length > 0 && graphSettings ? (
+          <ResponsiveGraph 
+            stock={prices}
+            postVolume={postVolume}
+            showPostVolume={showPostVolume}
+            graphSettings={graphSettings} 
+            selectedRange={selectedPoint} 
+            setSelectedRange={setSelectedPoint} />
+          ) : (
           <div className="p-5 text-gray-800">
             No price data found.
           </div>
-        ) }
+          ) }
           </div>
         <div>
-        <DashboardPanel collapsable={false} restrictedHeight={false}>
-          <DashboardPanel.Header>
-            <div className="flex items-center flex-justify-between font-normal">
-              { selectedPoint && graphSettings && (
-              <div>
-                <span>Showing new posts from{" "}</span>
-                <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]), false) }</span>
-                <span>{" "}to{" "}</span>
-                <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]), false) }</span>
-              </div>
-              )}
-              <span class="flex-grow"></span>
-              <div className="flex text-xs items-center">
-                <div className="flex items-center border-r border-gray-780 mr-2 px-2">
-                  <span className="">sort by</span>
-                    <SimpleDropdown 
-                      options={['time', 'interaction', 'user', 'impact']} 
-                      selected={sortByOption} 
-                      setSelected={setSortByOption} />
-                    <span className="mx-1">in</span>
-                    <SimpleDropdown 
-                      options={['ascending', 'descending']} 
-                      selected={sortOrderOption} 
-                      setSelected={setSortOrderOption} />
-                    <span className="mx-1">order</span>
+          <DashboardPanel collapsable={false} restrictedHeight={false}>
+            <DashboardPanel.Header>
+              <div className="flex items-center flex-justify-between font-normal">
+                { selectedPostRange  && (
+                <div>
+                  <span>Showing new posts from{" "}</span>
+                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]), false) }</span>
+                  <span>{" "}to{" "}</span>
+                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]), false) }</span>
                 </div>
-                <div className="flex items-center px-2">
-                  <span className="mx-1">show</span>
-                    <SimpleDropdown 
-                      options={['relevant', 'all']} 
-                      selected={showPostsOption} 
-                      setSelected={setShowPostsOption} />
-                  <span className="mx-1">posts from</span>
-                    <SimpleDropdown
-                      options={['all', 'selected']}
-                      selected={showPostsFromOption}
-                      setSelected={setShowPostsFromOption} />
-                    <span className="mx-1">sources</span>
-                </div>
+                )}
+                <span class="flex-grow"></span>
+                <SortSelector
+                  sortByState={[sortByOption, setSortByOption]}
+                  sortOrderState={[sortOrderOption, setSortOrderOption]}
+                  showPostsState={[showPostsOption, setShowPostsOption]}
+                  showPostsFromState={[showPostsFromOption, setShowPostsFromOption]} />
               </div>
-            </div>
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            {sortedPosts.length > 0 ? (
-            <div className="overflow-y-auto max-h-128">
-              {sortedPosts.map((post, i) => (
-                <PostOverview post={post} />
-              ))}
-            </div>
-            ) : (selectedPoint) ? (
-              <div className="mt-2">No new posts to show in the selected range.</div>
-            ) : (
-              <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
-            )}
-          </DashboardPanel.Body>
-        </DashboardPanel>
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+              <PostList
+                selectedRange={selectedPostRange}
+                coinType={graphSettings.coinType}
+                selectedSources={selectedSources}
+                sortBy={sortByOption}
+                sortOrder={sortOrderOption}
+                allSources={showPostsFromOption === "all"}
+                showIrrelevant={showPostsOption === "all"}
+                onUpdate={calculateImpactMap} />
+            </DashboardPanel.Body>
+          </DashboardPanel>
         </div>
       </div>
       <div className="p-1 col-span-1">
@@ -365,10 +306,8 @@ export default function Dashboard() {
                   <CuteButton
                     onClick={() => {
                       setSelectedPoint(null)
-                      setPosts(null)
                     }}
-                    size={'md'}
-                  >
+                    size={'md'}>
                     Clear selection
                   </CuteButton>
                 </div>

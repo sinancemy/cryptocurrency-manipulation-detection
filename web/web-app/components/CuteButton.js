@@ -1,13 +1,15 @@
 const defaultTextColor = "gray-200"
 const defaultColor = "gray-780"
 const defaultHoverColor = "gray-850"
-const borderColor = "gray-900"
-const hoverBorderColor = "gray-780"
+const defaultBorderColor = "gray-900"
+const defaultHoverBorderColor = "gray-780"
 
 export const CuteButton = ({ size = 'xs', onClick = () => {}, isDisabled = () => false, 
                               color = defaultColor, 
                               hoverColor = defaultHoverColor, 
                               textColor = defaultTextColor,
+                              borderColor = defaultBorderColor,
+                              hoverBorderColor = defaultHoverBorderColor,
                               width = null,
                               children }) => {
   return (
