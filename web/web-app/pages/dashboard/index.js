@@ -1,59 +1,31 @@
-import { useRouter } from "next/router"
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Graph } from "../../components/Graph"
 import axios from "axios"
 import { DashboardPanel } from "../../components/DashboardPanel"
 import cookie from "cookie"
 import { SimpleDropdown } from "../../components/SimpleDropdown"
-import { useCookies } from "react-cookie"
 import { VerticalSelector } from "../../components/VerticalSelector"
 import { SourceCard } from "../../components/SourceCard"
 import Link from "next/link"
 import { CuteButton } from "../../components/CuteButton"
 import { PostOverview } from "../../components/PostOverview"
-import { dateToString, getAvgImpact, getCoinColor, getCoinIcon, getSourceColor, getSourceIcon } from "../../Helpers"
+import { dateToString, getAvgImpact } from "../../Helpers"
 import { CoinCard } from "../../components/CoinCard"
 import { IoMdSettings } from "react-icons/io"
 import { withParentSize } from '@vx/responsive';
 import { Prediction } from "../../components/Prediction"
+import { useRequireLogin, useUser } from "../../user-helpers"
 
+export default function Dashboard() {  
+  useRequireLogin()
+  const { user } = useUser()
 
-export async function getServerSideProps(context) {
-  const cookies = cookie.parse(context.req.headers.cookie)
-  const userinfoResp = await axios.get("http://127.0.0.1:5000/user/info", {
-    params: {
-      token: cookies.token
-    }
-  })
-
-  if(userinfoResp.data.result !== "ok") {
-    return {
-      redirect: {
-        destination: '/login'
-      }
-    }
-  }
-  const userinfo = userinfoResp.data.userinfo
-  const initialGraphSettings = {
-    coinType: userinfo.followed_coins.length > 0 ? userinfo.followed_coins[0].coin_type : null,
-    extent: "year",
-    timeWindow: 30,
-  }
-  return {
-    props: {
-      userInfo: userinfo,
-      initialGraphSettings: initialGraphSettings,
-    }
-  }
-}
-
-export default function Dashboard({userInfo, initialGraphSettings}) {  
   const [prices, setPrices] = useState([])
-  const [posts, setPosts] = useState([])
   const [postVolume, setPostVolume] = useState([])
+  const [posts, setPosts] = useState([])
   const [impactMap, setImpactMap] = useState(new Map())
   
-  const [graphSettings, setGraphSettings] = useState(initialGraphSettings)
+  const [graphSettings, setGraphSettings] = useState(null)
   const [showPostVolume, setShowPostVolume] = useState(true)
   const [selectedRange, setSelectedRange] = useState(null)
   const [sortedPosts, setSortedPosts] = useState([])
@@ -72,10 +44,6 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
     return Object.values(dict)
   }
 
-  const isGraphLoaded = useCallback(() => {
-    return prices.length > 0 && postVolume.length > 0
-  }, [prices, postVolume])
-
   const getSelectedPrice = useCallback(() => {
     const date = parseInt(selectedRange.midDate.valueOf()/1000)
     return prices.find(p => p.time === date)?.price
@@ -87,13 +55,14 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
   }, [postVolume, selectedRange])
 
   const getSelectedRange = useCallback(() => {
-    if(selectedRange == null) return [0, 0]
+    if(!selectedRange || !graphSettings) return [0, 0]
     const pw0 = selectedRange.midDate.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
     const pw1 = selectedRange.midDate.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
     return [pw0, pw1]
   }, [selectedRange, graphSettings])
 
   const updatePosts = useCallback((start, end) => {
+    if(!graphSettings) return
     const type = (showPostsOption === "all") ? "*" : graphSettings.coinType 
     const sourcesToConsider = (showPostsFromOption === "all") ? ["*@*"] : selectedSources
     const requests = sourcesToConsider.map(src_string => {
@@ -118,58 +87,64 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
       console.log(collectedUniques)
       setPosts(collectedUniques)
       }))
-    }, [[showPostsFromOption, showPostsOption, graphSettings, selectedSources]]);
+  }, [showPostsFromOption, showPostsOption, graphSettings, selectedSources]);
 
-    useEffect(() => {
-      if(posts == null || posts.size == 0) return
-      console.log(posts)
-      let newImpactMap = new Map()
-      for (const p of posts) {
-        newImpactMap.set(p.coin_type, [])
-      }
-      for(const p of posts) {
-        newImpactMap.get(p.coin_type).push(p.impact)
-      }
-      const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
+  // Set the initial graph settings.
+  useEffect(() => {
+    if(!user) return
+    setGraphSettings( {
+      coinType: user.followed_coins.length > 0 ? user.followed_coins[0].coin_type : null,
+      extent: "year",
+      timeWindow: 30,
+    })
+  }, [user])
+  // Calculate the impact map.
+  useEffect(() => {
+    if(posts == null || posts.size == 0) return
+    let newImpactMap = new Map()
+    for (const p of posts) {
+      newImpactMap.set(p.coin_type, [])
+    }
+    for(const p of posts) {
+      newImpactMap.get(p.coin_type).push(p.impact)
+    }
+    const average = arr => arr.reduce(( p, c ) => p + c, 0 ) / arr.length
 
-      for(const p of newImpactMap.keys()) {
-        console.log(newImpactMap)
-        const first = average(newImpactMap.get(p).map(e => e[0]))
-        const second = average(newImpactMap.get(p).map(e => e[1]))
-        const third = average(newImpactMap.get(p).map(e => e[2]))
-        const fourth = average(newImpactMap.get(p).map(e => e[3]))
-        newImpactMap.set(p, [first, second, third, fourth])
-      }
-      setImpactMap(newImpactMap)
-    }, [posts])
-
-    // Sorter (this effect will be updating the shown posts!)
-    useEffect(() => {
-      if(posts === null || posts.length === 0) {
-        setSortedPosts([])
-        return
-      }
-      const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time
-                    : (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction
-                    : (sortByOption === "impact") ? (a, b) => getAvgImpact(a.impact) - getAvgImpact(b.impact)
-                    : (a, b) => ('' + a.user).localeCompare(b.user)
-      const sorted = [...posts].sort(sorter)
-      if(sortOrderOption === "descending") {
-        sorted.reverse()
-      }
-      setSortedPosts(sorted)
-    }, [posts, sortOrderOption, sortByOption])
-
+    for(const p of newImpactMap.keys()) {
+      console.log(newImpactMap)
+      const first = average(newImpactMap.get(p).map(e => e[0]))
+      const second = average(newImpactMap.get(p).map(e => e[1]))
+      const third = average(newImpactMap.get(p).map(e => e[2]))
+      const fourth = average(newImpactMap.get(p).map(e => e[3]))
+      newImpactMap.set(p, [first, second, third, fourth])
+    }
+    setImpactMap(newImpactMap)
+  }, [posts])
+  // Sorter (this effect will be updating the shown posts!)
+  useEffect(() => {
+    if(posts === null || posts.length === 0) {
+      setSortedPosts([])
+      return
+    }
+    const sorter = (sortByOption === "time") ? (a, b) => a.time - b.time
+                  : (sortByOption === "interaction") ? (a, b) => a.interaction - b.interaction
+                  : (sortByOption === "impact") ? (a, b) => getAvgImpact(a.impact) - getAvgImpact(b.impact)
+                  : (a, b) => ('' + a.user).localeCompare(b.user)
+    const sorted = [...posts].sort(sorter)
+    if(sortOrderOption === "descending") {
+      sorted.reverse()
+    }
+    setSortedPosts(sorted)
+  }, [posts, sortOrderOption, sortByOption])
   // Listen to changes in the relevant settings and refetch the posts.
   useEffect(() => {
     if(selectedRange == null) return
     const [pw0, pw1] = getSelectedRange()
     updatePosts(parseInt(pw0/1000), parseInt(pw1/1000))
   }, [showPostsOption, showPostsFromOption, selectedRange, graphSettings, selectedSources])
-
   // Listen to changes in the relevant settings and refetch the prices shown on the graph.
   useEffect(() => {
-    if(graphSettings.coinType == null) return
+    if(!graphSettings) return
     const decrement = 60 * 60 * 24 * ((graphSettings.extent === "day") ? 1 : 
                                       (graphSettings.extent === "month") ? 30 :
                                       (graphSettings.extent === "week") ? 7 : 365)
@@ -209,14 +184,14 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
               Followed Coins
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {userInfo && userInfo.followed_coins.length > 0 ? 
-            userInfo?.followed_coins.map(coin => (
-              <div className="mt-2"> 
-                <CoinCard 
-                  onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
-                  isSelected={() => graphSettings.coinType && graphSettings.coinType === coin.coin_type}
-                  coin={coin.coin_type} />
-              </div>
+            {user?.followed_coins && user.followed_coins.length > 0 ? 
+              user.followed_coins.map(coin => (
+                <div className="mt-2"> 
+                  <CoinCard 
+                    onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
+                    isSelected={() => graphSettings?.coinType && graphSettings?.coinType === coin.coin_type}
+                    coin={coin.coin_type} />
+                </div>
               )) : ("Not following any coins.")}
           </DashboardPanel.Body>
           <DashboardPanel.Footer>
@@ -235,8 +210,8 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
                 Followed Sources
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {userInfo && userInfo.followed_sources.length > 0 ? (
-              userInfo.followed_sources.map(source => (
+            {user?.followed_sources && user.followed_sources.length > 0 ? (
+              user.followed_sources.map(source => (
                 <div className="mt-2">
                   <SourceCard 
                     onToggle={() => {if(selectedSources.includes(source.source)) {
@@ -253,8 +228,8 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([...userInfo.followed_sources.map(s => s.source)])}
-                isDisabled={() => selectedSources.length === userInfo.followed_sources.length}>
+                onClick={() => setSelectedSources([...user?.followed_sources.map(s => s.source)])}
+                isDisabled={() => selectedSources.length === user?.followed_sources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
@@ -275,7 +250,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
       </div>
       <div className="p-1 col-span-4">
         <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
-        { isGraphLoaded() && userInfo && userInfo.followed_coins.length > 0 && prices.length > 0 ? (
+        { prices && postVolume && prices.length > 0 && postVolume.length > 0 && graphSettings ? (
             <ResponsiveGraph 
               stock={prices}
               postVolume={postVolume}
@@ -293,7 +268,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
         <DashboardPanel collapsable={false} restrictedHeight={false}>
           <DashboardPanel.Header>
             <div className="flex items-center flex-justify-between font-normal">
-              { selectedRange && graphSettings.coinType && (
+              { selectedRange && graphSettings && (
               <div>
                 <span>Showing new posts from{" "}</span>
                 <span className="font-semibold">{ dateToString(new Date(getSelectedRange()[0]), false) }</span>
@@ -361,7 +336,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
               <div>
                 <VerticalSelector
                   options={['day', 'week', 'month', 'year']}
-                  getter={() => graphSettings.extent}
+                  getter={() => graphSettings?.extent}
                   setter={(opt) => setGraphSettings({...graphSettings, extent: opt})}
                   prefix={"Last"}
                 />
@@ -374,7 +349,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
             <div>
               <VerticalSelector
                 options={[5, 10, 30, 60]}
-                getter={() => graphSettings.timeWindow}
+                getter={() => graphSettings?.timeWindow}
                 setter={(opt) => setGraphSettings({...graphSettings, timeWindow: opt})}
                 suffix={"days"}
               />
@@ -408,7 +383,7 @@ export default function Dashboard({userInfo, initialGraphSettings}) {
                   { dateToString(new Date(selectedRange.midDate)) }
                 </div>
                 <div>
-                  <span className="font-semibold">{ graphSettings.coinType.toUpperCase() }/USD:{" "}</span>
+                  <span className="font-semibold">{ graphSettings?.coinType?.toUpperCase() }/USD:{" "}</span>
                   <span>{ getSelectedPrice()?.toPrecision(5) } </span>
                 </div>
                 <div>

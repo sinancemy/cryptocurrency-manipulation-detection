@@ -2,13 +2,19 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useRouter } from "next/router"
+import { useRequireGuest } from "../../user-helpers"
 
-export default function Login({ init_username }) {
-
+export default function Login() {
+  useRequireGuest()
   const router = useRouter()
   const [cookie, setCookie] = useCookies()
 
-  const [username, setUsername] = useState(init_username)
+  useEffect(() => {
+    if(!router) return
+    setUsername(router.query.username)
+  }, [router])
+
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [usernameErrorMsg, setUsernameErrorMsg] = useState("")
   const [passwordErrorMsg, setPasswordErrorMsg] = useState("")
@@ -129,11 +135,4 @@ export default function Login({ init_username }) {
       </div>
     </div>
   );
-}
-
-
-Login.getInitialProps = async ({ query }) => {
-  return {
-    init_username: query.username
-  }
 }

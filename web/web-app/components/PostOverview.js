@@ -26,7 +26,7 @@ export const PostOverview = ({ post }) => {
 
   }, [post])
 
-  return (
+  return (post &&
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} disperse={true}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col w-32`}>

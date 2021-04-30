@@ -10,7 +10,7 @@ const textColor = "gray-100"
 
 export const CoinCard = ({ coin, isSelected, onToggle }) => {
 
-  return (
+  return (coin && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
       <label
         className={`cursor-pointer text-${textColor} text-sm`}>

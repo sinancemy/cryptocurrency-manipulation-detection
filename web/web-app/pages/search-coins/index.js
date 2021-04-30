@@ -1,73 +1,27 @@
-import axios from "axios";
-import cookie from "cookie";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/router";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { CoinOverview } from "../../components/CoinOverview";
 import { FollowButton } from "../../components/FollowButton";
+import { useApiData } from "../../api-helpers"
+import { useRequireLogin, useUser } from "../../user-helpers"
 
-export async function getServerSideProps(context) {
-  if (context.req.headers.cookie == null) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
-  const res = await axios.get("http://127.0.0.1:5000/api/coin_list");
-
-  const cookies = cookie.parse(context.req.headers.cookie);
-  const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
-    params: {
-      token: cookies.token,
-    },
-  });
-  var userinfo = null;
-  if (res2.data.result === "ok") {
-    userinfo = res2.data.userinfo;
-  } else {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
-  return {
-    props: {
-      allCoins: res.data,
-      userInfo: userinfo,
-    },
-  };
-}
-
-export default function SearchCoins({ allCoins, userInfo, token }) {
-  const router = useRouter();
-  if (userInfo === null) {
-    useEffect(() => {
-      router.push("/");
-    });
-  }
+export default function SearchCoins() {
+  useRequireLogin()
+  const { user, isFollowingCoin } = useUser()
   const [query, setQuery] = useState("");
-  const [coins, setCoins] = useState(allCoins)
+  const coins = useApiData([], "coin_list")
   const [filteredCoins, setFilteredCoins] = useState([]);
-  const [followedCoins, setFollowedCoins] = useState(new Set(userInfo.followed_coins.map(coin => coin.coin_type)))
 
   useEffect(() => {
     if (!query || query.trim() === "") {
-      const rearranged = [...coins.filter(c => isFollowing(c.name)), ...coins.filter(c => !followedCoins.has(c.name))]
+      const rearranged = [...coins.filter(c => isFollowingCoin(c.name)), ...coins.filter(c => !isFollowingCoin(c.name))]
       setFilteredCoins(rearranged)
       return
     }
     const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
     const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
     setFilteredCoins(sorted)
-  }, [coins, query, followedCoins])
-
-  const isFollowing = useCallback((coinName) => {
-    return followedCoins.has(coinName)
-  }, [followedCoins])
+  }, [coins, query, user])
 
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
@@ -97,11 +51,9 @@ export default function SearchCoins({ allCoins, userInfo, token }) {
                         coin={coin.name}
                         button={(
                           <FollowButton
-                            queryUrl={"http://127.0.0.1:5000/user/follow_coin"}
-                            queryParams={{token: token, type: coin.name}}
-                            isFollowing={() => isFollowing(coin.name)}
-                            onFollow={() => setFollowedCoins(new Set([...followedCoins, coin.name]))}
-                            onUnfollow={() => setFollowedCoins(new Set([...followedCoins].filter(c => c !== coin.name)))}/>
+                            followEndpoint={"follow_coin"}
+                            params={{type: coin.name}}
+                            isFollowing={() => isFollowingCoin(coin.name)} />
                         )}/>
                     </div>
                   ))}

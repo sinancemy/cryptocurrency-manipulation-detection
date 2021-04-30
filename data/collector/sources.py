@@ -9,11 +9,11 @@ CRAWLERS = [ArchivedRedditCrawler, RealtimeRedditCrawler, TwitterCrawler]
 
 class Source:
     def __init__(self, source, username):
-        self.username = username
+        self.user = username
         self.source = source
 
     def __repr__(self):
-        return self.username + "@" + self.source
+        return self.user + "@" + self.source
 
 
 # Checks whether the given source (req) corresponds to at least one supported source.
@@ -29,16 +29,16 @@ def find_in_all_sources(req) -> list:
     if parsed is None:
         return []
     # Search the requested source in all the sources that we support.
-    search_result = list(filter(lambda src: source_matches(parsed, src), get_all_sources()))
+    search_result = list(filter(lambda src: source_matches(parsed, src), get_exported_sources()))
     return search_result
 
 
 def source_matches(a: Source, b: Source) -> bool:
     if a.source != b.source:
         return False
-    if a.username == "*" or b.username == "*":
+    if a.user == "*" or b.user == "*":
         return True
-    return a.username == b.username
+    return a.user == b.user
 
 
 def parse_source(source) -> Optional[Source]:
@@ -49,7 +49,7 @@ def parse_source(source) -> Optional[Source]:
     return Source(source, username)
 
 
-def get_all_sources() -> list:
+def get_exported_sources() -> list:
     sources = [c.get_all_sources() for c in CRAWLERS]
     sources_flat = functools.reduce(list.__add__, sources)
     sources_unique = set(sources_flat)

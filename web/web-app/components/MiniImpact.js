@@ -8,7 +8,7 @@ export const MiniImpact = ({ impact }) => {
   const [focused, setFocused] = useState(false)
   const avgImpact = useMemo(() => (impact[0] + impact[1] + impact[2] + impact[3])/4, [impact])
 
-  return (
+  return (impact &&
       <div className={`flex flex-row max-w-8 cursor-default relative`} 
           onMouseEnter={() => setFocused(true)}
           onMouseLeave={() => setFocused(false)}>

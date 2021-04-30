@@ -1,32 +1,24 @@
 import axios from "axios";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRequireLogin, useUser } from "../user-helpers";
 import { CuteButton } from "./CuteButton";
 
-export const FollowButton = ({ queryUrl, queryParams, isFollowing, onFollow, onUnfollow }) => {
-
+export const FollowButton = ({ followEndpoint, params, isFollowing }) => {
+    const { user, updateUser } = useUser()
     const [disabled, setDisabled] = useState(false)
 
     const toggleFollow = () => {
         setDisabled(true)
         const unfollow = isFollowing() ? 1 : 0
-        axios.get(queryUrl, {
-            params: {
-                ...queryParams,
-                unfollow: unfollow
-            }
-        })
-        .then(resp => {
-          console.log(resp.data)
-          if(resp.data.result === "ok") {
-            if(unfollow === 1) {
-              onUnfollow()
-            } else {
-              onFollow()
-            }
-            setDisabled(false)
-          }
+        updateUser(followEndpoint, {
+          ...params,
+          unfollow: unfollow
         })
     }
+
+    useEffect(() => {
+      setDisabled(false)
+    }, [user])
 
     return (
         <CuteButton

@@ -12,7 +12,7 @@ export const SourceCard = ({ source, isSelected, onToggle }) => {
 
   const isUser = useCallback(() => getSourceParts(source)[0] !== "*", [source])
 
-  return (
+  return (source && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
       <label
         className={`cursor-pointer text-${textColor} text-sm`}>

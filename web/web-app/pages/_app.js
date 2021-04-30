@@ -1,7 +1,7 @@
-import "tailwindcss/tailwind.css"
 import "../styles/globals.css"
 import Layout from "../components/Layout"
 import { useCookies } from "react-cookie"
+import { UserProvider } from "../user-helpers"
 
 function MyApp({ Component, pageProps }) {
 
@@ -10,9 +10,11 @@ function MyApp({ Component, pageProps }) {
   pageProps.token = cookie.token
 
   return (
-    <Layout {...pageProps}>
-      <Component {...pageProps} />
-    </Layout>
+    <UserProvider>
+      <Layout {...pageProps}>
+        <Component {...pageProps} />
+      </Layout>
+    </UserProvider>
   );
 }
 

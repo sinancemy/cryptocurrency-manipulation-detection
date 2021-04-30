@@ -25,7 +25,7 @@ export const CoinOverview = ({ coin, button, singleLine = false }) => {
       })
   }, [coin])
 
-  return (
+  return (coin &&
     <MultipurposeCard badgeColor={getCoinColor(coin)} colorizer={() => bgColor}>
       <MultipurposeCard.Left>
         <span className={`text-4xl text-${getCoinColor(coin)}`}>
