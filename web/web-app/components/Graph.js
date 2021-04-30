@@ -43,14 +43,12 @@ export const Graph = withTooltip(
     tooltipData,
     tooltipTop = [0, 0],
     tooltipLeft = 0,
-    graphSettings,
     selectedRange,
     setSelectedRange,
+    graphSettings,
     stock,
     postVolume,
-    showPostVolume = false,
-    showPostCount = false,
-    impactScore}) => {
+    showPostVolume = false}) => {
     const width = parentWidth
     const height = parentHeight
     if (width < 10) return null;
@@ -178,7 +176,7 @@ export const Graph = withTooltip(
     const _min = (a, b) => (a < b) ? a : b
     const _max = (a, b) => (a > b) ? a : b
 
-    return  (
+    return  (stock && postVolume && graphSettings &&
       <div>
         <svg width={width} height={height} className="animate-blur-in">
           <rect

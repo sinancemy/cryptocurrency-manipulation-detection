@@ -1,90 +1,38 @@
 import { DashboardPanel } from "../../components/DashboardPanel";
-import axios from "axios";
-import { Card } from "../../components/Card";
-import cookie from "cookie";
 import { SimpleDropdown } from "../../components/SimpleDropdown";
 import { PostOverview } from "../../components/PostOverview";
-import {
-  getCoinColor,
-  getCoinIcon,
-  getSourceColor,
-  getSourceIcon,
-  getSourceParts,
-} from "../../Helpers";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { CuteButton } from "../../components/CuteButton";
-import { SourceOverview } from "../../components/SourceOverview"
-import { CoinOverview } from "../../components/CoinOverview"
+import { getSourceIcon, getSourceParts } from "../../helpers";
+import { useEffect, useMemo, useState } from "react";
+import { SourceOverview } from "../../components/SourceOverview";
+import { CoinOverview } from "../../components/CoinOverview";
 import { FollowButton } from "../../components/FollowButton";
+import { useApiData } from "../../api-hook";
+import { useRequireLogin, useUser } from "../../user-hook";
+import { useRouter } from "next/router";
 
-export async function getServerSideProps(context) {
-  if (context.req.headers.cookie == null) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
-
-  const res = await axios.get(
-    "http://127.0.0.1:5000/api/source_info?source=" +
-      context.query.source.slice(2) +
-      "&userlimit=4&coinlimit=20"
-  );
-
-  const res2 = await axios.get(
-    "http://127.0.0.1:5000/api/posts?source=" + context.query.source.slice(2)
-  );
-
-  const cookies = cookie.parse(context.req.headers.cookie);
-  const res3 = await axios.get("http://127.0.0.1:5000/user/info", {
-    params: {
-      token: cookies.token,
-    },
-  });
-  var userinfo = null;
-  if (res3.data.result === "ok") {
-    userinfo = res3.data.userinfo;
-  }
-
-  let isFollowing = false;
-  userinfo.followed_sources.forEach((source) => {
-    if (source.source.includes(context.query.source)) {
-      isFollowing = true;
+export default function SourceInfo() {
+  useRequireLogin()
+  const router = useRouter()
+  const sourceName = router.query.source
+  // Redirect if the given sourceName does not denote a full source.
+  useEffect(() => {
+    if(sourceName && !sourceName.startsWith('*')) {
+      router.push("/user-info?user=" + sourceName)
     }
-  });
-
-  return {
-    props: {
-      sourceName: context.query.source,
-      relevantCoins: res.data.relevant_coins,
-      topActiveUsers: res.data.top_active_users,
-      topInteractedUsers: res.data.top_interacted_users,
-      numFollowers: res.data.num_followers,
-      post: res2.data,
-      isFollowingSource: isFollowing,
-    },
-  };
-}
-
-export default function SourceInfo({
-  sourceName,
-  relevantCoins,
-  topActiveUsers,
-  topInteractedUsers,
-  numFollowers,
-  post,
-  isFollowingSource,
-  token}) {
-  const [followerCount, setFollowerCount] = useState(numFollowers);
-  const [isFollowing, setIsFollowing] = useState(isFollowingSource);
-  const [sortByOption, setSortByOption] = useState("interaction");
-  const [sortOrderOption, setSortOrderOption] = useState("descending");
-  const [posts, setPosts] = useState(post);
-  const [sortedPosts, setSortedPosts] = useState([]);
-
+  }, [sourceName])
+  const { user, isFollowingSource } = useUser()
+  // Fetch the source info and update it when the user changes.
+  const sourceInfo = useApiData(null, "source_stats", { 
+    source: sourceName
+  }, [user, sourceName], () => sourceName != null)
+  const [sortByOption, setSortByOption] = useState("interaction")
+  const [sortOrderOption, setSortOrderOption] = useState("descending")
+  // Fetch the posts from the source.
+  const posts = useApiData([], "posts", {
+    source: sourceName
+  }, [sourceName], () => sourceName != null)
+  const [sortedPosts, setSortedPosts] = useState([])
+  // Sorter.
   useEffect(() => {
     if (posts === null || posts.length === 0) {
       setSortedPosts([]);
@@ -102,36 +50,23 @@ export default function SourceInfo({
     }
     setSortedPosts(sorted);
   }, [posts, sortOrderOption, sortByOption]);
-
-    const onFollow = () => {
-      setFollowerCount(followerCount + 1)
-      setIsFollowing(true);
-    }
-
-    const onUnfollow = () => {
-      setFollowerCount(followerCount -1)
-      setIsFollowing(false);
-    }
-
-  return (
+  
+  return (!sourceName ? "..." :
     <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
       <div className="col-start-2 col-span-2">
         <DashboardPanel collapsable={false}>
           <DashboardPanel.Header>
             <div className="grid grid-cols-1 mt-2 place-items-center">
               <span className="text-4xl">{ getSourceIcon(sourceName) }</span>
-              <span className="mt-2">{sourceName.slice(2)}</span>
+              <span className="mt-2">{ getSourceParts(sourceName)[1] }</span>
               <span className="mt-2 font-light">
-                {followerCount} Followers
+                {sourceInfo?.num_followers && sourceInfo.num_followers} Followers
               </span>
               <div className="mt-2">
                 <FollowButton
-                  queryUrl={"http://127.0.0.1:5000/user/follow_source"}
-                  queryParams={{token: token, source: sourceName}}
-                  isFollowing={() => isFollowing}
-                  onFollow={onFollow}
-                  onUnfollow={onUnfollow}
-                  />
+                  followEndpoint={"follow_source"}
+                  params={{source: sourceName}}
+                  isFollowing={() => isFollowingSource(sourceName)} />
               </div>
             </div>
           </DashboardPanel.Header>
@@ -142,8 +77,8 @@ export default function SourceInfo({
             <p className="text-center">Relevant Coins</p>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {relevantCoins.length > 0
-              ? relevantCoins.map(coin => (
+            {sourceInfo?.relevant_coins && sourceInfo.relevant_coins.length > 0
+              ? sourceInfo.relevant_coins.map(coin => (
                   <CoinOverview 
                     coin={coin.coin_type}
                     singleLine={true} />
@@ -200,9 +135,9 @@ export default function SourceInfo({
             <p>Top Interacted Users</p>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-              {topInteractedUsers.map(user => (
+              {sourceInfo?.top_interacted_users && sourceInfo.top_interacted_users.map(user => (
                 <SourceOverview
-                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  source={user.source}
                   button={<>{user.total_interaction}</>} 
                   singleLine={true} />
               ))}
@@ -213,9 +148,9 @@ export default function SourceInfo({
             <p>Top Active Users</p>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {topActiveUsers.map(user => (
+            {sourceInfo?.top_active_users && sourceInfo.top_active_users.map(user => (
                 <SourceOverview
-                  source={user.user + "@" + getSourceParts(sourceName)[1]}
+                  source={user.source}
                   button={<>{user.total_msg}</>}
                   singleLine={true} />
               ))}

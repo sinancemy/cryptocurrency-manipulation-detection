@@ -1,10 +1,10 @@
 
-import {getCoinIcon, getImpactColor, getImpactIcon} from "../Helpers";
+import {getCoinIcon, getImpactColor, getImpactIcon} from "../helpers";
 import React from "react";
 
 
 export const Prediction = ({ prediction, coin }) => {
-    return (
+    return (prediction && coin &&
     <div className="flex flex-col rounded-md">
         <div className="flex flex-row items-center font-semibold text-md mb-2">
             <span>{getCoinIcon(coin)}</span>

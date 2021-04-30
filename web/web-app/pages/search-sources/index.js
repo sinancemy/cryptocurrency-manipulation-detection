@@ -1,76 +1,30 @@
 import axios from "axios";
 import cookie from "cookie";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SourceOverview } from "../../components/SourceOverview";
 import { FollowButton } from "../../components/FollowButton";
+import { useApiData } from "../../api-hook";
+import { useRequireLogin, useUser } from "../../user-hook";
 
-export async function getServerSideProps(context) {
-  if (context.req.headers.cookie == null) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
 
-  const cookies = cookie.parse(context.req.headers.cookie);
-  const res2 = await axios.get("http://127.0.0.1:5000/user/info", {
-    params: {
-      token: cookies.token,
-    },
-  });
-  var userinfo = null;
-  if (res2.data.result === "ok") {
-    userinfo = res2.data.userinfo;
-  }
-
-  const sourceListRes = await axios.get("http://127.0.0.1:5000/api/source_list")
-  const userListRes = await axios.get("http://127.0.0.1:5000/api/user_list")
-  let sourceListSet = new Set()
-
-  for(const e of [...sourceListRes.data, ...userListRes.data]) {
-    sourceListSet.add(e.user + '@' + e.source)
-  }
-
-  return {
-    props: {
-      allSources: [...sourceListSet],
-      userInfo: userinfo,
-    },
-  };
-}
-
-export default function SearchSources({ allSources, userInfo, token }) {
-  const router = useRouter();
-  if (userInfo === null) {
-    useEffect(() => {
-      router.push("/");
-    });
-  }
-
+export default function SearchSources() {
+  useRequireLogin()
+  const { user, isFollowingSource } = useUser()
   const [query, setQuery] = useState("");  
-  const [sources, setSources] = useState(allSources)
+  const sources = useApiData([], "source_list", {}, [], () => true, (res) => res.map(s => s.user + '@' + s.source))
   const [filteredSources, setFilteredSources] = useState([])
-  const [followedSources, setFollowedSources] = useState(new Set(userInfo.followed_sources.map(source => source.source)))
 
   useEffect(() => {
     if (!query || query.trim() === "") {
-      const rearranged = [...sources.filter(s => isFollowing(s))].concat(sources.filter(s => !followedSources.has(s)).slice(0, 10))
+      const rearranged = [...sources.filter(s => isFollowingSource(s))].concat(sources.filter(s => !isFollowingSource(s)).slice(0, 10))
       setFilteredSources(rearranged)
       return
     }
     const filtered = sources.filter((s) => s.toLowerCase().includes(query.toLowerCase()))
     const sorted = [...filtered].sort((a, b) => a.localeCompare(b))
     setFilteredSources(sorted.slice(0, 20))
-  }, [sources, query, followedSources])
-
-
-  const isFollowing = useCallback((source) => {
-    return followedSources.has(source)
-  }, [followedSources])
+  }, [sources, query, user])
 
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
@@ -97,11 +51,9 @@ export default function SearchSources({ allSources, userInfo, token }) {
                   source={source}
                   button={(
                     <FollowButton
-                      queryUrl={"http://127.0.0.1:5000/user/follow_source"}
-                      queryParams={{token: token, source: source}}
-                      isFollowing={() => isFollowing(source)}
-                      onFollow={() => setFollowedSources(new Set([...followedSources, source]))}
-                      onUnfollow={() => setFollowedSources(new Set([...followedSources].filter(s => s !== source)))}/>
+                      followEndpoint={"follow_source"}
+                      params={{source: source}}
+                      isFollowing={() => isFollowingSource(source)} />
                   )}/>
               ))}
             </div>

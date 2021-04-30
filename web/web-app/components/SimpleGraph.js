@@ -88,7 +88,7 @@ export const SimpleGraph = withTooltip(
     const _min = (a, b) => (a < b) ? a : b
     const _max = (a, b) => (a > b) ? a : b
 
-    return  (
+    return  (stock && lastPrice &&
       <div>
         <svg width={width} height={height} className="animate-blur-in">
           <rect

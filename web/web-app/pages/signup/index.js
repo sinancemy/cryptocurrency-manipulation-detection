@@ -1,11 +1,11 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { async } from "regenerator-runtime";
+import { useRequireGuest } from "../../user-hook";
 
 export default function Signup() {
+  useRequireGuest()
   const router = useRouter();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [reenteredPassword, setReenteredPassword] = useState("");

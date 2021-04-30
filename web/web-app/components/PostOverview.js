@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react"
 import { IoChatbubblesSharp } from "react-icons/io5"
-import { dateToString, getCoinIcon, getSourceColor, getSourceIcon } from "../Helpers"
+import { dateToString, getCoinIcon, getSourceColor, getSourceIcon } from "../helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
 import { MiniImpact } from "./MiniImpact"
 import { MdDateRange } from "react-icons/md"
@@ -26,7 +26,7 @@ export const PostOverview = ({ post }) => {
 
   }, [post])
 
-  return (
+  return (post &&
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} disperse={true}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col w-32`}>

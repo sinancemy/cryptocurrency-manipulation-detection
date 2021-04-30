@@ -3,74 +3,36 @@ import axios from "axios";
 import cookie from "cookie";
 import { SimpleDropdown } from "../../components/SimpleDropdown";
 import { PostOverview } from "../../components/PostOverview";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TiAt } from "react-icons/ti"
-import { CuteButton } from "../../components/CuteButton";
-import { getSourceIcon, getSourceParts } from "../../Helpers";
 import Link from "next/link";
 import { FollowButton } from "../../components/FollowButton";
+import { useRequireLogin, useUser } from "../../user-hook";
+import { getSourceParts } from "../../helpers";
+import { useApiData } from "../../api-hook";
+import { useRouter } from "next/router";
 
-export async function getServerSideProps(context) {
-  if (context.req.headers.cookie == null) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
-
-  const splitted = context.query.user.split("@");
-  const res2 = await axios.get(
-    "http://127.0.0.1:5000/api/posts?source=" +
-      splitted[1] +
-      "&user=" +
-      splitted[0]
-  );
-
-  const cookies = cookie.parse(context.req.headers.cookie);
-  const res3 = await axios.get("http://127.0.0.1:5000/user/info", {
-    params: {
-      token: cookies.token,
-    },
-  });
-  var userinfo = null;
-  if (res3.data.result === "ok") {
-    userinfo = res3.data.userinfo;
-  }
-
-  let isFollowing = false;
-  userinfo.followed_sources.forEach((source) => {
-    if (source.source.includes(context.query.user)) {
-      isFollowing = true;
+export default function UserInfo() {
+  useRequireLogin()
+  const router = useRouter()
+  const sourceName = router.query.user
+  // Redirect if the given sourceName does not denote a user.
+  useEffect(() => {
+    if(sourceName && sourceName.startsWith('*')) {
+      router.push("/source-info?source=" + sourceName)
     }
-  });
-
-  const res4 = await axios.get(
-    "http://127.0.0.1:5000/api/source_info?source=" + splitted[1] + "&user=" + splitted[0]
-  );
-
-  return {
-    props: {
-      sourceName: context.query.user,
-      post: res2.data,
-      isFollowingSource: isFollowing,
-      numFollowers: res4.data.num_followers
-    },
-  };
-}
-
-export default function UserInfo({
-  sourceName,
-  post,
-  isFollowingSource,
-  numFollowers,
-  token}) {
-  const [followerCount, setFollowerCount] = useState(numFollowers);
-  const [isFollowing, setIsFollowing] = useState(isFollowingSource);
+  }, [sourceName])
+  const { user, isFollowingSource } = useUser()
+  // Fetch the user stats from the source stats endpoint.
+  const userInfo  = useApiData(null, "source_stats", { 
+    source: sourceName
+  }, [user, sourceName], () => sourceName != null)  
   const [sortByOption, setSortByOption] = useState("interaction");
   const [sortOrderOption, setSortOrderOption] = useState("descending");
-  const [posts, setPosts] = useState(post);
+  // Fetch the user's posts.
+  const posts = useApiData([], "posts", {
+    source: sourceName
+  }, [sourceName], () => sourceName != null);
   const [sortedPosts, setSortedPosts] = useState([]);
 
   useEffect(() => {
@@ -91,17 +53,7 @@ export default function UserInfo({
     setSortedPosts(sorted);
   }, [posts, sortOrderOption, sortByOption]);
 
-    const onFollow = () => {
-      setFollowerCount(followerCount + 1)
-      setIsFollowing(true);
-    }
-
-    const onUnfollow = () => {
-      setFollowerCount(followerCount -1)
-      setIsFollowing(false);
-    }
-
-  return (
+  return (!sourceName ? "..." :
     <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
       <div className="col-start-2 col-span-2">
         <DashboardPanel collapsable={false}>
@@ -119,15 +71,13 @@ export default function UserInfo({
                 </Link>
               </span>
               <span className="mt-2 font-light">
-                {followerCount} Followers
+                {userInfo?.num_followers && userInfo.num_followers} Followers
               </span>
               <div className="mt-2">
                 <FollowButton
-                  queryUrl={"http://127.0.0.1:5000/user/follow_source"}
-                  queryParams={{token: token, source: sourceName}}
-                  isFollowing={() => isFollowing}
-                  onFollow={onFollow}
-                  onUnfollow={onUnfollow}
+                  followEndpoint={"follow_source"}
+                  params={{source: sourceName}}
+                  isFollowing={() => isFollowingSource(sourceName)}
                   />
               </div>
             </div>

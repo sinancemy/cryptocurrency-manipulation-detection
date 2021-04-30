@@ -1,5 +1,5 @@
 module.exports = {
-  purge: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+//  purge: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
@@ -7,14 +7,14 @@ module.exports = {
         blue: {
           50: "#0C0E11",
           60: "#272F3E",
-          128: "#3b6978"
+          128: "#3b6978",
         },
         yellow: {
           50: "#F6C14E",
         },
         gray: {
           780: "#252F3E",
-          850: "#18202f"
+          850: "#18202f",
         }
       },
       spacing: {

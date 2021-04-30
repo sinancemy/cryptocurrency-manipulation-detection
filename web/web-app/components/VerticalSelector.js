@@ -8,20 +8,20 @@ const selectedTextColor = "gray-200"
 
 export const VerticalSelector = ({ prefix = null, suffix = null, options, getter, setter }) => {
 
-  return useMemo(() =>
-    <div className={`flex flex-row items-center text-xs py-2`}>
-      {prefix && 
-        <div className="px-2 py-1 cursor-default" disabled={true}>
-          {prefix}
-        </div>}
-      {options.map((opt, i) => (
-        <button 
-          className={`${getter() === opt ? (`ring-1 ring-${textColor} border-${borderColor} bg-${selectedColor} text-${selectedTextColor}`) : (`border-transparent bg-${color} opacity-50 hover:opacity-80 text-${textColor}`)} border-2 px-1 rounded`}
-          onClick={e => setter(opt)}>
-        {opt}
-      </button>
-      ))}
-      {suffix && <div className="px-2 py-1 cursor-default" disabled={true}>{suffix}</div>}
-    </div>
+  return (options && getter && setter &&
+      <div className={`flex flex-row items-center text-xs py-2`}>
+        {prefix && 
+          <div className="px-2 py-1 cursor-default" disabled={true}>
+            {prefix}
+          </div>}
+        {options.map((opt, i) => (
+          <button 
+            className={`${getter() === opt ? (`ring-1 ring-${textColor} border-${borderColor} bg-${selectedColor} text-${selectedTextColor}`) : (`border-transparent bg-${color} opacity-50 hover:opacity-80 text-${textColor}`)} border-2 px-1 rounded`}
+            onClick={e => setter(opt)}>
+          {opt}
+        </button>
+        ))}
+        {suffix && <div className="px-2 py-1 cursor-default" disabled={true}>{suffix}</div>}
+      </div>
   )
 }

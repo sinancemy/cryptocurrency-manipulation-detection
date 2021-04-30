@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { getCoinColor, getCoinIcon, getSourceParts } from "../Helpers"
+import { getCoinColor, getCoinIcon, getSourceParts } from "../helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
 
 
@@ -10,7 +10,7 @@ const textColor = "gray-100"
 
 export const CoinCard = ({ coin, isSelected, onToggle }) => {
 
-  return (
+  return (coin && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
       <label
         className={`cursor-pointer text-${textColor} text-sm`}>

@@ -75,6 +75,12 @@ class MatchSelector:
         self.needle = needle
 
 
+# Custom selector for sources. Not very elegant.
+class SourceSelector:
+    def __init__(self, sources: list):
+        self.sources = sources
+
+
 # Creates an INSERT query.
 def generate_insert_query(table_name, cols):
     cols_sql = "(" + ",".join(cols) + ")"
@@ -103,6 +109,22 @@ def create_conditionals(selectors: list) -> (str, list):
             cond = "(" + selector.col + " = ?)"
             conds.append(cond)
             params += [selector.needle]
+        # Handle the custom source selector.
+        elif isinstance(selector, SourceSelector):
+            inner_conds = []
+            inner_params = []
+            for source in selector.sources:
+                source_parts = source.split("@")
+                if source_parts[0] == "*":
+                    inner_conds.append("(source = ?)")
+                    inner_params.append(source_parts[1])
+                else:
+                    inner_conds.append("(user = ? AND source = ?)")
+                    inner_params.append(source_parts[0])
+                    inner_params.append(source_parts[1])
+            conds.append("(" + (" OR ".join(inner_conds)) + ")")
+            params += inner_params
+
     if len(conds) > 0:
         sql = "WHERE " + " AND ".join(conds)
     return sql, params
