@@ -1,12 +1,9 @@
-import { useCallback, useState } from "react"
-import { IoChatbubblesSharp, IoEllipsisHorizontal } from "react-icons/io5"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { IoChatbubblesSharp } from "react-icons/io5"
 import { dateToString, getCoinIcon, getSourceColor, getSourceIcon } from "../helpers"
 import { MultipurposeCard } from "./MultipurposeCard"
 import { MiniImpact } from "./MiniImpact"
-import { MdDateRange, MdExpandMore } from "react-icons/md"
 import Link from "next/link"
-import { AiOutlineArrowDown, AiOutlineArrowUp, AiOutlineEllipsis, AiOutlineLink } from "react-icons/ai"
-import { FaEllipsisH } from "react-icons/fa"
 import { BsChevronCompactDown } from "react-icons/bs"
 
 const mutedColor = "gray-500"
@@ -16,6 +13,7 @@ const innerBorderColor = "gray-800"
 export const PostOverview = ({ post }) => {
 
   const [selected, setSelected] = useState(false)
+  const contentRef = useRef(null)
 
   const getInteractionColor = useCallback((score) => {
     return (score > 1000)? "red-500"
@@ -29,9 +27,23 @@ export const PostOverview = ({ post }) => {
 
   }, [post])
 
+  const [isOverflown, setIsOverflown] = useState(false)
+
+  useLayoutEffect(() => {
+    console.log(contentRef.current)
+    console.log(contentRef.current.clientWidth)
+    console.log(contentRef.current.scrollWidth)
+    if (contentRef.current.clientHeight < contentRef.current.scrollHeight) {
+      setIsOverflown(true);
+    }
+  }, [contentRef])
+
+  const shouldShowExpander = useMemo(() => isOverflown && !selected, [isOverflown, selected])
+  const shouldShowLink = useMemo(() => !isOverflown|| selected, [isOverflown, selected])
+
   return (post &&
     <div className="my-2">
-    <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} disperse={true}>
+    <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} aligned={false}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col px-4 py-2 w-32`}>
           <span className="font-semibold width-50 truncate hover:underline">
@@ -62,32 +74,20 @@ export const PostOverview = ({ post }) => {
         </div>
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
-        <div className="flex flex-col px-4 py-2">
-          <div 
-            className={`flex flex-col justify-between ${!selected ? 'h-20 overflow-hidden' : 'min-h-20 max-h-48 overflow-scroll'} 
-                        bg-${innerColor} border border-${innerBorderColor} px-4 py-2 rounded relative`}>
-            <p>
-              {post.content}
-            </p>
-            { selected && (
-              <div className="text-xs text-gray-600 mt-2 hover:text-gray-200">
-                  <button className="hover:underline w-full flex flex-row items-center justify-center space-x-1">
-                    <AiOutlineLink />
-                    <span>Go to original...</span>
-                  </button>
-              </div>
-              )}
-            { !selected &&
-            <p className={`absolute left-0 right-0 bottom-0 w-full h-8 flex flex-col items-center justify-end 
-                           text-transparent hover:text-white font-semibold 
-                           bg-gradient-to-t from-${innerColor} 
-                           ${!selected && 'cursor-pointer'}`}
-                onClick={() => setSelected(!selected)}>
-                <BsChevronCompactDown />
-            </p> 
-            }
+        <div className={`flex flex-col justify-between bg-${innerColor} border border-${innerBorderColor} mx-4 my-2 rounded relative`}>
+          <div className={`${selected ? "max-h-48 overflow-scroll" : "h-16 overflow-hidden"} px-4 py-2`}
+              ref={contentRef}>
+            {post.content}
           </div>
+          { shouldShowExpander &&
+          <p className={`absolute left-0 right-0 bottom-0 w-full h-8 flex flex-col items-center justify-end 
+          text-transparent hover:text-white font-semibold bg-gradient-to-t from-${innerColor} 
+          ${!selected && 'cursor-pointer'}`} onClick={() => setSelected(!selected)}>
+            <BsChevronCompactDown />
+            </p> 
+          }
         </div>
+        
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
         <div className={`flex px-4 py-2 flex-col w-32`}>

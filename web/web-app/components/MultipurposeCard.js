@@ -6,7 +6,7 @@ const defaultColor = "gray-900"
 const borderColor = "gray-800"
 const textColor = "gray-100"
 
-export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defaultColor, hoverColorizer = () => colorizer(), disperse = false }) => {
+export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defaultColor, hoverColorizer = () => colorizer(), aligned = true }) => {
 
   const left = children.find(c => c.type === Left)
   const middle = children.find(c => c.type === Middle)
@@ -14,10 +14,10 @@ export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defau
 
   return (
     <div className={`flex flex-row relative border border-${borderColor} rounded
-                    items-center w-full text-${textColor} 
+                    items-center w-full text-${textColor} z-0
                     bg-${colorizer()} hover:bg-${hoverColorizer()}`}>
       <div className={`w-1.5 absolute left-0 top-0 bottom-0 bg-${badgeColor} rounded-l`}></div>
-      <div className={`flex-grow ml-1.5 flex items-center flex-row overflow-hidden`}>
+      <div className={`flex-grow ml-1.5 flex flex-row ${aligned && 'items-center'} overflow-hidden`}>
         <div class="flex-none">
             { left && left.props.children }
         </div>

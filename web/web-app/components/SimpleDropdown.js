@@ -11,8 +11,7 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
   const [focused, setFocused] = useState(false)
 
   return (options && selected && setSelected &&
-    <div 
-      class="relative inline-block text-left text-xs" 
+    <div class="relative inline-block text-left text-xs z-50" 
       tabIndex="0" 
       onBlur={() => setFocused(false)}>
       <div>

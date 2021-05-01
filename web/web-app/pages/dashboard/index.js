@@ -95,10 +95,10 @@ export default function Dashboard() {
     return prices.find(p => p.time === date)?.price
   }, [prices, selectedPoint])
 
-  const selectedVolume = useMemo(() => {
+  const selectedPostPoint = useMemo(() => {
     if(!selectedPoint) return 0
     const date = parseInt(selectedPoint.midDate.valueOf()/1000)
-    return postVolume.find(p => date >= p.time && date < p.next_time)?.volume
+    return postVolume.find(p => date >= p.time && date < p.next_time)
   }, [postVolume, selectedPoint])
 
   // Set the initial graph settings.
@@ -274,7 +274,7 @@ export default function Dashboard() {
                 checked={showPostVolume}
                 onClick={() => setShowPostVolume(!showPostVolume)}
               />
-              <p className="ml-2">Show post volume</p>
+              <p className="ml-2">Show heartbeat</p>
             </label>
             <label className="flex items-center mt-2">
               <input 
@@ -300,7 +300,11 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="font-semibold">Posts (cumulative):{" "}</span>
-                  <span className="col-span-4">{ selectedVolume }</span>
+                  <span className="col-span-4">{ selectedPostPoint?.volume }</span>
+                </div>
+                <div>
+                  <span className="font-semibold">Posts (new):{" "}</span>
+                  <span className="col-span-4">{ selectedPostPoint?.count }</span>
                 </div>
                 <div className="w-full pt-2">
                   <CuteButton
