@@ -29,7 +29,7 @@ const formatDate = timeFormat("%b %d, '%y");
 // accessors
 const getDate = (d) => new Date(d.time * 1000);
 const getStockValue = (d) => d.price;
-const getPostVolumeValue = (d) => d.volume;
+const getPostVolumeValue = (d) => d.count;
 const getPostCountValue = (d) => d.count; 
 const bisectDate = bisector(d => new Date(d.time * 1000)).left;
 
@@ -71,7 +71,7 @@ export const Graph = withTooltip(
       const high = max(postVolume, getPostVolumeValue) || 0
       return scaleLinear({
         domain: [0, high + high/8],
-        range: [yMax, 0]
+        range: [yMax+1, 0]
       })
     }, [postVolume, yMax])
 
@@ -378,7 +378,7 @@ export const Graph = withTooltip(
                 </span>
               { showPostVolume && (
                 <span>
-                 Posts(cum): {getPostVolumeValue(tooltipData.selectedVolumePoint)} {" "} 
+                 Posts(new): {getPostVolumeValue(tooltipData.selectedVolumePoint)} {" "} 
                 </span>
               )}
               </div>
