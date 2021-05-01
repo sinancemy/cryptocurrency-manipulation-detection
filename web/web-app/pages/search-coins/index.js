@@ -42,7 +42,6 @@ export default function SearchCoins() {
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <div className="pt-2">
               {filteredCoins.map(coin => (
                 <div className="mb-2">
                   <CoinOverview 
@@ -57,7 +56,6 @@ export default function SearchCoins() {
                     )}/>
                 </div>
               ))}
-            </div>
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>

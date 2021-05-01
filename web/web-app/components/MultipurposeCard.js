@@ -13,14 +13,15 @@ export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defau
   const right = children.find(c => c.type === Right)
 
   return (
-    <div className="flex flex-row mb-2">
-      <div className={`w-1.5 flex-none bg-${badgeColor} rounded-l`}></div>
-      <div className={`flex flex-row items-center justify-between ${disperse && 'justify-between'} py-2 px-4 
-                        w-full text-${textColor} bg-${colorizer()} hover:bg-${hoverColorizer()} border border-${borderColor} rounded-r`}>
+    <div className={`flex flex-row relative border border-${borderColor} rounded
+                    items-center w-full text-${textColor} 
+                    bg-${colorizer()} hover:bg-${hoverColorizer()}`}>
+      <div className={`w-1.5 absolute left-0 top-0 bottom-0 bg-${badgeColor} rounded-l`}></div>
+      <div className={`flex-grow ml-1.5 flex items-center flex-row overflow-hidden`}>
         <div class="flex-none">
             { left && left.props.children }
         </div>
-        <div className="flex-grow">
+        <div className="flex-grow flex-shrink overflow-hidden">
             { middle && middle.props.children }
         </div>
         <div className="flex-none">

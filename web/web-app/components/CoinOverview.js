@@ -16,13 +16,13 @@ export const CoinOverview = ({ coin, button, singleLine = false }) => {
   return (coin &&
     <MultipurposeCard badgeColor={getCoinColor(coin)} colorizer={() => bgColor}>
       <MultipurposeCard.Left>
-        <span className={`text-4xl text-${getCoinColor(coin)}`}>
+        <div className={`text-4xl text-${getCoinColor(coin)} p-4`}>
           {getCoinIcon(coin)}
-        </span>
+        </div>
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
-        <div className={`flex flex-col ml-2`}>
-          <div className={`py-1 flex flex-row items-center`}>
+        <div className={`flex flex-col`}>
+          <div className={`flex flex-row items-center`}>
             <span className="hover:underline">
               <Link href={`/coin-info?coin=${coin}`}>
                 {coin.toUpperCase()}
@@ -35,14 +35,14 @@ export const CoinOverview = ({ coin, button, singleLine = false }) => {
                 <FiDollarSign />
               </span>
               <span className={`text-xs text-${mutedTextColor} font-mono`}>
-                Not implemented.
+                0.00
               </span>
             </div>
           )}
         </div>
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
-        <div>
+        <div className="px-3">
           { button }
         </div>
       </MultipurposeCard.Right>

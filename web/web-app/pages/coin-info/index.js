@@ -105,7 +105,7 @@ export default function CoinInfo() {
           <DashboardPanel.Header>
             <div className="flex items-center flex-justify-between font-normal">
               <div>
-                <span>Showing posts for{" "}</span>
+                <span>Showing posts about{" "}</span>
                 <span className="font-semibold">{ coinName.toUpperCase() }</span>
               </div>
               <span class="flex-grow"></span>
@@ -126,8 +126,6 @@ export default function CoinInfo() {
               selectedRange={null}
               allTime={true} />
           </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-          </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="col-start-10 col-span-2">

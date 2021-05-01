@@ -6,10 +6,11 @@ body {
   background-color: rgb(10, 10, 10);
 }
 
-a.link {
+.link {
   color: #004A81
 }
 
-a.link:hover {
+.link:hover {
+  color: #046DBB;
   text-decoration: underline;
 }

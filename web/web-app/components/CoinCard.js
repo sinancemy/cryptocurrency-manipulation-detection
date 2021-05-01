@@ -12,24 +12,27 @@ export const CoinCard = ({ coin, isSelected, onToggle }) => {
 
   return (coin && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
-      <label
-        className={`cursor-pointer text-${textColor} text-sm`}>
+      <label className={`cursor-pointer text-${textColor} text-sm`}>
       <MultipurposeCard badgeColor={getCoinColor(coin)} colorizer={() => isSelected() ? selectedColor : color}>
         <MultipurposeCard.Left>
-          <input 
-            type="radio"
-            className="hidden"
-            name="coin-type"
-            onClick={onToggle}
-            checked={isSelected()} />
+        </MultipurposeCard.Left>
+        <MultipurposeCard.Middle>
+          <div className="pl-3 py-2">
+            <input 
+              type="radio"
+              className="hidden"
+              name="coin-type"
+              onClick={onToggle}
+              checked={isSelected()} />
             <Link href={`/coin-info?coin=` + coin}>
               <span className="hover:underline">
                 { coin.toUpperCase() }
               </span>
             </Link>
-        </MultipurposeCard.Left>
+          </div>
+        </MultipurposeCard.Middle>
         <MultipurposeCard.Right>
-          <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
+          <div className={`opacity-${isSelected() ? '70' : '40'} text-xl pr-2 py-2`}>
               { getCoinIcon(coin) }
           </div>
         </MultipurposeCard.Right>

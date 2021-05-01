@@ -45,18 +45,18 @@ export default function SearchSources() {
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            <div>
-              {filteredSources.map(source => (
-                <SourceOverview
-                  source={source}
-                  button={(
-                    <FollowButton
-                      followEndpoint={"follow_source"}
-                      params={{source: source}}
-                      isFollowing={() => isFollowingSource(source)} />
-                  )}/>
+            {filteredSources.map(source => (
+            <div className="mb-2">
+              <SourceOverview
+                source={source}
+                button={(
+                  <FollowButton
+                    followEndpoint={"follow_source"}
+                    params={{source: source}}
+                    isFollowing={() => isFollowingSource(source)} />
+                )}/>
+              </div>
               ))}
-            </div>
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>

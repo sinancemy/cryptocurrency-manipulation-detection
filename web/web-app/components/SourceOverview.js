@@ -15,24 +15,24 @@ export const SourceOverview = ({ source, button, singleLine = false }) => {
   return (source && button &&
     <MultipurposeCard badgeColor={getSourceColor(source)} colorizer={() => bgColor}>
       <MultipurposeCard.Left>
-        <span className={`text-4xl text-${getSourceColor(source)}`}>
+        <div className={`text-4xl text-${getSourceColor(source)} ${singleLine ? 'p-2' : 'p-4'}`}>
           { hasUsername() ? (
             <TiAt />
           ) : getSourceIcon(source)}
-        </span>
+        </div>
       </MultipurposeCard.Left>
       <MultipurposeCard.Middle>
-        <div className={`flex flex-col ml-2`}>
-          <div className={`py-1 flex flex-row items-center`}>
+        <div className={`flex flex-col`}>
+          <div className={`flex flex-row items-center`}>
             <span className="hover:underline">
             { hasUsername() ? (
-                <Link href={`/user-info?user=${source}`}>
-                  { getUsername() }
+              <Link href={`/user-info?user=${source}`}>
+                { getUsername() }
               </Link>
-            ) : (
-                  <Link href={`/source-info?source=${source}`}>
-                    { getSource() }
-                  </Link>
+              ) : (
+              <Link href={`/source-info?source=${source}`}>
+                { getSource() }
+              </Link>
             ) }
             </span>
           </div>
@@ -51,7 +51,7 @@ export const SourceOverview = ({ source, button, singleLine = false }) => {
         </div>
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
-        <div>
+        <div className="px-3">
           { button }
         </div> 
       </MultipurposeCard.Right>

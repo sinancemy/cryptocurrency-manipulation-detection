@@ -90,8 +90,6 @@ export default function UserInfo() {
                 selectedRange={null}
                 allTime={true} />
             </DashboardPanel.Body>
-            <DashboardPanel.Footer>
-            </DashboardPanel.Footer>
           </DashboardPanel>
       </div>
     </div>

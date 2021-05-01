@@ -69,7 +69,7 @@ def get_posts():
     source = request.args.get("source", type=str, default=None)
     order_by = request.args.get("sort", type=str, default=None)
     desc = request.args.get("desc", type=int, default=0)
-    limit = request.args.get("limit", type=int, default=100)
+    limit = request.args.get("limit", type=int, default=50)
     # We return 50 posts per request at most.
     limit = min(limit, 50)
     if coin_type is not None:

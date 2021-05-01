@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { fetchFromApi, useApiData, useTraceUpdate } from "../api-hook"
 import { CuteButton } from "./CuteButton"
 import { PostOverview } from "./PostOverview"
+import { AiOutlineLoading } from "react-icons/ai"
 
+const API_POST_LIMIT = 50
 
 export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedSources = [], sortBy, sortOrder,  
                             showIrrelevant = false, allSources = false, onUpdate = (posts) => {} }) => {
@@ -31,7 +33,7 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
   // Move to the shown posts.
   useEffect(() => {
     if(!posts) return
-    setCanLoadMore(true)
+    setCanLoadMore(posts.length === API_POST_LIMIT)
     setLoadingMore(false)
     setShownPosts(posts)
   }, [posts])
@@ -60,7 +62,8 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
       ...fetchPostsParams,
       ["from_" + sortBy]: lastScrolled
       }, (data) => {
-        if(data.length === 0) setCanLoadMore(false)
+        setCanLoadMore(data.length === API_POST_LIMIT)
+        // Concatenate the new posts into the shown posts.
         setShownPosts(shownPosts.concat(data))
         setLoadingMore(false)
       })
@@ -75,11 +78,12 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
         ))}
         <div className="flex flex-row justify-center w-full">
           { canLoadMore ? (
-            <CuteButton onClick={loadMore} width="full" size="sm" isDisabled={() => loadingMore}>
-              Load more
+            <CuteButton onClick={loadMore} width="full" size="baseline" isDisabled={() => loadingMore}>
+                <AiOutlineLoading className={`animate-spin mr-2 ${!loadingMore && 'invisible'}`} />
+                Load more
             </CuteButton>
           ) : (
-            <CuteButton width="full" size="sm" isDisabled={() => true} textColor={"white"}>
+            <CuteButton width="full" size="baseline" isDisabled={() => true} textColor={"white"}>
               That's all
             </CuteButton>
           )}

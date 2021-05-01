@@ -14,41 +14,34 @@ export const SourceCard = ({ source, isSelected, onToggle }) => {
 
   return (source && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
-      <label
-        className={`cursor-pointer text-${textColor} text-sm`}>
+      <label className={`cursor-pointer text-${textColor} text-sm`}>
         <MultipurposeCard badgeColor={getSourceColor(source)} colorizer={() => isSelected() ? selectedColor : color}>
           <MultipurposeCard.Left>
-            <div className="w-24 truncate">
+          </MultipurposeCard.Left>
+          <MultipurposeCard.Middle>
+            <div className="pl-3 py-2">
               <input 
                 type="checkbox"
                 className="hidden"
                 onClick={onToggle}
                 checked={isSelected()} />
-                    { isUser() ? (
-                      <span className="hover:underline">
-                        <Link href={`/user-info?user=` + source}>
-                          {getSourceParts(source)[0]}
-                        </Link>
-                      </span>
-                    ) : (
-                      <span className="hover:underline">
-                        <Link href={`/source-info?source=` + source}>
-                          {getSourceParts(source)[1]}
-                        </Link>
-                      </span>
-                    )}
+                { isUser() ? (
+                <span className="hover:underline">
+                  <Link href={`/user-info?user=` + source}>
+                    {getSourceParts(source)[0]}
+                  </Link>
+                </span>
+                ) : (
+                <span className="hover:underline">
+                  <Link href={`/source-info?source=` + source}>
+                    {getSourceParts(source)[1]}
+                  </Link>
+                </span>
+                )}
               </div>
-          </MultipurposeCard.Left>
-          <MultipurposeCard.Middle>
-            { isUser() && (
-              <div className="flex flex-row items-center w-16 truncate">
-                  <span className="ml-2 text-xs opacity-30">{getSourceIcon(source)}</span>
-                  <span className="ml-1 text-xs opacity-30">{getSourceParts(source)[1]}</span>  
-                </div>            
-            )}
           </MultipurposeCard.Middle>
           <MultipurposeCard.Right>
-            <div className={`opacity-${isSelected() ? '70' : '40'} text-xl`}>
+            <div className={`opacity-${isSelected() ? '70' : '40'} text-xl p-2`}>
                 { isUser() ?  <TiAt /> : getSourceIcon(source) }
             </div>
           </MultipurposeCard.Right>

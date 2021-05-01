@@ -93,8 +93,6 @@ export default function SourceInfo() {
               selectedRange={null}
               allTime={true} />
           </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-          </DashboardPanel.Footer>
         </DashboardPanel>
       </div>
       <div className="col-start-10 col-span-2">
@@ -104,10 +102,12 @@ export default function SourceInfo() {
           </DashboardPanel.Header>
           <DashboardPanel.Body>
               {sourceInfo?.top_interacted_users && sourceInfo.top_interacted_users.map(user => (
-                <SourceOverview
-                  source={user.source}
-                  button={<>{user.total_interaction}</>} 
-                  singleLine={true} />
+                <div className="mb-2">
+                  <SourceOverview
+                    source={user.source}
+                    button={<>{user.total_interaction}</>} 
+                    singleLine={true} />
+                </div>
               ))}
           </DashboardPanel.Body>
         </DashboardPanel>
@@ -117,10 +117,12 @@ export default function SourceInfo() {
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {sourceInfo?.top_active_users && sourceInfo.top_active_users.map(user => (
+              <div className="mb-2">
                 <SourceOverview
                   source={user.source}
                   button={<>{user.total_msg}</>}
                   singleLine={true} />
+              </div>
               ))}
           </DashboardPanel.Body>
         </DashboardPanel>

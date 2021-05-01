@@ -17,6 +17,10 @@ module.exports = {
           850: "#18202f",
         }
       },
+      minHeight: {
+        '16':  '4rem',
+        '20': '5rem'
+      },
       spacing: {
         128: "36rem",
       },
@@ -51,7 +55,8 @@ module.exports = {
   variants: {
     extend: {
       opacity: ['disabled'],
-      cursor: ['disabled', 'hover']
+      cursor: ['disabled', 'hover'],
+      visibility: ['hover']
     },
   },
   plugins: [],
