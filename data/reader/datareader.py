@@ -29,7 +29,7 @@ class DataReader(object):
         print("DataReader: Invoked to run within", time_range)
         # Collect all the posts within the time range.
         posts = sorted(reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers)),
-                       key=lambda  x: x.time)
+                       key=lambda x: x.time)
         # Collect all the possible prices according to the window.
         prices = []
         if len(posts) > 0:

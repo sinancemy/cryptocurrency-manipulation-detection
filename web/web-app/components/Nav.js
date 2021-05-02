@@ -13,7 +13,7 @@ export default function Nav({ loggedIn, userInfo }) {
   };
 
   return (
-    <div className="py-4 px-8 bg-blue-50 text text-white flex justify-between">
+    <div className="py-4 px-8 bg-blue-50 h-16 text text-white flex justify-between">
       <div className="flex text-xl items-center text-yellow-50">
         <Link href="/">Logo</Link>
       </div>

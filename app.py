@@ -1,11 +1,11 @@
 import time
 from typing import Optional
 
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
-from flask_cors import CORS
+from flask import Flask, request, jsonify, send_from_directory
 
 import misc
 from analysis.interface import Predictor
+from backend.mail_helpers import Mailer
 from data.collector.sources import get_exported_sources, is_valid_source
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
     FollowedSource, SourceSelector
@@ -13,15 +13,20 @@ from backend.user import get_user_by_username, verify_password, create_user, Use
     check_session, new_session, remove_session
 from backend.json_helpers import *
 import numpy as np
+from flask_cors import CORS
 
 NPM_OUT = "web/web-app/out"
 
 app = Flask(__name__, static_folder=NPM_OUT, static_url_path="/static")
 app.secret_key = b'f&#Uj**pF(G6R5O'
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
-app.config["CORS_SUPPORTS_CREDENTIALS"] = True
-
+mailer = Mailer(app)
 CORS(app)
+
+
+@app.route("/send_mail")
+def sendmail():
+    mailer.send_mail()
 
 
 def get_coin_type_arg() -> Optional[misc.CoinType]:

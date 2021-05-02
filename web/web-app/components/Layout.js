@@ -3,9 +3,13 @@ import Nav from "./Nav";
 
 export default function Layout({children, userInfo, loggedIn}) {
   return (
-    <div>
-      <Nav loggedIn={loggedIn} userInfo={userInfo} />
-      {children}
+    <div className="flex flex-col h-screen">
+      <div className="flex-none">
+        <Nav loggedIn={loggedIn} userInfo={userInfo} />
+      </div>
+      <div className="flex-grow">
+        {children}
+      </div>
     </div>
   );
 }

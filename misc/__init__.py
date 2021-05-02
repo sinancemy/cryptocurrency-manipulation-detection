@@ -11,7 +11,7 @@ class CoinType(str, Enum):
     DOGE = "doge"
     ADA = "ada"
     LINK = "link"
-    DOT = "dot1"
+    DOT = "dot"
     XRP = "xrp"
     LTC = "ltc"
     XLM = "xlm"
