@@ -1,12 +1,12 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { AreaClosed, Line, Bar, LinePath } from '@vx/shape';
-import { curveMonotoneX } from '@vx/curve';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { GridRows, GridColumns } from '@vx/grid';
-import { withTooltip, Tooltip, defaultStyles } from '@vx/tooltip';
+import { withTooltip, Tooltip, defaultStyles, useTooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 import { max, extent, bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
+import { useApiData } from "../api-hook"
 
 export const background = 'transparent';
 export const stockColor = '#1F85DE';
@@ -27,34 +27,47 @@ const tooltipStyles = {
 const formatDate = timeFormat("%b %d, '%y");
 
 // accessors
-const getDate = (d) => new Date(d.time * 1000);
-const getStockValue = (d) => d.price;
-const getPostVolumeValue = (d) => d.count;
-const getPostCountValue = (d) => d.count; 
-const bisectDate = bisector(d => new Date(d.time * 1000)).left;
+const getDate = (d) => !d ? new Date(0) : new Date(d.time * 1000);
+const getStockValue = (d) => !d ? 0 : d.price
+const getPostVolumeValue = (d) => !d ? 0 : d.count
+const bisectDate = bisector(d => !d ? new Date(1000) : new Date(d.time * 1000)).left;
 
-export const Graph = withTooltip(
-  ({
-    parentWidth,
-    parentHeight,
-    margin = { top: 0, right: 0, bottom: 0, left: 0 },
-    showTooltip,
-    hideTooltip,
-    tooltipData,
-    tooltipTop = [0, 0],
-    tooltipLeft = 0,
-    selectedRange,
-    setSelectedRange,
-    graphSettings,
-    stock,
-    postVolume,
-    showPostVolume = false}) => {
-    const width = parentWidth
-    const height = parentHeight
-    if (width < 10) return null;
+const timeExtentMap = {
+  "d": 1,
+  "w": 7,
+  "m": 30,
+  "y": 365,
+}
+
+export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWindow, showPostVolume = true, onSelected = () => true }) => {
+    const { showTooltip, hideTooltip, tooltipData, tooltipTop, tooltipLeft } = useTooltip()
     // bounds
-    const xMax = width - margin.left - margin.right;
-    const yMax = height - margin.top - margin.bottom;
+    if (width < 10) return null
+    const xMax = width
+    const yMax = height
+    // The price range that will be shown on the graph.
+    const shownPriceRange = useMemo(() => {
+        if(!timeExtent || !coinType) return [0, 0]
+        const decrement = 60 * 60 * 24 * timeExtentMap[timeExtent]
+        const winHigh = currentTime
+        const winLow = winHigh - decrement
+        return [winLow, winHigh]
+    }, [timeExtent, currentTime])
+    // Indicating when to refetch the prices.
+    const shouldRefetchPrices = useCallback(() => currentTime && timeWindow != null && timeExtent && coinType && shownPriceRange[0] !== shownPriceRange[1])
+    // Fetching the prices.
+    const stock = useApiData([], "prices", {
+        start: shownPriceRange[0],
+        end: shownPriceRange[1],
+        type: coinType
+    }, [shownPriceRange, coinType], shouldRefetchPrices, (prices) => prices?.reverse())
+    // Fetching the post volume.
+    const postVolume = useApiData([], "post_volume", {
+        start: shownPriceRange[0],
+        end: shownPriceRange[1],
+        type: coinType,
+        ticks: 1000
+    }, [shownPriceRange, coinType], () => shouldRefetchPrices() && showPostVolume)
     // scales
     const dateScale = useMemo(() => scaleTime({
         domain: extent(stock, getDate),
@@ -74,7 +87,6 @@ export const Graph = withTooltip(
         range: [yMax+1, 0]
       })
     }, [postVolume, yMax])
-
     // Tooltip handler
     const handleTooltip = useCallback((event) => {
         const { x } = localPoint(event) || { x: 0 };
@@ -95,9 +107,9 @@ export const Graph = withTooltip(
         if (vd1 && getDate(vd1)) {
           vd = x0.valueOf() - getDate(vd0).valueOf() > getDate(vd1).valueOf() - x0.valueOf() ? vd1 : vd0;
         }
-        // Handle time window.
-        const tw0 = x0.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-        const tw1 = x0.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
+        // Handle the time window.
+        const tw0 = x0.valueOf() - (timeWindow/2) * 1000 * 60 * 60 * 24
+        const tw1 = x0.valueOf() + (timeWindow/2) * 1000 * 60 * 60 * 24
         const pricei0 = bisectDate(stock, tw0)
         const pricei1 = bisectDate(stock, tw1)
         const volumei0 = bisectDate(postVolume, tw0)
@@ -114,69 +126,59 @@ export const Graph = withTooltip(
           tooltipTop: [stockValueScale(getStockValue(d)), postVolumeScale(getPostVolumeValue(vd))],
         });
       },
-      [showTooltip, stock, postVolume, stockValueScale, dateScale, graphSettings],
+      [showTooltip, stock, postVolume, stockValueScale, postVolumeScale, dateScale, timeWindow],
     );
-
+    const getPointWithDate = useCallback((list, date) => {
+      if(list.length == 1) return list[0]
+      let index = bisectDate(list, date)
+      let d = list[index]
+      return d
+    })
+    const getPricePointWithDate = useCallback((date) => getPointWithDate(stock, date), [stock])
+    const getVolumePointWithDate = useCallback((date) => getPointWithDate(postVolume, date), [postVolume])
+    // Selection stuff...
+    const [selectedDate, setSelectedDate] = useState(null)
     // Selection handler
-    const handleSelect = useCallback((event) => {
-      const { x } = localPoint(event) || { x: 0 };
-      const x0 = dateScale.invert(x);
-      let d = getPricePointWithDate(x0)
-      let v = getVolumePointWithDate(x0)
-      setSelectedRange({
-        mid: d,
-        midVolume: v,
-        midDate: getDate(d)
-      })
-    }, [graphSettings])
+    const handleSelect = useCallback(() => {
+      if(timeWindow === 0) return
+      const midDate = getDate(tooltipData.selectedPoint)
+      setSelectedDate(midDate)
+    }, [dateScale, tooltipData])
 
-    const getPricePointWithDate = useCallback((date) => {
-      if(stock.length == 1) {
-        return stock[0]
-      }
-      const x0 = dateScale(date)
-      let mid = bisectDate(stock, date)
-      // Mid can be 0, especially when the date is out of bounds!
-      if(mid == 0) mid += 1
-      const d0 = stock[mid - 1];
-      const d1 = stock[mid];
-      let d = d0;
-      if (d1 && getDate(d1)) {
-        d = x0.valueOf() - getDate(d0).valueOf() > getDate(d1).valueOf() - x0.valueOf() ? d1 : d0;
-      }
-      return d
-    }, [stock])
+    const getRangeIndices = (date, list) => {
+      const d = date
+      const pw0 = d.valueOf() - (timeWindow/2) * 1000 * 60 * 60 * 24
+      const pw1 = d.valueOf() + (timeWindow/2) * 1000 * 60 * 60 * 24
+      const i0 = bisectDate(list, pw0)
+      const i1 = bisectDate(list, pw1)
+      return [i0, i1]
+    }
+    
+    const selectedRange = useMemo(() => {
+      if(!selectedDate) return [0, 0]
+      const [i0, i1] = getRangeIndices(selectedDate, stock)
+      return [getDate(stock[i0]), getDate(stock[i1])]
+    }, [selectedDate, timeWindow])
 
-    const getVolumePointWithDate = useCallback((date) => {
-      if(postVolume.length == 1) {
-        return postVolume[0]
-      }
-      const x0 = dateScale(date)
-      let mid = bisectDate(postVolume, date)
-      // Mid can be 0, especially when the date is out of bounds!
-      if(mid == 0) mid += 1
-      const d0 = postVolume[mid - 1];
-      const d1 = postVolume[mid];
-      let d = d0;
-      if (d1 && getDate(d1)) {
-        d = x0.valueOf() - getDate(d0).valueOf() > getDate(d1).valueOf() - x0.valueOf() ? d1 : d0;
-      }
-      return d
-    }, [postVolume])
+    useEffect(() => {
+      if(!selectedRange) onSelected(null)
+      const midVolume  = getVolumePointWithDate(selectedDate)
+      const mid = getPricePointWithDate(selectedDate)
+      onSelected({ mid: mid, midVolume: midVolume, midDate: selectedDate, selectedRange: selectedRange })
+    }, [selectedRange])
+    // Clearing the selection.
+    useEffect(() => {
+      setSelectedDate(null)
+    }, [timeExtent])
 
     const getSelectedRange = useCallback((volume = false) => {
-        const d = selectedRange.midDate
-        const pw0 = d.valueOf() - (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-        const pw1 = d.valueOf() + (graphSettings.timeWindow/2) * 1000 * 60 * 60 * 24
-        const i0 = bisectDate(volume ? postVolume : stock, pw0)
-        const i1 = bisectDate(volume ? postVolume : stock, pw1)  
+        const [i0, i1] = getRangeIndices(selectedDate, volume ? postVolume : stock)
         return volume ? postVolume.slice(i0, i1) : stock.slice(i0, i1)
-    }, [graphSettings, selectedRange])
+    }, [timeWindow, selectedDate, postVolume, stock])
 
-    const _min = (a, b) => (a < b) ? a : b
-    const _max = (a, b) => (a > b) ? a : b
+    const renderDependencies = [stock, postVolume, tooltipData, width, height, coinType, currentTime, timeExtent, timeWindow, showPostVolume]
 
-    return  (stock && postVolume && graphSettings &&
+    return  (stock && postVolume &&
       <div>
         <svg width={width} height={height} className="animate-blur-in">
           <rect
@@ -192,16 +194,14 @@ export const Graph = withTooltip(
             strokeDasharray="3,3"
             stroke={gridColor}
             strokeOpacity={0.3}
-            pointerEvents="none"
-          />
+            pointerEvents="none"/>
           <GridColumns
             scale={dateScale}
             height={yMax}
             strokeDasharray="3,3"
             stroke={gridColor}
             strokeOpacity={0.3}
-            pointerEvents="none"
-          />
+            pointerEvents="none"/>
           <AreaClosed
             data={stock}
             x={d => dateScale(getDate(d))}
@@ -210,8 +210,7 @@ export const Graph = withTooltip(
             strokeWidth={2}
             stroke={stockStrokeColor}
             fill={stockColor}
-            opacity={0.5}
-          />
+            opacity={0.5}/>
           {tooltipData && (
           <LinePath
             data={tooltipData.priceTimeWindow}
@@ -219,18 +218,16 @@ export const Graph = withTooltip(
             y={d => stockValueScale(getStockValue(d))}
             yScale={stockValueScale}
             strokeWidth={2}
-            stroke={tooltipReflectionColor}
-          />
+            stroke={tooltipReflectionColor}/>
           )}
-          {selectedRange && (
+          {selectedDate && (
           <LinePath
             data={getSelectedRange()}
             x={d => dateScale(getDate(d))}
             y={d => stockValueScale(getStockValue(d))}
             yScale={stockValueScale}
             strokeWidth={2}
-            stroke={selectionColor}
-          />
+            stroke={selectionColor}/>
           )}
           {showPostVolume && (
             <>
@@ -255,7 +252,7 @@ export const Graph = withTooltip(
                 fill="transparent"
               /> 
             )}
-            { selectedRange && (
+            { selectedDate && (
               <LinePath
                 data={getSelectedRange(true)}
                 x={d => dateScale(getDate(d))}
@@ -318,19 +315,19 @@ export const Graph = withTooltip(
               )}
             </g>
           )}
-          {selectedRange && (
+          {selectedDate && (
             <g>
               <Line
-                from={{ x: dateScale(selectedRange.midDate), y: 0 }}
-                to={{ x: dateScale(selectedRange.midDate), y: yMax }}
+                from={{ x: dateScale(selectedDate), y: 0 }}
+                to={{ x: dateScale(selectedDate), y: yMax }}
                 stroke={selectionColor}
                 strokeWidth={1}
                 pointerEvents="none"
                 strokeDasharray="5,2"
               />
               <circle
-                cx={dateScale(selectedRange.midDate)}
-                cy={stockValueScale(getStockValue(getPricePointWithDate(selectedRange.midDate)))}
+                cx={dateScale(selectedDate)}
+                cy={stockValueScale(getStockValue(getPricePointWithDate(selectedDate)))}
                 r={4}
                 fill={selectionColor}
                 stroke="white"
@@ -339,8 +336,8 @@ export const Graph = withTooltip(
               />
               {showPostVolume && (
                   <circle
-                    cx={dateScale(selectedRange.midDate)}
-                    cy={postVolumeScale(getPostVolumeValue(getVolumePointWithDate(selectedRange.midDate)))}
+                    cx={dateScale(selectedDate)}
+                    cy={postVolumeScale(getPostVolumeValue(getVolumePointWithDate(selectedDate)))}
                     r={4}
                     fill={selectionColor}
                     stroke="white"
@@ -355,18 +352,17 @@ export const Graph = withTooltip(
           <div>
             <Tooltip
               top={yMax - 36}
-              left={_max(0, _min(tooltipLeft - 60, xMax - 150))}
+              left={Math.max(0, Math.min(tooltipLeft - 60, xMax - 150))}
               style={{
                 ...defaultStyles,
                 textAlign: 'center',
                 width: 120
-              }}
-            >
+              }} >
               {formatDate(getDate(tooltipData.selectedPoint))}
             </Tooltip>
             <Tooltip 
               top={(tooltipTop[0] + tooltipTop[1])/2 - 24} 
-              left={_min(tooltipLeft + 12, xMax - 135)} 
+              left={Math.min(tooltipLeft + 12, xMax - 135)} 
               style={{
                 ...tooltipStyles,
                 width: 120,
@@ -386,6 +382,6 @@ export const Graph = withTooltip(
 
           </div>
         )}
-      </div>)
-  },
-)
+      </div>
+  )
+}

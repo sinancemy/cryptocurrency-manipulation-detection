@@ -30,9 +30,6 @@ export const PostOverview = ({ post }) => {
   const [isOverflown, setIsOverflown] = useState(false)
 
   useLayoutEffect(() => {
-    console.log(contentRef.current)
-    console.log(contentRef.current.clientWidth)
-    console.log(contentRef.current.scrollWidth)
     if (contentRef.current.clientHeight < contentRef.current.scrollHeight) {
       setIsOverflown(true);
     }

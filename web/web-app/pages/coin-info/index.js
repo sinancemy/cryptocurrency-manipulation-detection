@@ -1,18 +1,17 @@
 import { DashboardPanel } from "../../components/DashboardPanel"
-import { SimpleDropdown } from "../../components/SimpleDropdown"
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CuteButton } from "../../components/CuteButton"
 import { SourceCard } from "../../components/SourceCard"
 import { SourceOverview } from "../../components/SourceOverview";
 import { getCoinIcon } from "../../helpers";
 import { FollowButton } from "../../components/FollowButton";
-import { SimpleGraph } from "../../components/SimpleGraph"
-import { withParentSize } from '@vx/responsive';
 import { useRequireLogin, useUser } from "../../user-hook";
 import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
 import { PostList } from "../../components/PostList";
 import { SortSelector } from "../../components/SortSelector";
+import { Graph } from "../../components/Graph";
+import { ResponsiveGraph } from "../../components/ResponsiveGraph";
 
 export default function CoinInfo() {
   useRequireLogin()
@@ -20,7 +19,6 @@ export default function CoinInfo() {
   const coinName = router.query.coin
   const { user, isFollowingCoin } = useUser()
   const coinStats = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
-  const prices = useApiData(null, "prices", {type: coinName}, [coinName], () => coinName != null, (coins) => coins?.reverse())
   const [selectedSources, setSelectedSources] = useState([])
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
@@ -30,7 +28,7 @@ export default function CoinInfo() {
     setSelectedSources(coinStats.top_sources.map(s => s.source))
   }, [coinStats])
 
-  const SimpleResponsiveGraph = withParentSize(SimpleGraph)
+  const SimpleResponsiveGraph = Graph
 
   return (!coinName ? "..." :
     <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
@@ -95,11 +93,14 @@ export default function CoinInfo() {
       </div>
       <div className="col-start-4 col-span-6">
         <div className="h-48 bg-gray-900 rounded-md overflow-hidden mb-2">
-          {prices && coinStats?.last_price && coinStats && 
-          <SimpleResponsiveGraph
-            stock={prices}
-            lastPrice={coinStats.last_price.price}
-          />}
+          {coinStats?.last_price && coinStats && 
+            <ResponsiveGraph
+              coinType={coinName}
+              timeWindow={0}
+              showPostVolume={true}
+              onSelected={() => false}
+              autoUpdateSetting={true} />
+          }
         </div>
         <DashboardPanel restrictedHeight={false} collapsable={false}>
           <DashboardPanel.Header>

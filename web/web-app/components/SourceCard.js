@@ -24,7 +24,7 @@ export const SourceCard = ({ source, isSelected, onToggle }) => {
                 type="checkbox"
                 className="hidden"
                 onClick={onToggle}
-                checked={isSelected()} />
+                defaultChecked={isSelected()} />
                 { isUser() ? (
                 <span className="hover:underline">
                   <Link href={`/user-info?user=` + source}>

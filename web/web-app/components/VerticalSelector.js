@@ -9,7 +9,7 @@ const selectedTextColor = "gray-200"
 export const VerticalSelector = ({ prefix = null, suffix = null, options, getter, setter }) => {
 
   return (options && getter && setter &&
-      <div className={`flex flex-row items-center text-xs py-2`}>
+      <div className={`flex flex-row items-center text-${textColor} text-xs`}>
         {prefix && 
           <div className="px-2 py-1 cursor-default" disabled={true}>
             {prefix}

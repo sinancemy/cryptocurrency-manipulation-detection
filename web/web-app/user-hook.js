@@ -73,10 +73,14 @@ const useUserProvider = () => {
     return user.followed_coins.some((followedCoin) => followedCoin.coin_type.includes(coinName))
   }, [user])
 
+  const logout = useCallback(() => {
+    removeCookie("token")
+  }, [user])
+
   // Run on render.
   useEffect(fetchUser, [cookies])
   // Expose data and methods.
-  return { user: user, updateUser: updateUser, isFollowingSource: isFollowingSource, isFollowingCoin: isFollowingCoin }
+  return { user: user, updateUser: updateUser, isFollowingSource: isFollowingSource, isFollowingCoin: isFollowingCoin, logout: logout }
 }
 
 // Custom Hook to redirect to the login page if needed.

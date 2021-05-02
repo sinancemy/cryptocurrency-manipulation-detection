@@ -1,16 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
-import { useCookies } from "react-cookie";
 import { useRouter } from "next/router";
+import { useUser } from "../user-hook";
 
-export default function Nav({ loggedIn, userInfo }) {
-  const [cookie, setCookie, removeCookie] = useCookies();
-  const router = useRouter();
-
-  const logout = () => {
-    removeCookie("token");
-    router.push("/");
-  };
+export default function Nav() {
+  const { user, logout } = useUser()
+  const loggedIn = useMemo(() => user?.user?.username !== "guest", [user])
 
   return (
     <div className="py-4 px-8 bg-blue-50 h-16 text text-white flex justify-between">
@@ -33,8 +28,7 @@ export default function Nav({ loggedIn, userInfo }) {
           </div>
           <button
             onClick={logout}
-            className="ml-8 bg-yellow-50 text-blue-50 py-2 px-4 rounded"
-          >
+            className="ml-8 bg-yellow-50 text-blue-50 py-2 px-4 rounded">
             Logout
           </button>
         </div>
