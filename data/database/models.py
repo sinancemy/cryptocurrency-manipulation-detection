@@ -21,11 +21,11 @@ def row_to_user(r):
 
 
 def row_to_followed_coin(r):
-    return FollowedCoin(r[0], r[1], CoinType(r[2]))
+    return FollowedCoin(r[0], r[1], CoinType(r[2]), r[3])
 
 
 def row_to_followed_source(r):
-    return FollowedSource(r[0], r[1], r[2])
+    return FollowedSource(r[0], r[1], r[2], r[3])
 
 
 def row_to_session(r):
@@ -77,17 +77,19 @@ class User(object):
 
 
 class FollowedCoin(object):
-    def __init__(self, id: int, userid: int, coin_type: CoinType):
+    def __init__(self, id: int, userid: int, coin_type: CoinType, notify_email: int):
         self.id = id
         self.userid = userid
         self.coin_type = coin_type
+        self.notify_email = notify_email
 
 
 class FollowedSource(object):
-    def __init__(self, id: int, userid: int, source: str):
+    def __init__(self, id: int, userid: int, source: str, notify_email: int):
         self.id = id
         self.userid = userid
         self.source = source
+        self.notify_email = notify_email
 
     def __repr__(self):
         return self.source

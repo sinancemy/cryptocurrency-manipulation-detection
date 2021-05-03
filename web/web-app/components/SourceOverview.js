@@ -12,7 +12,7 @@ export const SourceOverview = ({ source, button, singleLine = false }) => {
   const getUsername = () => getSourceParts(source)[0] === '*' ? null : getSourceParts(source)[0]
   const getSource = () => getSourceParts(source)[1]
 
-  return (source && button &&
+  return (source &&
     <MultipurposeCard badgeColor={getSourceColor(source)} colorizer={() => bgColor}>
       <MultipurposeCard.Left>
         <div className={`text-4xl text-${getSourceColor(source)} ${singleLine ? 'p-2' : 'p-4'}`}>

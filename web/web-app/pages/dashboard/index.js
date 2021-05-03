@@ -167,9 +167,9 @@ export default function DashboardPage() {
                 { selectedPostRange  && (
                 <div>
                   <span>Showing new posts from{" "}</span>
-                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]), false) }</span>
+                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]*1000), false) }</span>
                   <span>{" "}to{" "}</span>
-                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]), false) }</span>
+                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]*1000), false) }</span>
                 </div>
                 )}
                 <span class="flex-grow"></span>

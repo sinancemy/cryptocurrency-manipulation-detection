@@ -1,16 +1,17 @@
 import axios from "axios"
 import cookie from "cookie"
 import { DashboardPanel } from "../../components/DashboardPanel"
-import { CoinCard } from "../../components/CoinCard"
+import { CoinOverview } from "../../components/CoinOverview"
+import { SourceOverview } from "../../components/SourceOverview"
 import Link from "next/link"
+import { NotifyButton } from "../../components/NotifyButton"
 import { CuteButton } from "../../components/CuteButton"
 import { IoMdSettings } from "react-icons/io"
-import { SourceCard } from "../../components/SourceCard"
 import { useRequireLogin, useUser } from "../../user-hook"
 
 export default function Profile() {
   useRequireLogin()
-  const { user } = useUser()
+  const { user, areCoinNotificationsOn, areSourceNotificationsOn } = useUser()
   return (
     <div className="animate-fade-in-down">
       <div className="text-white bg-gray-900 mt-4">
@@ -27,16 +28,18 @@ export default function Profile() {
       <div className="col-start-2 col-end-3">
         <DashboardPanel>
           <DashboardPanel.Header>
-             Coins That You Follow
+             Coin Notifications
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             {user?.followed_coins && user.followed_coins.length > 0 ? 
               user.followed_coins.map(coin => (
                 <div className="mt-2">
-                  <CoinCard 
+                  <CoinOverview 
                     coin={coin.coin_type}
-                    isSelected={() => 1+1}
-                    onToggle={() => 1+1} />
+                    button={<NotifyButton 
+                            notifyEndpoint={"follow_coin"} 
+                            params={{"type": coin.coin_type}}
+                            areNotificationsOn={() => areCoinNotificationsOn(coin.coin_type)} />} />
                 </div>
               )) : ("Not following any coins.")}
           </DashboardPanel.Body>
@@ -52,20 +55,21 @@ export default function Profile() {
           </DashboardPanel.Footer>
         </DashboardPanel>
         </div>
-
         <div className="col-start-3 col-end-4">
         <DashboardPanel>
           <DashboardPanel.Header>
-             Sources That You Follow
+             Source Notifications
           </DashboardPanel.Header>
           <DashboardPanel.Body>
           {user?.followed_sources && user.followed_sources.length > 0 ? (
               user.followed_sources.map(source => (
                 <div className="mt-2">
-                  <SourceCard 
+                  <SourceOverview 
                     source={source.source}
-                    isSelected={() => 1+1}
-                    onToggle={() => {1+1}} />
+                    button={<NotifyButton 
+                            notifyEndpoint={"follow_source"} 
+                            params={{"source": source.source}}
+                            areNotificationsOn={() => areSourceNotificationsOn(source.source)} />} />
                 </div>
               ))
             ) : ("Not following any sources.")}

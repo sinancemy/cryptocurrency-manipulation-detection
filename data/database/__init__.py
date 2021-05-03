@@ -53,6 +53,13 @@ class Database(object):
         cur.execute(delete_sql, params)
         self.conn.commit()
 
+    # Generic update method.
+    def update_by(self, table, cols: list, vals: list, selectors: list):
+        update_sql, params = generate_update_query(table, cols, vals, selectors)
+        cur = self.conn.cursor()
+        cur.execute(update_sql, params)
+        self.conn.commit()
+
     # Generic reading method.
     def read_by(self, table, selectors: list, row_converter, limit=-1, order_by=None, desc=0) -> list:
         select_sql, params = generate_select_query(table, selectors, limit=limit, order_by=order_by, desc=desc)

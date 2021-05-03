@@ -73,6 +73,16 @@ const useUserProvider = () => {
     return user.followed_coins.some((followedCoin) => followedCoin.coin_type.includes(coinName))
   }, [user])
 
+  const areCoinNotificationsOn = useCallback((coinName) => {
+    if(!user) return false
+    return user.followed_coins.some((followedCoin) => followedCoin.coin_type.includes(coinName) && followedCoin.notify_email === 1)
+  }, [user])
+
+  const areSourceNotificationsOn = useCallback((sourceName) => {
+    if(!user) return false
+    return user.followed_sources.some((followedSource) => followedSource.source.includes(sourceName) && followedSource.notify_email === 1)
+  }, [user])
+
   const logout = useCallback(() => {
     removeCookie("token")
   }, [user])
@@ -80,7 +90,8 @@ const useUserProvider = () => {
   // Run on render.
   useEffect(fetchUser, [cookies])
   // Expose data and methods.
-  return { user: user, updateUser: updateUser, isFollowingSource: isFollowingSource, isFollowingCoin: isFollowingCoin, logout: logout }
+  return { user: user, updateUser: updateUser, isFollowingSource: isFollowingSource, isFollowingCoin: isFollowingCoin, 
+          areCoinNotificationsOn: areCoinNotificationsOn, areSourceNotificationsOn: areSourceNotificationsOn, logout: logout }
 }
 
 // Custom Hook to redirect to the login page if needed.

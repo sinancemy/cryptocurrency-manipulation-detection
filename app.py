@@ -314,16 +314,22 @@ def follow_coin():
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     unfollow_flag = request.args.get("unfollow", type=int, default=0)
     unfollow = unfollow_flag == 1
+    notify_email_flag = request.args.get("notify", type=int, default=-1)
+    notify_email = notify_email_flag == 1
     db = Database()
     user = get_user_from_token(db)
     if user is None:
         return jsonify({"result": "error", "error_msg": "Invalid token."})
+    followed = next(filter(lambda fc: coin_type == fc.coin_type, user.followed_coins), None)
     # Follow
     if not unfollow:
-        if coin_type in [fc.coin_type for fc in user.followed_coins]:
+        if followed is not None and notify_email_flag >= 0:
+            db.update_by("followed_coins", ["notify_email"], [1 if notify_email else 0], [MatchSelector("id", followed.id)])
+            return jsonify({"result": "ok"})
+        if followed is not None:
             return jsonify({"result": "error", "error_msg": "Already following."})
         # Follow the coin.
-        db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type)])
+        db.create("followed_coins", [FollowedCoin(-1, user.user.id, coin_type, 1 if notify_email else 0)])
     # Unfollow
     else:
         followed = next(filter(lambda fc: coin_type == fc.coin_type, user.followed_coins), None)
@@ -343,6 +349,8 @@ def follow_source():
         return jsonify({"result": "error", "error_msg": "No such source."})
     unfollow_flag = request.args.get("unfollow", type=int, default=0)
     unfollow = unfollow_flag == 1
+    notify_email_flag = request.args.get("notify", type=int, default=-1)
+    notify_email = notify_email_flag == 1
     db = Database()
     user = get_user_from_token(db)
     if user is None:
@@ -350,16 +358,19 @@ def follow_source():
     # Get the sources the user is already following.
     followed_sources_set = set([src.__repr__() for src in user.followed_sources])
     # Follow
+    followed = next(filter(lambda fc: requested_source == fc.source, user.followed_sources), None)
     if not unfollow:
+        if followed is not None and notify_email_flag >= 0:
+            db.update_by("followed_sources", ["notify_email"], [1 if notify_email else 0], [MatchSelector("id", followed.id)])
+            return jsonify({"result": "ok"})
         # If the user is already following the source, no need to add it again.
-        if requested_source in followed_sources_set:
+        if followed is not None:
             return jsonify({"result": "error", "error_msg": "Already following."})
         # Follow the new source.
-        db.create("followed_sources", [FollowedSource(-1, user.user.id, requested_source)])
+        db.create("followed_sources", [FollowedSource(-1, user.user.id, requested_source, 1 if notify_email else 0)])
     # Unfollow
     else:
         # Get the followed source instance.
-        followed = next(filter(lambda fc: requested_source == fc.source, user.followed_sources), None)
         if followed is None:
             return jsonify({"result": "error", "error_msg": "Already unfollowed."})
         # Unfollow the followed source.

@@ -42,6 +42,7 @@ CREATE TABLE "followed_coins" (
     "id"	INTEGER NOT NULL UNIQUE,
     "userid" INTEGER NOT NULL,
     "coin_type" TEXT NOT NULL,
+    "notify_email" INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
@@ -49,6 +50,7 @@ CREATE TABLE "followed_sources" (
     "id"	INTEGER NOT NULL UNIQUE,
     "userid" INTEGER NOT NULL,
     "source" TEXT NOT NULL,
+    "notify_email" INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
@@ -58,8 +60,7 @@ CREATE TABLE "sessions" (
     "token" TEXT NOT NULL,
     "expiration" INTEGER NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
-)"""
-                        ]
+)"""]
 
 
 class RangeSelector:
@@ -154,7 +155,6 @@ def generate_select_query(table_name, selectors: list, cols=None, limit=-1, orde
     if limit > 0:
         sql += " LIMIT ?"
         cond_params.append(limit)
-    print(sql)
     return sql, cond_params
 
 
@@ -168,6 +168,15 @@ def generate_delete_query(table_name, selectors: list):
     cond_sql, cond_params = create_conditionals(selectors)
     sql += " " + cond_sql
     return sql, cond_params
+
+
+def generate_update_query(table_name, cols: list, vals: list, selectors: list):
+    sql = "UPDATE " + table_name + " SET "
+    sql += ",".join((" = ".join([col, "?"]) for col in cols))
+    cond_sql, cond_params = create_conditionals(selectors)
+    sql += " " + cond_sql
+    params = vals + cond_params
+    return sql, params
 
 
 def generate_top_query(table_name, order_by, order_dir: str, limit: int, selectors: list):
