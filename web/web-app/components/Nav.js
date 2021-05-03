@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "../user-hook";
+import { Notifier } from "./Notifier";
 
 export default function Nav() {
   const { user, logout } = useUser()
@@ -25,6 +26,9 @@ export default function Nav() {
           </div>
           <div className="ml-8">
             <Link href="/profile">Profile</Link>
+          </div>
+          <div className="ml-8">
+            <Notifier />
           </div>
           <button
             onClick={logout}

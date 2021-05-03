@@ -44,6 +44,7 @@ CREATE TABLE "followed_coins" (
     "coin_type" TEXT NOT NULL,
     "notify_email" INTEGER NOT NULL DEFAULT 0,
     "notification_read" INTEGER NOT NULL DEFAULT 1,
+    "notification_time" INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
@@ -53,6 +54,7 @@ CREATE TABLE "followed_sources" (
     "source" TEXT NOT NULL,
     "notify_email" INTEGER NOT NULL DEFAULT 0,
     "notification_read" INTEGER NOT NULL DEFAULT 1,
+    "notification_time" INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """

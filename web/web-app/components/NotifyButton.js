@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { IoNotificationsOffOutline, IoNotificationsOutline } from "react-icons/io5";
+import { RiMailCheckLine, RiMailCloseLine } from "react-icons/ri";
 import { useUser } from "../user-hook";
 import { CuteButton } from "./CuteButton";
 
@@ -22,11 +23,12 @@ export const NotifyButton = ({ params, areNotificationsOn }) => {
     return (
         <CuteButton
             onClick={() => toggleFollow()}
-            textColor={ areNotificationsOn() ? "yellow-400" : "green-400" }
+            textColor={ !areNotificationsOn() ? "yellow-400" : "green-400" }
             fullWidth={true}
             isDisabled={() => disabled}
             size={"lg"}>
-        { !areNotificationsOn() ? (<IoNotificationsOutline />) : (<IoNotificationsOffOutline />) }
+        { areNotificationsOn() ? (
+          <RiMailCheckLine />) : (<RiMailCloseLine />) }
       </CuteButton>
     );
   }

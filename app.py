@@ -141,7 +141,7 @@ def get_coin_list():
     coin_types = []
     for coin_type in misc.CoinType:
         coin_types.append({"name": coin_type,
-                           "image": "https://www.dhresource.com/0x0/f2/albu/g9/M00/27/85/rBVaVVxO822ACwv4AALYau1h4a8355.jpg/500pcs-30mm-diameter-bitcoin-logo-label-sticker.jpg"})
+                           "image": ""})
     return jsonify(coin_types)
 
 
@@ -327,17 +327,17 @@ def follow():
         return jsonify({"result": "error", "error_msg": "Invalid token."})
     if coin_type is not None:
         followed = next(filter(lambda fc: coin_type == fc.coin_type, user.followed_coins), None)
-        new_entry = FollowedCoin(-1, user.user.id, coin_type, 1 if notify_email else 0, 1)
+        new_entry = FollowedCoin(-1, user.user.id, coin_type, 1 if notify_email else 0, 1, 0)
     elif source is not None:
         followed = next(filter(lambda fc: source == fc.source, user.followed_sources), None)
-        new_entry = FollowedSource(-1, user.user.id, source, 1 if notify_email else 0, 1)
+        new_entry = FollowedSource(-1, user.user.id, source, 1 if notify_email else 0, 1, 0)
     else:
         return jsonify({"result": "error", "error_msg": "Unexplainable error."})
     related_table = "followed_coins" if coin_type is not None else "followed_sources"
     # Try to follow.
     if not unfollow:
         if followed is not None and notify_email_flag >= 0:
-            db.update_by(related_table, ["notify_email"], [1 if notify_email else 0],
+            db.update_by(related_table, ["notify_email", "notification_read"], [1 if notify_email else 0, 1],
                          [MatchSelector("id", followed.id)])
             return jsonify({"result": "ok"})
         if followed is not None:
@@ -353,10 +353,18 @@ def follow():
     return jsonify({"result": "ok"})
 
 
-@app.route("/user/update_notification")
-def update_notification():
-    coin_type = get_coin_type_arg()
-    requested_source = request.args.get("source", type=str, default=None)
+@app.route("/user/discard_notification")
+def discard_notification():
+    notif_id = request.args.get("notif_id", type=int, default=0)
+    notif_type = request.args.get("notif_type", type=str, default=None)
+    if notif_type is None or notif_type not in ["coin", "source"]:
+        return jsonify({"result": "error", "error_msg": "Invalid notification type."})
+    db = Database()
+    user = get_user_from_token(db)
+    table = "followed_coins" if notif_type == "coin" else "followed_sources"
+    db.update_by(table, ["notification_read"], [1], [MatchSelector("userid", user.user.id),
+                                                     MatchSelector("id", notif_id)])
+    return jsonify({"result": "ok"})
 
 
 if __name__ == "__main__":
