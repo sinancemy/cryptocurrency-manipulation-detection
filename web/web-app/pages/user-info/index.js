@@ -54,7 +54,6 @@ export default function UserInfo() {
               </span>
               <div className="mt-2">
                 <FollowButton
-                  followEndpoint={"follow_source"}
                   params={{source: sourceName}}
                   isFollowing={() => isFollowingSource(sourceName)}
                   />

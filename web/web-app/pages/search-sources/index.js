@@ -51,7 +51,6 @@ export default function SearchSources() {
                 source={source}
                 button={(
                   <FollowButton
-                    followEndpoint={"follow_source"}
                     params={{source: source}}
                     isFollowing={() => isFollowingSource(source)} />
                 )}/>

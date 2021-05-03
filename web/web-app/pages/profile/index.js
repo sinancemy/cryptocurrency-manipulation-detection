@@ -37,7 +37,6 @@ export default function Profile() {
                   <CoinOverview 
                     coin={coin.coin_type}
                     button={<NotifyButton 
-                            notifyEndpoint={"follow_coin"} 
                             params={{"type": coin.coin_type}}
                             areNotificationsOn={() => areCoinNotificationsOn(coin.coin_type)} />} />
                 </div>
@@ -67,7 +66,6 @@ export default function Profile() {
                   <SourceOverview 
                     source={source.source}
                     button={<NotifyButton 
-                            notifyEndpoint={"follow_source"} 
                             params={{"source": source.source}}
                             areNotificationsOn={() => areSourceNotificationsOn(source.source)} />} />
                 </div>

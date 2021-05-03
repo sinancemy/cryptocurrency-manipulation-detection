@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useUser } from "../user-hook";
 import { CuteButton } from "./CuteButton";
 
-export const FollowButton = ({ followEndpoint, params, isFollowing }) => {
+export const FollowButton = ({ params, isFollowing }) => {
     const { user, updateUser } = useUser()
     const [disabled, setDisabled] = useState(false)
 
     const toggleFollow = () => {
         setDisabled(true)
         const unfollow = isFollowing() ? 1 : 0
-        updateUser(followEndpoint, {
+        updateUser("follow", {
           ...params,
           unfollow: unfollow
         })

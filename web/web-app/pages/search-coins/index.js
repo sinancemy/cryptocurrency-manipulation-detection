@@ -50,7 +50,6 @@ export default function SearchCoins() {
                     coin={coin.name}
                     button={(
                       <FollowButton
-                        followEndpoint={"follow_coin"}
                         params={{type: coin.name}}
                         isFollowing={() => isFollowingCoin(coin.name)} />
                     )}/>

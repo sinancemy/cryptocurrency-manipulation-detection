@@ -3,14 +3,14 @@ import { IoNotificationsOffOutline, IoNotificationsOutline } from "react-icons/i
 import { useUser } from "../user-hook";
 import { CuteButton } from "./CuteButton";
 
-export const NotifyButton = ({ notifyEndpoint, params, areNotificationsOn }) => {
+export const NotifyButton = ({ params, areNotificationsOn }) => {
     const { user, updateUser } = useUser()
     const [disabled, setDisabled] = useState(false)
 
     const toggleFollow = () => {
         setDisabled(true)
         const toggleNotifyFlag = areNotificationsOn() ? 0 : 1
-        updateUser(notifyEndpoint, {
+        updateUser("follow", {
           ...params,
           notify: toggleNotifyFlag
         })
@@ -22,11 +22,11 @@ export const NotifyButton = ({ notifyEndpoint, params, areNotificationsOn }) => 
     return (
         <CuteButton
             onClick={() => toggleFollow()}
-            textColor={ !areNotificationsOn() ? "yellow-400" : "green-400" }
+            textColor={ areNotificationsOn() ? "yellow-400" : "green-400" }
             fullWidth={true}
             isDisabled={() => disabled}
             size={"lg"}>
-        { areNotificationsOn() ? (<IoNotificationsOutline />) : (<IoNotificationsOffOutline />) }
+        { !areNotificationsOn() ? (<IoNotificationsOutline />) : (<IoNotificationsOffOutline />) }
       </CuteButton>
     );
   }
