@@ -3,7 +3,7 @@ import { IoNotifications, IoNotificationsOutline } from "react-icons/io5"
 import { useUser } from "../user-hook"
 import { Notification } from "./Notification"
 
-const pollTime = 3000
+const pollTime = 10000
 
 export const Notifier = () => {
   const { refetchUser, unreadNotifications } = useUser()

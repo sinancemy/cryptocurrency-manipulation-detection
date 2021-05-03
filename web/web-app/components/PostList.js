@@ -69,7 +69,7 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
       })
   }, [shownPosts, lastScrolled, canLoadMore, fetchPostsParams, sortBy])
 
-  return (
+  return useMemo(() => (
     <>
     {shownPosts.length > 0 ? (
       <div className="overflow-y-auto max-h-128">
@@ -95,5 +95,5 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
         <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
     )}
     </>
-  )
+  ), [shownPosts])
 }

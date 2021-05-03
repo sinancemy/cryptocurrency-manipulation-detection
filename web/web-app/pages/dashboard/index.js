@@ -68,12 +68,13 @@ export default function DashboardPage() {
 
   // Set the initial graph settings.
   useEffect(() => {
+    if(!user || graphSettings) return
     setGraphSettings( {
-      coinType: null,
+      coinType: user.followed_coins.length > 0 ? user.followed_coins[0].coin_type : null,
       extent: "year",
       timeWindow: 30,
     })
-  }, [])
+  }, [user])
 
   const renderDependencies = [user, sortByOption, sortOrderOption, showPostVolume, showPostsFromOption, showPostsOption, showPostVolume, graphSelection, selectedPostRange,  
                                 impactMap, selectedSources]
