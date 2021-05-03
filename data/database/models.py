@@ -3,12 +3,16 @@ from misc import CoinType, TimeRange
 
 # Converts a row from 'posts' table into a Post.
 def row_to_post(r):
-    return Post(CoinType(r[1]), r[2], r[3], r[4], r[5], r[6], r[7], r[8])
+    return Post(CoinType(r[1]), r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9])
 
 
 # Converts a row from 'prices' table into a MarketPrice
 def row_to_price(r):
     return MarketPrice(CoinType(r[1]), r[2], r[3], r[4], r[5])
+
+
+def row_to_post_volume(r):
+    return PostVolume(r[1], r[2], r[3], r[4], r[5])
 
 
 # Converts a row from 'cached_ranges' table into a CachedRange
@@ -34,7 +38,7 @@ def row_to_session(r):
 
 class Post(object):
     def __init__(self, coin_type: CoinType, user: str, content: str, source: str, interaction: int, time: int,
-                 unique_id: str, type: str = "null", impact=None):
+                 unique_id: str, type: str = "null", impact=0.):
         self.user = user
         self.content = content
         self.interaction = interaction
@@ -48,6 +52,15 @@ class Post(object):
     def copy(self):
         return Post(self.coin_type, self.user, self.content, self.source, self.interaction, self.time, self.unique_id,
                     self.type, self.impact)
+
+
+class PostVolume(object):
+    def __init__(self, time: int, next_time: int, volume: int, count: int, source: str):
+        self.time = time
+        self.next_time = next_time
+        self.volume = volume
+        self.count = count
+        self.source = source
 
 
 # Represents a market price of a particular coin for a particular time.

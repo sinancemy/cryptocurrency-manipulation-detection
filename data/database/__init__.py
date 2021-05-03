@@ -138,7 +138,7 @@ class Database(object):
         return self.read_grouped_tops("posts", "user", "SUM(interaction)", limit,
                                       [MatchSelector("coin_type", coin_type.value)], row_converter)
 
-    def read_num_source_followers(self, source: str):
+    def read_num_source_followers(self, source: str) -> int:
         sql, params = generate_select_query("followed_sources", [MatchSelector("source", "*@" + source)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
@@ -146,7 +146,7 @@ class Database(object):
         rows = cur.fetchall()
         return rows[0][0]
 
-    def read_num_user_followers(self, user: str, source: str):
+    def read_num_user_followers(self, user: str, source: str) -> int:
         sql, params = generate_select_query("followed_sources", [MatchSelector("source", user + "@" + source)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
@@ -154,7 +154,7 @@ class Database(object):
         rows = cur.fetchall()
         return rows[0][0]
 
-    def read_num_coin_followers(self, coin: CoinType):
+    def read_num_coin_followers(self, coin: CoinType) -> int:
         sql, params = generate_select_query("followed_coins", [MatchSelector("coin_type", coin.value)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
@@ -174,3 +174,10 @@ class Database(object):
         cur.execute(sql)
         rows = cur.fetchall()
         return [{"user": r[0], "source": r[1]} for r in rows]
+
+    def read_num_posts_within_time(self, low, high, selectors) -> int:
+        sql, params = generate_select_query("posts", [RangeSelector("time", low, high)] + selectors, ["COUNT(id)"])
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return rows[0][0]

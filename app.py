@@ -6,9 +6,9 @@ from flask import Flask, request, jsonify, send_from_directory
 import misc
 from analysis.interface import Predictor
 from backend.mail_helpers import Mailer
-from data.collector.sources import get_exported_sources, is_valid_source
+from data.collector.sources import get_exported_sources, is_valid_source, get_all_sources
 from data.database import Database, recreate_database, MatchSelector, row_to_post, RangeSelector, FollowedCoin, \
-    FollowedSource, SourceSelector
+    FollowedSource, SourceSelector, row_to_post_volume
 from backend.user import get_user_by_username, verify_password, create_user, UserInfo, \
     check_session, new_session, remove_session
 from backend.json_helpers import *
@@ -148,43 +148,21 @@ def get_coin_list():
 @app.route("/api/source_list")
 def get_source_list():
     db = Database()
-    users = db.read_users()
-    users += [{
-        "user": src.user,
-        "source": src.source
-    } for src in get_exported_sources()]
-    uniquesMap = {s["user"] + '@' + s["source"]: s for s in users}
-    return jsonify(list(uniquesMap.values()))
+    return jsonify(get_all_sources(db))
 
 
 @app.route("/api/post_volume")
-def calculate_post_volume():
+def get_post_volumes():
     start = request.args.get("start", type=float, default=0)
     end = request.args.get("end", type=float, default=int(time.time()))
-    ticks = request.args.get("ticks", type=int, default=100)
     coin_type = get_coin_type_arg()
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     # Connect to the database
     db = Database()
-    posts = db.read_posts_by_time_and_coin_type(start, end, coin_type)
-    full_range = end - start
-    tick_range = full_range / ticks
-    volumes = []
-    for (i, curr_tick) in enumerate(np.arange(start, end - tick_range + 1, tick_range)):
-        tick_start = curr_tick
-        tick_end = curr_tick + tick_range
-        count = sum(1 for p in posts if tick_start <= p.time <= tick_end)
-        volume = count
-        if i > 0:
-            volume += volumes[i - 1]['volume']
-        volumes.append({
-            'time': tick_start,
-            'next_time': tick_end,
-            'volume': volume,
-            'count': count
-        })
-    return jsonify(volumes)
+    volumes = db.read_by("post_volumes", [MatchSelector("source", "coin:" + coin_type.value),
+                                          RangeSelector("time", start, end)], row_to_post_volume)
+    return jsonify(list(map(lambda v: v.__dict__, volumes)))
 
 
 @app.route("/api/coin_stats")

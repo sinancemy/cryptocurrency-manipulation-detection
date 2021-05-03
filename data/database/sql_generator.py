@@ -9,6 +9,7 @@ CREATE TABLE "posts" (
     "time"	INTEGER NOT NULL,
     "unique_id"	TEXT NOT NULL UNIQUE,
     "type"	TEXT NOT NULL,
+    "impact" BLOB,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
@@ -18,6 +19,17 @@ CREATE TABLE "posts" (
     "price"	REAL NOT NULL,
     "time"	INTEGER NOT NULL,
     "volume"	REAL NOT NULL,
+    "type"	TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)
+""", """
+    CREATE TABLE "post_volumes" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "time"	INTEGER NOT NULL,
+    "next_time"	INTEGER NOT NULL,
+    "volume"	INTEGER NOT NULL,
+    "count"	INTEGER NOT NULL,
+    "source" TEXT NOT NULL,
     "type"	TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
