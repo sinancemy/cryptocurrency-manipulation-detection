@@ -11,8 +11,8 @@ export const Notifier = () => {
   const unreadCount = useMemo(() => unreadNotifications.length, [unreadNotifications])
 
   useEffect(() => {
-    const refetchInterval = setInterval(refetchUser, pollTime)
-    return () => clearInterval(refetchInterval)
+    //const refetchInterval = setInterval(refetchUser, pollTime)
+    //return () => clearInterval(refetchInterval)
   }, [])
 
   return (

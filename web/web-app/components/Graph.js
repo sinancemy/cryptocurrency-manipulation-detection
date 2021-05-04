@@ -47,27 +47,24 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
     const yMax = height
     // The price range that will be shown on the graph.
     const shownPriceRange = useMemo(() => {
-        if(!timeExtent || !coinType) return [0, 0]
-        const decrement = 60 * 60 * 24 * timeExtentMap[timeExtent]
-        const winHigh = currentTime
-        const winLow = winHigh - decrement
-        return [winLow, winHigh]
-    }, [timeExtent, currentTime])
-    // Indicating when to refetch the prices.
-    const shouldRefetchPrices = useCallback(() => currentTime && timeWindow != null && timeExtent && coinType && shownPriceRange[0] !== shownPriceRange[1])
+      if(!timeExtent || !coinType) return [0, 0]
+      const decrement = 60 * 60 * 24 * timeExtentMap[timeExtent]
+      const winHigh = currentTime
+      const winLow = winHigh - decrement
+      return [winLow, winHigh]
+    }, [timeExtent, currentTime, coinType])
     // Fetching the prices.
     const stock = useApiData([], "prices", {
-        start: shownPriceRange[0],
-        end: shownPriceRange[1],
-        type: coinType
-    }, [shownPriceRange, coinType], shouldRefetchPrices, (prices) => prices?.reverse())
+      start: shownPriceRange[0],
+      end: shownPriceRange[1],
+      type: coinType
+    }, [], (params) => params[0] !== params[1], (prices) => prices?.reverse())
     // Fetching the post volume.
     const postVolume = useApiData([], "post_volume", {
-        start: shownPriceRange[0],
-        end: shownPriceRange[1],
-        type: coinType,
-        ticks: 1000
-    }, [shownPriceRange, coinType], () => shouldRefetchPrices() && showPostVolume)
+      start: shownPriceRange[0],
+      end: shownPriceRange[1],
+      type: coinType
+    }, [], (params) => params[0] !== params[1] && showPostVolume)
     // scales
     const dateScale = useMemo(() => scaleTime({
         domain: extent(stock, getDate),
@@ -176,8 +173,7 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
         return volume ? postVolume.slice(i0, i1) : stock.slice(i0, i1)
     }, [timeWindow, selectedDate, postVolume, stock])
 
-    const renderDependencies = [stock, postVolume, tooltipData, width, height, coinType, currentTime, timeExtent, timeWindow, showPostVolume]
-
+    // const renderDependencies = [stock, postVolume, tooltipData, width, height, coinType, currentTime, timeExtent, timeWindow, showPostVolume]
     return  (stock && postVolume &&
       <div>
         <svg width={width} height={height} className="animate-blur-in">

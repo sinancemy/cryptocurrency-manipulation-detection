@@ -22,11 +22,11 @@ export default function SourceInfo() {
       router.push("/user-info?user=" + sourceName)
     }
   }, [sourceName])
-  const { user, isFollowingSource } = useUser()
+  const { followedSources } = useUser()
   // Fetch the source info and update it when the user changes.
   const sourceInfo = useApiData(null, "source_stats", { 
     source: sourceName
-  }, [user, sourceName], () => sourceName != null)
+  }, [followedSources, sourceName], () => sourceName != null)
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
 
@@ -43,8 +43,8 @@ export default function SourceInfo() {
               </span>
               <div className="mt-2">
                 <FollowButton
-                  params={{source: sourceName}}
-                  isFollowing={() => isFollowingSource(sourceName)} />
+                  followType={"source"}
+                  followTarget={sourceName} />
               </div>
             </div>
           </DashboardPanel.Header>
@@ -83,14 +83,11 @@ export default function SourceInfo() {
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             <PostList
-              coinType={null}
+              coinType={"all"}
+              selectedRange={"all"}
               selectedSources={[sourceName]}
               sortBy={sortByOption}
-              sortOrder={sortOrderOption}
-              allSources={false}
-              showIrrelevant={true}
-              selectedRange={null}
-              allTime={true} />
+              sortOrder={sortOrderOption} />
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>

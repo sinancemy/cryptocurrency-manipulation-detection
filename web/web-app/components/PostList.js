@@ -6,46 +6,40 @@ import { AiOutlineLoading } from "react-icons/ai"
 
 const API_POST_LIMIT = 50
 
-export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedSources = [], sortBy, sortOrder,  
-                            showIrrelevant = false, allSources = false, onUpdate = (posts) => {} }) => {
+export const PostList = ({ selectedRange = "all", coinType = "all", selectedSources = "all", sortBy, sortOrder, disabled = false, onUpdate = (posts) => {} }) => {
   
   const [shownPosts, setShownPosts] = useState([])
   const [canLoadMore, setCanLoadMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(true)
+
   // Indicating changes in which states will result in a refetch of the posts.
-  const fetchPostsDependencies = [allSources, showIrrelevant, coinType, selectedSources, selectedRange, sortBy, sortOrder]
   const fetchPostsParams = useMemo(() => {
     return {
-      source: !allSources ? selectedSources.join(";") : null,
-      type: !showIrrelevant ? coinType : null,
-      start: selectedRange ? selectedRange[0] : null,
-      end: selectedRange ? selectedRange[1] : null,
+      source: selectedSources === "all" ? null : selectedSources.join(";"),
+      type: coinType === "all" ? null : coinType,
+      start: selectedRange === "all" ? null : selectedRange[0],
+      end: selectedRange === "all" ? null : selectedRange[1],
       sort: sortBy,
       desc: sortOrder === "descending" ? 1 : 0
     }
-  }, fetchPostsDependencies)
-  // Indicating when to refetch the posts.
-  const shouldRefetchPosts = useCallback(() => {
-    return !(!showIrrelevant && !coinType) && !(!allSources && selectedSources.length === 0) && !(selectedRange && selectedRange[0] < 0)
-  }, [coinType, allSources, selectedSources, selectedRange])  
+  }, [selectedSources, coinType, selectedRange, sortBy, sortOrder])
+
   // Fetching the posts (initializer).
-  const posts = useApiData([], "posts", fetchPostsParams, fetchPostsDependencies, shouldRefetchPosts)
-  // Move to the shown posts.
+  const posts = useApiData([], "posts", fetchPostsParams, [], () => !disabled)
+  // The first movement to the shown posts.
   useEffect(() => {
     if(!posts) return
     setCanLoadMore(posts.length === API_POST_LIMIT)
     setLoadingMore(false)
     setShownPosts(posts)
   }, [posts])
-  // Clear the shown posts on any change.
-  useEffect(() => {
-    setShownPosts([])
-  }, [selectedRange, coinType, selectedSources, sortBy, sortOrder, showIrrelevant, allSources])
   // Invoke the callback.
   useEffect(() => {
     onUpdate(shownPosts)
   }, [shownPosts])
-
+  useEffect(() => {
+    if(disabled) setShownPosts([])
+  }, [disabled])
   const lastScrolled = useMemo(() => {
     if(!shownPosts || shownPosts.length === 0) return 0
     const last = shownPosts[shownPosts.length-1]
@@ -70,8 +64,7 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
   }, [shownPosts, lastScrolled, canLoadMore, fetchPostsParams, sortBy])
 
   return useMemo(() => (
-    <>
-    {shownPosts.length > 0 ? (
+    shownPosts.length > 0 ? (
       <div className="overflow-y-auto max-h-128">
         {shownPosts.map(post => (
           <PostOverview post={post} />
@@ -93,7 +86,6 @@ export const PostList = ({ selectedRange = [-1, -1], coinType = "btc", selectedS
         <div className="mt-2">No new posts to show in the selected range.</div>
       ) : (
         <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
-    )}
-    </>
-  ), [shownPosts])
+    )
+  ), [shownPosts, canLoadMore, loadingMore])
 }

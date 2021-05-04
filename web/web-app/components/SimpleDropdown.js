@@ -11,13 +11,13 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
   const [focused, setFocused] = useState(false)
 
   return (options && selected && setSelected &&
-    <div class="relative inline-block text-left text-xs z-50" 
+    <div class="relative inline-block text-left text-xs" 
       tabIndex="0" 
       onBlur={() => setFocused(false)}>
       <div>
           <button 
             type="button" 
-            className={`flex focus:ring-white focus:ring-1 items-center border-2 border-${borderColor} px-2 py-1 rounded-md bg-${color} text-${textColor} hover:bg-${hoverColor}`}
+            className={`flex z-0 focus:ring-white focus:ring-1 items-center border-2 border-${borderColor} px-2 py-1 rounded-md bg-${color} text-${textColor} hover:bg-${hoverColor}`}
             onClick={() => setFocused(!focused)}>
             { selected === "descending" ? (
               <HiSortDescending />
@@ -29,7 +29,7 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
       </div>
       {focused && (
         <div 
-          className={`origin-top-right w-24 absolute bg-${color} text-${textColor} overflow-hidden right-0 mt-2 rounded shadow-lg border`} 
+          className={`origin-top-right w-24 absolute bg-${color} text-${textColor} overflow-hidden right-0 mt-2 rounded shadow-lg border z-50`} 
           role="menu" 
           aria-orientation="vertical" 
           aria-labelledby="menu-button" 

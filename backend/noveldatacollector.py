@@ -30,4 +30,7 @@ if __name__ == "__main__":
             data_reader.update_coin_type(c)
             new_posts, _ = data_reader.read(TimeRange(t - 60 * 60 * 2, t), SLEEP_INTERVAL)
             posts += new_posts
+        # At this point, post volumes are calculated.
+        # TODO: Deploy the notifications!
+        # ...
         time.sleep(SLEEP_INTERVAL)

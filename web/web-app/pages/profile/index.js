@@ -8,10 +8,16 @@ import { NotifyButton } from "../../components/NotifyButton"
 import { CuteButton } from "../../components/CuteButton"
 import { IoMdSettings } from "react-icons/io"
 import { useRequireLogin, useUser } from "../../user-hook"
+import { FollowOverview } from "../../components/FollowOverview"
+import { TabbedView } from "../../components/TabbedView"
+import { SimpleMenu } from "../../components/SimpleMenu"
+import { useState } from "react"
+import { ConditionalPages } from "../../components/ConditionalPages"
 
 export default function Profile() {
   useRequireLogin()
-  const { user, areCoinNotificationsOn, areSourceNotificationsOn } = useUser()
+  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn } = useUser()
+  const [selectedPage, setSelectedPage] = useState(0)
   return (
     <div className="animate-fade-in-down">
       <div className="text-white bg-gray-900 mt-4">
@@ -19,70 +25,77 @@ export default function Profile() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <img className="h-212 w-24" alt="profile picture" />
-              <span className="text-xl ml-4">{user?.user?.username}</span>
+              <span className="text-xl ml-4">{username}</span>
             </div>
           </div>
         </div>
       </div>
-      <div className="mt-10 lg:grid grid-cols-4 gap-4">
-      <div className="col-start-2 col-end-3">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-             Coin Notifications
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            {user?.followed_coins && user.followed_coins.length > 0 ? 
-              user.followed_coins.map(coin => (
-                <div className="mt-2">
-                  <CoinOverview 
-                    coin={coin.coin_type}
-                    button={<NotifyButton 
-                            params={{"type": coin.coin_type}}
-                            areNotificationsOn={() => areCoinNotificationsOn(coin.coin_type)} />} />
-                </div>
-              )) : ("Not following any coins.")}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-                <span className="flex-grow"></span>
-                <Link href="/search-coins">
-                <CuteButton>
-                  <IoMdSettings />
-                </CuteButton>
-              </Link>
-             </div>
-          </DashboardPanel.Footer>
-        </DashboardPanel>
+      <div className="flex flex-row pt-2 space-x-2 justify-center">
+        <div className="">
+          <DashboardPanel collapsable={false}>
+            <DashboardPanel.Header>
+              Menu
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+              <SimpleMenu 
+                options={["Notification Settings", "Account Settings", "Delete Your Account"]} 
+                onChange={setSelectedPage} />
+            </DashboardPanel.Body>
+          </DashboardPanel>
         </div>
-        <div className="col-start-3 col-end-4">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-             Source Notifications
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-          {user?.followed_sources && user.followed_sources.length > 0 ? (
-              user.followed_sources.map(source => (
-                <div className="mt-2">
-                  <SourceOverview 
-                    source={source.source}
-                    button={<NotifyButton 
-                            params={{"source": source.source}}
-                            areNotificationsOn={() => areSourceNotificationsOn(source.source)} />} />
-                </div>
-              ))
-            ) : ("Not following any sources.")}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-                <span className="flex-grow"></span>
-                <Link href="/search-coins">
-                <CuteButton>
-                  <IoMdSettings />
-                </CuteButton>
-              </Link>
-             </div>
-          </DashboardPanel.Footer>
-        </DashboardPanel>
+        <div className="w-128">
+          <ConditionalPages index={selectedPage}>
+            <DashboardPanel restrictedHeight={false} collapsable={false}>
+              <DashboardPanel.Header>
+                Notification Settings
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                <TabbedView options={["Followed Coins", "Followed Sources"]}>
+                  <div className="flex flex-col space-x-5">
+                    <div>
+                      <div>
+                        {followedCoins.length > 0 ? 
+                          followedCoins.map(follow => (
+                            <div className="mt-2">
+                              <FollowOverview follow={follow} />
+                            </div>
+                          )) : ("Not following any coins.")}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div>
+                          <div>
+                          {followedSources.length > 0 ? (
+                            followedSources.map(follow => (
+                              <div className="mt-2">
+                                <FollowOverview follow={follow} />
+                              </div>
+                            ))
+                          ) : ("Not following any sources.")}
+                          </div>
+                        </div>
+                    </div>
+                  </TabbedView>
+              </DashboardPanel.Body>
+            </DashboardPanel>
+            <DashboardPanel restrictedHeight={false} collapsable={false}>
+              <DashboardPanel.Header>
+                Account Settings
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                Nothing yet.
+              </DashboardPanel.Body>
+            </DashboardPanel>
+          <DashboardPanel restrictedHeight={false} collapsable={false}>
+              <DashboardPanel.Header>
+                Delete Your Account
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                Nothing yet.
+              </DashboardPanel.Body>
+            </DashboardPanel>
+          </ConditionalPages>
         </div>
       </div>
     </div>

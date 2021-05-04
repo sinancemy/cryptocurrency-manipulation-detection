@@ -1,6 +1,7 @@
 import { BsArrowDownRight, BsArrowRight, BsArrowUpRight } from "react-icons/bs"
 import { FaRedditAlien, FaTwitter, FaEthereum, FaBitcoin } from "react-icons/fa"
 import { RiCoinFill } from "react-icons/ri"
+import { TiAt } from "react-icons/ti"
 
 const sourceColorMap =  [["twitter", "blue-400"], ["reddit", "red-500"]]
 const sourceIconMap = [["twitter", <FaTwitter />], ["reddit", <FaRedditAlien />]]
@@ -31,6 +32,7 @@ export const getSourceColor = (source) => {
 }
 
 export const getSourceIcon = (source) => {
+  if(!source.startsWith("*@")) return <TiAt />
   for(const e of sourceIconMap) {
     if(getSourceParts(source)[1].includes(e[0])) return e[1]
   }

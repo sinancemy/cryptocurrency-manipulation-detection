@@ -1,4 +1,10 @@
+from sqlalchemy import Integer, Column
+
 from misc import CoinType, TimeRange
+
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
 # Converts a row from 'posts' table into a Post.
@@ -24,12 +30,16 @@ def row_to_user(r):
     return User(r[0], r[1], r[2], r[3])
 
 
-def row_to_followed_coin(r):
-    return FollowedCoin(r[0], r[1], CoinType(r[2]), r[3], r[4], r[5])
+def row_to_follower(r):
+    return Follower(r[0], r[1], r[2], r[3], r[4])
 
 
-def row_to_followed_source(r):
-    return FollowedSource(r[0], r[1], r[2], r[3], r[4], r[5])
+def row_to_trigger(r):
+    return Trigger(r[0], r[1], r[2], r[3], r[4])
+
+
+def row_to_notification(r):
+    return Notification(r[0], r[1], r[2], r[3])
 
 
 def row_to_session(r):
@@ -89,29 +99,30 @@ class User(object):
         self.salt = salt
 
 
-class FollowedCoin(object):
-    def __init__(self, id: int, userid: int, coin_type: CoinType, notify_email: int,
-                 notification_read: int, notification_time: int):
+class Follower(object):
+    def __init__(self, id: int, userid: int, type: str, target: str, notify_email: int):
         self.id = id
         self.userid = userid
-        self.coin_type = coin_type
+        self.type = type
+        self.target = target
         self.notify_email = notify_email
-        self.notification_read = notification_read
-        self.notification_time = notification_time
 
 
-class FollowedSource(object):
-    def __init__(self, id: int, userid: int, source: str, notify_email: int,
-                 notification_read: int, notification_time: int):
+class Trigger(object):
+    def __init__(self, id: int, followerid: int, type: str, threshold: int, time_window: str):
         self.id = id
-        self.userid = userid
-        self.source = source
-        self.notify_email = notify_email
-        self.notification_read = notification_read
-        self.notification_time = notification_time
+        self.followerid = followerid
+        self.type = type
+        self.time_window = time_window
+        self.threshold = threshold
 
-    def __repr__(self):
-        return self.source
+
+class Notification(object):
+    def __init__(self, id: int, triggerid: int, time: int, read: int):
+        self.id = id
+        self.triggerid = triggerid
+        self.time = time
+        self.read = read
 
 
 class Session(object):

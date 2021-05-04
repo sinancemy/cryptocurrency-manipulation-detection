@@ -1,7 +1,7 @@
 import { SimpleDropdown } from "./SimpleDropdown"
 
 export const SortSelector = ({ minimal = false, sortByState, sortOrderState, 
-                                showPostsState, showPostsFromState }) => {
+                                showPostsState }) => {
   return (
     <div className="flex text-xs items-center">
       <div className={`flex items-center ${!minimal && 'border-r'} border-gray-780 mr-2 px-2`}>
@@ -24,12 +24,7 @@ export const SortSelector = ({ minimal = false, sortByState, sortOrderState,
             options={['relevant', 'all']} 
             selected={showPostsState[0]} 
             setSelected={showPostsState[1]} />
-        <span className="mx-1">posts from</span>
-          <SimpleDropdown
-            options={['all', 'selected']}
-            selected={showPostsFromState[0]}
-            setSelected={showPostsFromState[1]} />
-          <span className="mx-1">sources</span>
+        <span className="mx-1">posts</span>
       </div>
       }
   </div>

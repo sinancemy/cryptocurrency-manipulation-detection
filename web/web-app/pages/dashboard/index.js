@@ -15,7 +15,7 @@ import { ResponsiveGraph } from "../../components/ResponsiveGraph"
 
 export default function DashboardPage() {  
   useRequireLogin()
-  const { user } = useUser()
+  const { followedCoins, followedSources } = useUser()
 
   const [sortByOption, setSortByOption] = useState("time")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
@@ -68,16 +68,15 @@ export default function DashboardPage() {
 
   // Set the initial graph settings.
   useEffect(() => {
-    if(!user || graphSettings) return
     setGraphSettings( {
-      coinType: user.followed_coins.length > 0 ? user.followed_coins[0].coin_type : null,
+      coinType: followedCoins.length > 0 ? followedCoins[0].target : null,
       extent: "year",
       timeWindow: 30,
     })
-  }, [user])
+  }, [followedCoins])
 
-  const renderDependencies = [user, sortByOption, sortOrderOption, showPostVolume, showPostsFromOption, showPostsOption, showPostVolume, graphSelection, selectedPostRange,  
-                                impactMap, selectedSources]
+  const renderDependencies = [followedSources, followedCoins, sortByOption, sortOrderOption, showPostVolume, showPostsFromOption, showPostsOption, showPostVolume, 
+                              graphSelection, selectedPostRange, impactMap, selectedSources]
 
   return useMemo(() => (graphSettings &&
     <div className="animate-fade-in-down md:flex md:flex-col lg:grid lg:grid-cols-6">
@@ -87,13 +86,13 @@ export default function DashboardPage() {
               Followed Coins
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {user?.followed_coins && user.followed_coins.length > 0 ? 
-              user.followed_coins.map(coin => (
+            {followedCoins && followedCoins.length > 0 ? 
+              followedCoins.map(follow => (
                 <div className="mt-2"> 
                   <CoinCard 
-                    onToggle={() => setGraphSettings({...graphSettings, coinType: coin.coin_type})}
-                    isSelected={() => graphSettings?.coinType && graphSettings?.coinType === coin.coin_type}
-                    coin={coin.coin_type} />
+                    onToggle={() => setGraphSettings({...graphSettings, coinType: follow.target})}
+                    isSelected={() => graphSettings?.coinType && graphSettings?.coinType === follow.target}
+                    coin={follow.target} />
                 </div>
               )) : ("Not following any coins.")}
           </DashboardPanel.Body>
@@ -113,17 +112,17 @@ export default function DashboardPage() {
                 Followed Sources
           </DashboardPanel.Header>
           <DashboardPanel.Body>
-            {user?.followed_sources && user.followed_sources.length > 0 ? (
-              user.followed_sources.map(source => (
+            {followedSources && followedSources.length > 0 ? (
+              followedSources.map(follow => (
                 <div className="mt-2">
                   <SourceCard 
-                    onToggle={() => {if(selectedSources.includes(source.source)) {
-                                      setSelectedSources(selectedSources.filter(x => x !== source.source))
+                    onToggle={() => {if(selectedSources.includes(follow.target)) {
+                                      setSelectedSources(selectedSources.filter(x => x !== follow.target))
                                     } else {
-                                      setSelectedSources([...selectedSources, source.source])
+                                      setSelectedSources([...selectedSources, follow.target])
                                     }}}
-                    isSelected={() => selectedSources.includes(source.source)}
-                    source={source.source} />
+                    isSelected={() => selectedSources.includes(follow.target)}
+                    source={follow.target} />
                 </div>
               ))
             ) : ("Not following any sources.")}
@@ -131,8 +130,8 @@ export default function DashboardPage() {
           <DashboardPanel.Footer>
             <div className="flex flex-row">
               <CuteButton
-                onClick={() => setSelectedSources([...user?.followed_sources.map(s => s.source)])}
-                isDisabled={() => selectedSources.length === user?.followed_sources.length}>
+                onClick={() => setSelectedSources([...followedSources?.map(f => f.target)])}
+                isDisabled={() => selectedSources.length === followedSources.length}>
                 Select all
               </CuteButton>
               <span className="flex-grow"></span>
@@ -183,12 +182,10 @@ export default function DashboardPage() {
             <DashboardPanel.Body>
               <PostList
                 selectedRange={selectedPostRange}
-                coinType={graphSettings.coinType}
-                selectedSources={selectedSources}
+                coinType={showPostsOption === "all" ? "all" : graphSettings.coinType}
+                selectedSources={selectedSources.length === 0 ? "all" : selectedSources}
                 sortBy={sortByOption}
                 sortOrder={sortOrderOption}
-                allSources={showPostsFromOption === "all"}
-                showIrrelevant={showPostsOption === "all"}
                 onUpdate={calculateImpactMap} />
             </DashboardPanel.Body>
           </DashboardPanel>

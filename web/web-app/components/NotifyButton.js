@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
-import { IoNotificationsOffOutline, IoNotificationsOutline } from "react-icons/io5";
 import { RiMailCheckLine, RiMailCloseLine } from "react-icons/ri";
 import { useUser } from "../user-hook";
 import { CuteButton } from "./CuteButton";
 
-export const NotifyButton = ({ params, areNotificationsOn }) => {
-    const { user, updateUser } = useUser()
+export const NotifyButton = ({ followType, followTarget }) => {
+    const { user, updateUser, areNotificationsOn } = useUser()
     const [disabled, setDisabled] = useState(false)
-
-    const toggleFollow = () => {
+    const toggleNotify = () => {
         setDisabled(true)
-        const toggleNotifyFlag = areNotificationsOn() ? 0 : 1
-        updateUser("follow", {
-          ...params,
-          notify: toggleNotifyFlag
+        updateUser("follow/update", {
+          type: followType,
+          target: followTarget,
+          notify: !areNotificationsOn(followType, followTarget)
         })
     }
     useEffect(() => {
@@ -22,12 +20,12 @@ export const NotifyButton = ({ params, areNotificationsOn }) => {
 
     return (
         <CuteButton
-            onClick={() => toggleFollow()}
-            textColor={ !areNotificationsOn() ? "yellow-400" : "green-400" }
+            onClick={() => toggleNotify()}
+            textColor={ !areNotificationsOn(followType, followTarget) ? "yellow-400" : "green-400" }
             fullWidth={true}
             isDisabled={() => disabled}
             size={"lg"}>
-        { areNotificationsOn() ? (
+        { areNotificationsOn(followType, followTarget) ? (
           <RiMailCheckLine />) : (<RiMailCloseLine />) }
       </CuteButton>
     );

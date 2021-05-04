@@ -1,5 +1,5 @@
 import axios from "axios"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 // Helper function.
 export const fetchFromApi = (endpoint, params, then) => {
@@ -8,14 +8,17 @@ export const fetchFromApi = (endpoint, params, then) => {
     })
 }
 
+// Parameter values are automatically added to the dependency list.
 export const useApiData = (initialState, endpoint, params = {}, deps = [], shouldFetch = () => true, postProcessor = (x) => x) => {
     const [result, setResult] = useState(initialState)
+    const effectiveParams = useMemo(() => Object.values(params), [params])
     // Fetch depending on the given dependencies.
     useEffect(() => {
-        // Wait...
-        if(!shouldFetch()) return
-        fetchFromApi(endpoint, params, (data) => setResult(postProcessor(data)))
-    }, deps)
+      //console.log(effectiveParams)
+      // Wait...
+      if(!shouldFetch(effectiveParams)) return
+      fetchFromApi(endpoint, params, (data) => setResult(postProcessor(data)))
+    }, [...effectiveParams, ...deps])
     return result
 }
 

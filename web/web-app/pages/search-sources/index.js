@@ -1,6 +1,6 @@
 import axios from "axios";
 import cookie from "cookie";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DashboardPanel } from "../../components/DashboardPanel";
 import { SourceOverview } from "../../components/SourceOverview";
 import { FollowButton } from "../../components/FollowButton";
@@ -10,9 +10,11 @@ import { useRequireLogin, useUser } from "../../user-hook";
 
 export default function SearchSources() {
   useRequireLogin()
-  const { user, isFollowingSource } = useUser()
+  const { isFollowing } = useUser()
+
+  const isFollowingSource = useCallback((source) => isFollowing("source", source), [isFollowing])
   const [query, setQuery] = useState("");  
-  const sources = useApiData([], "source_list", {}, [], () => true, (res) => res.map(s => s.user + '@' + s.source))
+  const sources = useApiData([], "source_list", {}, [])
   const [filteredSources, setFilteredSources] = useState([])
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function SearchSources() {
     const filtered = sources.filter((s) => s.toLowerCase().includes(query.toLowerCase()))
     const sorted = [...filtered].sort((a, b) => a.localeCompare(b))
     setFilteredSources(sorted.slice(0, 20))
-  }, [sources, query, user])
+  }, [sources, query, isFollowingSource])
 
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
@@ -51,8 +53,8 @@ export default function SearchSources() {
                 source={source}
                 button={(
                   <FollowButton
-                    params={{source: source}}
-                    isFollowing={() => isFollowingSource(source)} />
+                    followType={"source"}
+                    followTarget={source} />
                 )}/>
               </div>
               ))}

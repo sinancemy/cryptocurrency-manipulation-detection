@@ -54,9 +54,8 @@ export default function UserInfo() {
               </span>
               <div className="mt-2">
                 <FollowButton
-                  params={{source: sourceName}}
-                  isFollowing={() => isFollowingSource(sourceName)}
-                  />
+                  followType={"source"}
+                  followTarget={sourceName} />
               </div>
             </div>
           </DashboardPanel.Header>
@@ -80,14 +79,11 @@ export default function UserInfo() {
             </DashboardPanel.Header>
             <DashboardPanel.Body>
               <PostList
-                coinType={null}
+                coinType={"all"}
+                selectedRange={"all"}
                 selectedSources={[sourceName]}
                 sortBy={sortByOption}
-                sortOrder={sortOrderOption}
-                allSources={false}
-                showIrrelevant={true}
-                selectedRange={null}
-                allTime={true} />
+                sortOrder={sortOrderOption} />
             </DashboardPanel.Body>
           </DashboardPanel>
       </div>

@@ -50,26 +50,30 @@ CREATE TABLE "users" (
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
-CREATE TABLE "followed_coins" (
+CREATE TABLE "followers" (
     "id"	INTEGER NOT NULL UNIQUE,
     "userid" INTEGER NOT NULL,
-    "coin_type" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "target" TEXT NOT NULL,
     "notify_email" INTEGER NOT NULL DEFAULT 0,
-    "notification_read" INTEGER NOT NULL DEFAULT 1,
-    "notification_time" INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 """, """
-CREATE TABLE "followed_sources" (
+CREATE TABLE "triggers" (
     "id"	INTEGER NOT NULL UNIQUE,
-    "userid" INTEGER NOT NULL,
-    "source" TEXT NOT NULL,
-    "notify_email" INTEGER NOT NULL DEFAULT 0,
-    "notification_read" INTEGER NOT NULL DEFAULT 1,
-    "notification_time" INTEGER NOT NULL DEFAULT 0,
+    "followerid" INTEGER NOT NULL,
+    "type" TEXT NOT NULL,
+    "threshold" INTEGER NOT NULL,
+    "time_window" TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
-)
-""", """
+)""", """
+CREATE TABLE "notifications" (
+    "id"	INTEGER NOT NULL UNIQUE,
+    "triggerid" INTEGER NOT NULL,
+    "time" TEXT NOT NULL,
+    "read" INT NOT NULL DEFAULT 0,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)""", """
 CREATE TABLE "sessions" (
     "id"	INTEGER NOT NULL UNIQUE,
     "userid" INTEGER NOT NULL,

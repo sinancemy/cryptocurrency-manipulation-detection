@@ -1,12 +1,10 @@
 from typing import Optional
 
-from data.database import Database, MatchSelector, row_to_user, row_to_followed_coin, row_to_followed_source, User, \
-    Session, row_to_session, RangeSelector
+from data.database import Database, MatchSelector, row_to_user, User, \
+    Session, row_to_session, row_to_follower
 import time
 import hashlib
 import secrets
-
-from misc import CoinType
 
 
 def verify_password(given: str, hash: str, salt: str) -> bool:
@@ -72,11 +70,12 @@ def get_user_by_userid(db: Database, userid: str) -> Optional[UserInfo]:
 
 
 def populate_user_info(db: Database, userid: int, partial_user: UserInfo):
-    followed_coins = db.read_by("followed_coins", [MatchSelector("userid", userid)], row_to_followed_coin)
-    followed_sources = db.read_by("followed_sources", [MatchSelector("userid", userid)],
-                                  row_to_followed_source)
-    partial_user.followed_coins = sorted(followed_coins, key=lambda x: x.coin_type)
-    partial_user.followed_sources = sorted(followed_sources, key=lambda x: x.source)
+    followed_coins = db.read_by("followers", [MatchSelector("userid", userid),
+                                              MatchSelector("type", "coin")], row_to_follower)
+    followed_sources = db.read_by("followers", [MatchSelector("userid", userid),
+                                                MatchSelector("type", "source")], row_to_follower)
+    partial_user.followed_coins = sorted(followed_coins, key=lambda x: x.target)
+    partial_user.followed_sources = sorted(followed_sources, key=lambda x: x.target)
     return partial_user
 
 
@@ -116,20 +115,24 @@ def check_session(db: Database, token: str) -> Optional[UserInfo]:
     return get_user_by_userid(db, session.userid)
 
 
-def notify(db: Database, table, selector, row_converter) -> list:
-    current_time = time.time()
-    should_notify_email = db.read_by(table, [selector, MatchSelector("notify_email", 1)], row_converter)
-    db.update_by(table, ["notification_read", "notification_time"], [0, current_time], [selector])
-    return should_notify_email
+def get_user_notifications(db: Database, userid: int) -> list:
+    sql = "SELECT * FROM "
 
 
-# Batch notify all the users following the given coin in the database.
-# Returns the list of FollowedCoin entries that should receive an e-mail notification.
-def notify_coin(db: Database, coin: CoinType) -> list:
-    return notify(db, "followed_coin", [MatchSelector("coin_type", coin.value)], row_to_followed_coin)
-
-
-# Batch notify all the sources following the given source in the database.
-# Returns the list of updated FollowedSource entries that should receive an e-mail notification.
-def notify_source(db: Database, source: str) -> list:
-    return notify(db, "followed_source", [MatchSelector("source", source)], row_to_followed_source)
+# def notify(db: Database, table, selector, row_converter) -> list:
+#     current_time = time.time()
+#     should_notify_email = db.read_by(table, [selector, MatchSelector("notify_email", 1)], row_converter)
+#     db.update_by(table, ["notification_read", "notification_time"], [0, current_time], [selector])
+#     return should_notify_email
+#
+#
+# # Batch notify all the users following the given coin in the database.
+# # Returns the list of FollowedCoin entries that should receive an e-mail notification.
+# def notify_coin(db: Database, coin: CoinType) -> list:
+#     return notify(db, "followers", [MatchSelector("coin_type", coin.value)], row_to_followed_coin)
+#
+#
+# # Batch notify all the sources following the given source in the database.
+# # Returns the list of updated FollowedSource entries that should receive an e-mail notification.
+# def notify_source(db: Database, source: str) -> list:
+#     return notify(db, "followed_source", [MatchSelector("source", source)], row_to_followed_source)

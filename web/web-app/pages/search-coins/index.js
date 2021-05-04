@@ -7,7 +7,9 @@ import { useRequireLogin, useUser } from "../../user-hook"
 
 export default function SearchCoins() {
   useRequireLogin()
-  const { user, isFollowingCoin } = useUser()
+  const { isFollowing } = useUser()
+
+  const isFollowingCoin = useCallback((coin) => isFollowing("coin", coin), [isFollowing])
   const [query, setQuery] = useState("");
   const coins = useApiData([], "coin_list")
   const [filteredCoins, setFilteredCoins] = useState([]);
@@ -21,7 +23,7 @@ export default function SearchCoins() {
     const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
     const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
     setFilteredCoins(sorted)
-  }, [coins, query, user])
+  }, [coins, query, isFollowingCoin])
 
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
@@ -37,8 +39,7 @@ export default function SearchCoins() {
                 type="text"
                 value={query}
                 onInput={(e) => setQuery(e.target.value)}
-                placeholder="Type to search..."
-              />
+                placeholder="Type to search..." />
             </div>
           </DashboardPanel.Header>
           <DashboardPanel.Body>
@@ -50,8 +51,8 @@ export default function SearchCoins() {
                     coin={coin.name}
                     button={(
                       <FollowButton
-                        params={{type: coin.name}}
-                        isFollowing={() => isFollowingCoin(coin.name)} />
+                        followType={"coin"}
+                        followTarget={coin.name} />
                     )}/>
                 </div>
               ))}

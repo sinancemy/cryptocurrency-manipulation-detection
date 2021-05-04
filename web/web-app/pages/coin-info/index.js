@@ -43,9 +43,8 @@ export default function CoinInfo() {
               </span>
               <div className="mt-2">
                 <FollowButton
-                  followEndpoint={"follow_coin"}
-                  params={{type: coinName}}
-                  isFollowing={() => isFollowingCoin(coinName)} />
+                  followType={"coin"}
+                  followTarget={coinName} />
               </div>
             </div>
           </DashboardPanel.Header>
@@ -118,14 +117,12 @@ export default function CoinInfo() {
           </DashboardPanel.Header>
           <DashboardPanel.Body>
             <PostList
+              selectedRange={"all"}
               coinType={coinName}
               selectedSources={selectedSources}
               sortBy={sortByOption}
               sortOrder={sortOrderOption}
-              allSources={false}
-              showIrrelevant={false}
-              selectedRange={null}
-              allTime={true} />
+              disabled={selectedSources.length === 0} />
           </DashboardPanel.Body>
         </DashboardPanel>
       </div>

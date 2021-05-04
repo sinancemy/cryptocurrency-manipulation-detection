@@ -5,8 +5,7 @@ import { useUser } from "../user-hook";
 import { Notifier } from "./Notifier";
 
 export default function Nav() {
-  const { user, logout } = useUser()
-  const loggedIn = useMemo(() => user?.user?.username !== "guest", [user])
+  const { loggedIn, logout } = useUser()
 
   return (
     <div className="py-4 px-8 bg-blue-50 h-16 text text-white flex justify-between">

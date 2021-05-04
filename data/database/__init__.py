@@ -3,7 +3,7 @@ from data.database.sql_generator import *
 from data.database.models import *
 import os
 
-DATABASE_FILE = "database.db"
+DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"
 
 
 # Recreates the database from scratch.
@@ -139,7 +139,8 @@ class Database(object):
                                       [MatchSelector("coin_type", coin_type.value)], row_converter)
 
     def read_num_source_followers(self, source: str) -> int:
-        sql, params = generate_select_query("followed_sources", [MatchSelector("source", "*@" + source)],
+        sql, params = generate_select_query("followers", [MatchSelector("type", "source"),
+                                                          MatchSelector("target", "*@" + source)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
         cur.execute(sql, params)
@@ -147,7 +148,8 @@ class Database(object):
         return rows[0][0]
 
     def read_num_user_followers(self, user: str, source: str) -> int:
-        sql, params = generate_select_query("followed_sources", [MatchSelector("source", user + "@" + source)],
+        sql, params = generate_select_query("followers", [MatchSelector("type", "source"),
+                                                          MatchSelector("target", user + "@" + source)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
         cur.execute(sql, params)
@@ -155,7 +157,8 @@ class Database(object):
         return rows[0][0]
 
     def read_num_coin_followers(self, coin: CoinType) -> int:
-        sql, params = generate_select_query("followed_coins", [MatchSelector("coin_type", coin.value)],
+        sql, params = generate_select_query("followers", [MatchSelector("type", "coin"),
+                                                          MatchSelector("target", coin.value)],
                                             ["COUNT(userid)"])
         cur = self.conn.cursor()
         cur.execute(sql, params)
