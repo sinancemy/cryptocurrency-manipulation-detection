@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from user_blueprint import user_blueprint
@@ -9,7 +11,7 @@ NPM_OUT = "../web/web-app/out"
 
 def create_app():
     app = Flask(__name__, static_folder=NPM_OUT, static_url_path="/static")
-    app.secret_key = b'f&#Uj**pF(G6R5O'
+    app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
     app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
     CORS(app)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./app.db"
@@ -37,4 +39,5 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
+    # app.run(debug=True, ssl_context="adhoc")
     app.run(debug=True)

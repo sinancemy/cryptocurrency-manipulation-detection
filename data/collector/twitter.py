@@ -1,6 +1,6 @@
 import twint
 import datetime
-from data.database.models import Post
+from data.database.data_models import Post
 from data.collector import Collector
 from misc import TimeRange, CoinType
 

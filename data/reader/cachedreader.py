@@ -2,7 +2,7 @@ import functools
 
 from data.collector import Collector
 from data.database import Database, RangeSelector, MatchSelector
-from data.database.models import CachedRange
+from data.database.data_models import CachedRange
 from misc import TimeRange, interval_to_time_range
 import portion as P
 from tqdm import tqdm

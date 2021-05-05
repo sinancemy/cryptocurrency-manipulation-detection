@@ -1,6 +1,6 @@
 import sqlite3
 from data.database.sql_generator import *
-from data.database.models import *
+from data.database.data_models import *
 import os
 
 DATABASE_FILE = "/Users/utkn/PycharmProjects/cryptocurrency-manipulation-detection/database.db"

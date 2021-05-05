@@ -1,19 +1,18 @@
 import dataclasses
-import enum
 import secrets
 import datetime
-from typing import Optional
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, url_for
 
+from google_login import construct_request_uri, callback
 from helpers import get_json_arg, login_required
-from data.database.app_models import User, db, Session, Follow, FollowType, TriggerTimeWindow, Trigger
+from data.database.app_models import User, db, Session, Follow, FollowType, TriggerTimeWindow, Trigger, Notification
 from backend.user import verify_password, new_password
 
 user_blueprint = Blueprint("user", __name__)
 
 
-# TODO: isValidCoin, isValidSource checks!
+# TODO: isValidCoin, isValidSource, isValidEmail checks!
 
 
 @user_blueprint.route("/login", methods=["POST"])
@@ -37,6 +36,16 @@ def login():
     db.session.add(new_session)
     db.session.commit()
     return jsonify({"result": "ok", "token": new_token})
+
+
+@user_blueprint.route("/login/google", methods=["GET"])
+def login_with_google():
+    return construct_request_uri(url_for("user.login_callback", _external=True))
+
+
+@user_blueprint.route("/login/google/callback", methods=["GET"])
+def login_callback():
+    callback()
 
 
 @user_blueprint.route("/register", methods=["POST"])
@@ -81,6 +90,21 @@ def get_user_info(form, session):
     shown_user.pop("salt")
     shown_user.pop("sessions")
     return jsonify({"result": "ok", "userinfo": shown_user})
+
+
+@user_blueprint.route("/update", methods=["POST"])
+@login_required
+def update_user(form, session):
+    password = get_json_arg(form, "password", type=str, default=None)
+    email = get_json_arg(form, "email", type=str, default=None)
+    if password is not None:
+        hash, salt = new_password(password)
+        session.user.password = hash
+        session.user.salt = salt
+    if email is not None:
+        session.user.email = email
+    db.session.commit()
+    return jsonify({"result": "ok"})
 
 
 @user_blueprint.route("/follow/create", methods=["POST"])
@@ -147,9 +171,11 @@ def create_trigger(form, session):
     follow = Follow.query.filter_by(id=follow_id, user_id=session.user_id).first()
     if follow is None:
         return jsonify({"result": "error", "error_msg": "Invalid follow id."})
-    trigger_count = db.session.query(Trigger).join(Follow)\
-        .filter(Follow.user_id == session.user.id)\
-        .filter(Follow.id == follow_id)\
+    if follow.type == FollowType.source and not follow.target.startswith("*@"):
+        return jsonify({"result": "error", "error_msg": "Creating triggers for users is disallowed."})
+    trigger_count = db.session.query(Trigger).join(Follow) \
+        .filter(Follow.user_id == session.user.id) \
+        .filter(Follow.id == follow_id) \
         .count()
     if trigger_count >= 3:
         return jsonify({"result": "error", "error_msg": "Max triggers reached."})
@@ -211,3 +237,14 @@ def update_trigger(form, session):
         trigger.threshold = threshold
     db.session.commit()
     return jsonify({"result": "ok", "trigger": trigger})
+
+
+@user_blueprint.route("/notifications/read")
+@login_required
+def read_notifications(form, session):
+    notifications = db.session.query(Notification).join(Trigger).join(Follow) \
+        .filter(Follow.user_id == session.user.id) \
+        .filter(Trigger.follow_id == Follow.id) \
+        .filter(Notification.trigger_id == Trigger.id) \
+        .all()
+    return jsonify(notifications)

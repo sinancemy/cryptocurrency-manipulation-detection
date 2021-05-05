@@ -16,7 +16,11 @@ export const TabbedView = ({ children, options, width = "full" }) => {
           )) }
       </div>
       <div>
-        { children[selectedTab] }
+        { children.map((child, i) => (
+          <div className={`${i !== selectedTab && 'hidden'}`}>
+            { child }
+          </div>
+        )) }
       </div>
     </div>
   )

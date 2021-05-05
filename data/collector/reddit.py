@@ -5,7 +5,7 @@ from praw.models import MoreComments
 from psaw import PushshiftAPI
 
 from data.collector import Collector
-from data.database.models import Post
+from data.database.data_models import Post
 from misc import *
 
 import warnings

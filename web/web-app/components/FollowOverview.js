@@ -48,6 +48,7 @@ export const FollowOverview = ({ follow }) => {
               <div className="flex-grow">
               </div>
               <div className="flex flex-row space-x-2">
+                { !hasUsername && <>
                 <CuteButton onClick={() => setSelected(!selected)}>
                   <div className="flex flex-row space-x-1 items-center">
                     <span><HiLightningBolt /></span>
@@ -56,10 +57,12 @@ export const FollowOverview = ({ follow }) => {
                   </div>
                 </CuteButton>
                 <NotifyButton followType={follow.type} followTarget={follow.target} />
+                </>
+                }
                 <FollowButton followType={follow.type} followTarget={follow.target} />
               </div>
           </div>
-          { selected && (
+          { selected && !hasUsername && (
             <div className="flex flex-col space-y-2 lex-none">
               <div className={`flex flex-col space-y-1 max-h-36 overflow-scroll`}>
               { follow.triggers.map(trigger => (

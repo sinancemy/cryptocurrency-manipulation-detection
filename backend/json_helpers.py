@@ -1,6 +1,6 @@
 from enum import Enum
 
-from data.database.models import Post, MarketPrice
+from data.database.data_models import Post, MarketPrice
 
 
 # To be modified.

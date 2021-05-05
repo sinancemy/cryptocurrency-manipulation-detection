@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 
 from data.collector import Collector
-from data.database.models import MarketPrice
+from data.database.data_models import MarketPrice
 
 from misc import TimeRange, CoinType
 import portion as P

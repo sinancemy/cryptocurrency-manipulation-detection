@@ -1,22 +1,17 @@
-import axios from "axios"
-import cookie from "cookie"
 import { DashboardPanel } from "../../components/DashboardPanel"
-import { CoinOverview } from "../../components/CoinOverview"
-import { SourceOverview } from "../../components/SourceOverview"
-import Link from "next/link"
-import { NotifyButton } from "../../components/NotifyButton"
-import { CuteButton } from "../../components/CuteButton"
-import { IoMdSettings } from "react-icons/io"
 import { useRequireLogin, useUser } from "../../user-hook"
 import { FollowOverview } from "../../components/FollowOverview"
 import { TabbedView } from "../../components/TabbedView"
 import { SimpleMenu } from "../../components/SimpleMenu"
-import { useState } from "react"
-import { ConditionalPages } from "../../components/ConditionalPages"
+import { useMemo, useState } from "react"
+import { MenuPages } from "../../components/MenuPages"
 
 export default function Profile() {
   useRequireLogin()
   const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn } = useUser()
+  const followedGroups = useMemo(() => followedSources.filter(f => f.target.startsWith("*@")), [followedSources])
+  const followedUsers = useMemo(() => followedSources.filter(f => !f.target.startsWith("*@")), [followedSources])
+
   const [selectedPage, setSelectedPage] = useState(0)
   return (
     <div className="animate-fade-in-down">
@@ -44,37 +39,38 @@ export default function Profile() {
           </DashboardPanel>
         </div>
         <div className="w-128">
-          <ConditionalPages index={selectedPage}>
+          <MenuPages index={selectedPage}>
             <DashboardPanel restrictedHeight={false} collapsable={false}>
               <DashboardPanel.Header>
                 Notification Settings
               </DashboardPanel.Header>
               <DashboardPanel.Body>
-                <TabbedView options={["Followed Coins", "Followed Sources"]}>
-                  <div className="flex flex-col space-x-5">
-                    <div>
-                      <div>
-                        {followedCoins.length > 0 ? 
-                          followedCoins.map(follow => (
-                            <div className="mt-2">
-                              <FollowOverview follow={follow} />
-                            </div>
-                          )) : ("Not following any coins.")}
+                <TabbedView options={["Followed Coins", "Followed Groups", "Followed Users"]}>
+                  <div>
+                    {followedCoins.length > 0 ? 
+                      followedCoins.map(follow => (
+                        <div className="mt-2">
+                          <FollowOverview follow={follow} />
                         </div>
-                      </div>
+                      )) : ("Not following any coins.")}
                     </div>
                     <div>
-                      <div>
-                          <div>
-                          {followedSources.length > 0 ? (
-                            followedSources.map(follow => (
-                              <div className="mt-2">
-                                <FollowOverview follow={follow} />
-                              </div>
-                            ))
-                          ) : ("Not following any sources.")}
-                          </div>
+                    {followedGroups.length > 0 ? (
+                      followedGroups.map(follow => (
+                        <div className="mt-2">
+                          <FollowOverview follow={follow} />
                         </div>
+                      ))
+                    ) : ("Not following any groups.")}
+                    </div>
+                    <div>
+                    {followedUsers.length > 0 ? (
+                      followedUsers.map(follow => (
+                        <div className="mt-2">
+                          <FollowOverview follow={follow} />
+                        </div>
+                      ))
+                    ) : ("Not following any users.")}
                     </div>
                   </TabbedView>
               </DashboardPanel.Body>
@@ -95,7 +91,7 @@ export default function Profile() {
                 Nothing yet.
               </DashboardPanel.Body>
             </DashboardPanel>
-          </ConditionalPages>
+          </MenuPages>
         </div>
       </div>
     </div>

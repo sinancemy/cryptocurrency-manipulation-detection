@@ -79,7 +79,7 @@ export default function DashboardPage() {
                               graphSelection, selectedPostRange, impactMap, selectedSources]
 
   return useMemo(() => (graphSettings &&
-    <div className="animate-fade-in-down md:flex md:flex-col lg:grid lg:grid-cols-6">
+    <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col lg:grid lg:grid-cols-6">
       <div className="px-1 col-span-1">
         <DashboardPanel>
           <DashboardPanel.Header>

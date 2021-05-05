@@ -1,10 +1,9 @@
+from dataclasses import dataclass
+from datetime import datetime
+
 from sqlalchemy import Integer, Column
 
 from misc import CoinType, TimeRange
-
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
 
 
 # Converts a row from 'posts' table into a Post.
@@ -44,6 +43,41 @@ def row_to_notification(r):
 
 def row_to_session(r):
     return Session(r[1], r[2], r[3])
+
+
+# from flask_sqlalchemy import SQLAlchemy
+#
+# db = SQLAlchemy()
+
+
+# @dataclass
+# class Post(db.Model):
+#     id: int
+#     coin_type: CoinType
+#     user: str
+#     content: str
+#     source: str
+#     interaction: int
+#     time: datetime
+#     unique_id: str
+#     type: str
+#     impact: bytes
+#
+#     __tablename__ = "posts"
+#     id = db.Column(db.Integer, primary_key=True)
+#     coin_type = db.Column(db.Enum(CoinType))
+#     user = db.Column(db.String)
+#     content = db.Column(db.Text)
+#     source = db.Column(db.String)
+#     interaction = db.Column(db.Integer)
+#     time = db.Column(db.DateTime)
+#     unique_id = db.Column(db.String)
+#     type = db.Column(db.String)
+#     impact = db.Column(db.LargeBinary)
+#
+#     def copy(self):
+#         return Post(self.coin_type, self.user, self.content, self.source, self.interaction, self.time, self.unique_id,
+#                     self.type, self.impact)
 
 
 class Post(object):

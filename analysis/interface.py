@@ -2,7 +2,7 @@ from analysis.model import CryptoSpeculationModel
 from analysis.operate import predict
 from data.dataset import load_vectorizer_of, PredictSet
 import torch
-from data.database.models import Post, CoinType
+from data.database.data_models import Post, CoinType
 
 
 class Predictor:
