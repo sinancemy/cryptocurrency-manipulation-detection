@@ -27,7 +27,7 @@ class Predictor:
 
 def _example():
     pred = Predictor("test_model", "Jun19_Feb21_Big")
-    posts = [Post(CoinType.BTC, "elonmusk", "Everyone should be selling right now.", "twitter", 2114, None, None),
-             Post(CoinType.DOGE, "some_guy", "Everyone should be buying right now.", "reddit/dogecoin", 9, None, None)]
+    posts = [Post(coin_type=CoinType.btc, user="elonmusk", content="Everyone should be selling right now.", source="twitter", interaction=2114),
+             Post(coin_type=CoinType.doge, user="some_guy", content="Everyone should be buying right now.", source="reddit/dogecoin", interaction=9)]
     print(pred.predict(posts)[0].impact)
     print(pred.predict(posts)[1].impact)

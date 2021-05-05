@@ -10,16 +10,16 @@ usernames = ["officialmcafee", "VitalikButerin", "SatoshiLite", "pmarca", "roger
              "CarpeNoctom", "Melt_Dem", "100trillionUSD", "MessariCrypto", "TuurDemeester", "MartyBent", "elonmusk"]
 
 COIN_KEYWORDS = {
-    CoinType.BTC: ["Bitcoin", "BTC"],
-    CoinType.ETH: ["Ethereum", "ETH"],
-    CoinType.DOGE: ["Dogecoin", "DOGE"],
-    CoinType.ADA: ["Cardano", "ADA"],
-    CoinType.LINK: ["Chainlink", "LINK"],
-    CoinType.DOT: ["Polkadot", "DOT"],
-    CoinType.XRP: ["Ripple", "XRP"],
-    CoinType.LTC: ["Litecoin", "LTC"],
-    CoinType.XLM: ["Stellar", "XLM"],
-    CoinType.OMG: ["omise_go", "omgnetwork", "OMG"],
+    CoinType.btc: ["Bitcoin", "BTC"],
+    CoinType.eth: ["Ethereum", "ETH"],
+    CoinType.doge: ["Dogecoin", "DOGE"],
+    CoinType.ada: ["Cardano", "ADA"],
+    CoinType.link: ["Chainlink", "LINK"],
+    CoinType.dot: ["Polkadot", "DOT"],
+    CoinType.xrp: ["Ripple", "XRP"],
+    CoinType.ltc: ["Litecoin", "LTC"],
+    CoinType.xlm: ["Stellar", "XLM"],
+    CoinType.omg: ["omise_go", "omgnetwork", "OMG"],
 }
 
 
@@ -36,7 +36,7 @@ def convert_to_unix(datestamp, timestamp):
 
 class TwitterCrawler(Collector):
 
-    def __init__(self, coin: CoinType = CoinType.BTC):
+    def __init__(self, coin: CoinType = CoinType.btc):
         super().__init__(coin=coin)
         self.config = twint.Config()
         self.config.Limit = 1

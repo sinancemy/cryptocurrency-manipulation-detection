@@ -6,7 +6,7 @@ from misc import TimeRange, CoinType
 
 class PostVolumeCalculator(Collector):
 
-    def __init__(self, interval: int, coin: CoinType = CoinType.BTC):
+    def __init__(self, interval: int, coin: CoinType = CoinType.btc):
         super().__init__(interval=interval, coin=coin)
 
     def collect_with_selectors(self, db: Database, time_range: TimeRange, source, post_selectors):
@@ -16,7 +16,7 @@ class PostVolumeCalculator(Collector):
             tr = TimeRange(t, min(t + self.settings.interval, time_range.high))
             count = db.read_num_posts_within_time(tr.low, tr.high, post_selectors)
             volume_so_far += count
-            yield PostVolume(tr.low, tr.high, volume_so_far, count, source)
+            yield PostVolume(time=tr.low, next_time=tr.high, volume=volume_so_far, count=count, source=source)
 
     def collect(self, time_range: TimeRange) -> iter:
         db = Database()

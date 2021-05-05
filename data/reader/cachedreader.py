@@ -38,7 +38,7 @@ class CachedReader(object):
         if len(collector_ranges) > 0:
             print("CachedReader: Caching...")
             self.db.create("cached_ranges",
-                           list(map(lambda r: CachedRange(r.low, r.high, collector_state), collector_ranges)))
+                           list(map(lambda r: CachedRange(low=r.low, high=r.high, type=collector_state), collector_ranges)))
         # Now, read the data from the database.
         return self.db.read_by(self.table, [RangeSelector("time", time_range.low, time_range.high),
                                             MatchSelector("type", collector_state)], self.row_converter)

@@ -9,14 +9,14 @@ import time
 from tqdm import tqdm
 
 from data.collector import Collector
-from data.database.data_models import MarketPrice
+from data.database.data_models import Price
 
 from misc import TimeRange, CoinType
 import portion as P
 
 
 class YahooPriceCrawler(Collector):
-    def __init__(self, resolution: str, coin: CoinType = CoinType.BTC):
+    def __init__(self, resolution: str, coin: CoinType = CoinType.btc):
         super().__init__(coin=coin, resolution=resolution)
 
     def collect(self, time_range: TimeRange):
@@ -24,7 +24,7 @@ class YahooPriceCrawler(Collector):
 
 
 def collect_history(coin, time_range, resolution):
-    return (MarketPrice(coin_type=coin, price=row[1].Price, volume=row[1].Volume, time=row[0])
+    return (Price(coin_type=coin, price=row[1].Price, volume=row[1].Volume, time=row[0])
             for row in pull_coin_history(coin, time_range, resolution).iterrows())
 
 
@@ -91,7 +91,7 @@ def _example_pull_request():
     """
     An example pull request for reference and debugging purposes.
     """
-    plt.plot(list(pull_coin_history(CoinType.DOGE, TimeRange(1497398400, 1614556800), "1d")["Price"]))
+    plt.plot(list(pull_coin_history(CoinType.doge, TimeRange(1497398400, 1614556800), "1d")["Price"]))
     plt.show()
 
 # print(pull_coin_history(CoinType.BTC, TimeRange(1609459200, 1614556800), "1h"))

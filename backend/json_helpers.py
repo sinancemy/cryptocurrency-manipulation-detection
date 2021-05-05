@@ -1,6 +1,6 @@
 from enum import Enum
 
-from data.database.data_models import Post, MarketPrice
+from data.database.data_models import Post, Price
 
 
 # To be modified.
@@ -9,7 +9,7 @@ def post_to_dict(post: Post):
 
 
 # To be modified.
-def price_to_dict(price: MarketPrice):
+def price_to_dict(price: Price):
     return price.__dict__
 
 

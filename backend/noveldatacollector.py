@@ -16,8 +16,8 @@ if __name__ == "__main__":
         TwitterCrawler()]
     price_crawler = YahooPriceCrawler(resolution="1h")
     data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
-    coin_types = [CoinType.BTC, CoinType.ETH, CoinType.DOGE, CoinType.ADA, CoinType.LINK, CoinType.LTC, CoinType.OMG,
-                  CoinType.XLM, CoinType.XRP]
+    coin_types = [CoinType.btc, CoinType.eth, CoinType.doge, CoinType.ada, CoinType.link, CoinType.ltc, CoinType.omg,
+                  CoinType.xlm, CoinType.xrp]
     while True:
         # Wait until aligned with sleep_interval
         t = 1
@@ -32,5 +32,8 @@ if __name__ == "__main__":
             posts += new_posts
         # At this point, post volumes are calculated.
         # TODO: Deploy the notifications!
-        # ...
+        # 1h, 2h, 1d degisimleri hesapla
+        # Etkilenen triggerlari bul
+        # O triggerlarin userlarina notification at
+        # Notify_email 1 ise mail de at ayni zamanda!
         time.sleep(SLEEP_INTERVAL)

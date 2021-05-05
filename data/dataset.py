@@ -213,7 +213,7 @@ def _example():
                               collect_comments=True),
         TwitterCrawler()],
                                        price_crawler=YahooPriceCrawler(resolution="1h"),
-                                       coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE],
+                                       coin_types=[CoinType.btc, CoinType.eth, CoinType.doge],
                                        time_range=TimeRange(1577836800, 1578836800))
     dataset.save()
 
@@ -228,9 +228,9 @@ def _collect_dataset():
         ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 2000, 'score': '>4'}),
         TwitterCrawler()],
                                        price_crawler=YahooPriceCrawler(resolution="1h"),
-                                       coin_types=[CoinType.BTC, CoinType.ETH, CoinType.DOGE, CoinType.ADA,
-                                                   CoinType.LINK, CoinType.LTC, CoinType.OMG,
-                                                   CoinType.XLM, CoinType.XRP],
+                                       coin_types=[CoinType.btc, CoinType.eth, CoinType.doge, CoinType.ada,
+                                                   CoinType.link, CoinType.ltc, CoinType.omg,
+                                                   CoinType.xlm, CoinType.xrp],
                                        time_range=TimeRange(1559347200, 1612137600))
     dataset.save()
 

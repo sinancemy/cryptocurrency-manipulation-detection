@@ -2,9 +2,7 @@ import enum
 from datetime import datetime
 
 from dataclasses import dataclass
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from data.database.config import db
 
 
 @dataclass
@@ -18,6 +16,7 @@ class User(db.Model):
     sessions: 'Session'
 
     __tablename__ = "users"
+    __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
@@ -35,6 +34,7 @@ class Session(db.Model):
     expiration: datetime
 
     __tablename__ = "sessions"
+    __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     token = db.Column(db.String(16), nullable=False)
@@ -61,6 +61,7 @@ class Follow(db.Model):
     triggers: 'Trigger'
 
     __tablename__ = "follows"
+    __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     type = db.Column(db.Enum(FollowType), nullable=False)
@@ -90,6 +91,7 @@ class Trigger(db.Model):
     notifications: 'Notification'
 
     __tablename__ = "triggers"
+    __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     follow_id = db.Column(db.Integer, db.ForeignKey("follows.id"), nullable=False)
     time_window = db.Column(db.Enum(TriggerTimeWindow), nullable=False)
@@ -107,6 +109,7 @@ class Notification(db.Model):
     read: bool
 
     __tablename__ = "notifications"
+    __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     trigger_id = db.Column(db.Integer, db.ForeignKey("triggers.id"))
     time = db.Column(db.DateTime, nullable=False)

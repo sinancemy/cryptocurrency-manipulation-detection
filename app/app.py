@@ -2,6 +2,8 @@ import os
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+
+from data.database.config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_BINDS
 from user_blueprint import user_blueprint
 from api_blueprint import api_blueprint
 from data.database.app_models import db
@@ -14,7 +16,8 @@ def create_app():
     app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
     app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
     CORS(app)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./app.db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+    app.config["SQLALCHEMY_BINDS"] = SQLALCHEMY_BINDS
     # app.config["SQLALCHEMY_ECHO"] = True
     app.register_blueprint(user_blueprint, url_prefix="/user")
     app.register_blueprint(api_blueprint, url_prefix="/api")

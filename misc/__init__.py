@@ -6,16 +6,16 @@ import portion as P
 
 
 class CoinType(str, Enum):
-    BTC = "btc"
-    ETH = "eth"
-    DOGE = "doge"
-    ADA = "ada"
-    LINK = "link"
-    DOT = "dot"
-    XRP = "xrp"
-    LTC = "ltc"
-    XLM = "xlm"
-    OMG = "omg"
+    btc = "btc"
+    eth = "eth"
+    doge = "doge"
+    ada = "ada"
+    link = "link"
+    dot = "dot"
+    xrp = "xrp"
+    ltc = "ltc"
+    xlm = "xlm"
+    omg = "omg"
 
 
 class TimeRange(object):

@@ -81,20 +81,20 @@ def _example():
     An example analyze_trends call for reference and debugging purposes.
     """
     ema8, sma13, sma21, sma55 = analyze_trends(
-        collect_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"))
+        collect_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"))
     print("EMA8  Slope: ", ema8)
     print("SMA13 Slope: ", sma13)
     print("SMA21 Slope: ", sma21)
     print("SMA55 Slope: ", sma55)
-    plt.plot(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h")[["Price"]], label="BTC/USD")
+    plt.plot(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h")[["Price"]], label="BTC/USD")
     plt.plot(
-        _exponential_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 8 * 24),
+        _exponential_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 8 * 24),
         label="EMA8")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 13 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 13 * 24),
              label="SMA13")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 21 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 21 * 24),
              label="SMA21")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.BTC, TimeRange(1577836800, 1587340800), "1h"), 55 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 55 * 24),
              label="SMA55")
     plt.legend(loc='lower left', frameon=False)
     plt.show()
