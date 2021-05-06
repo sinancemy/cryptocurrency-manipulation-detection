@@ -28,7 +28,7 @@ const useUserProvider = () => {
   const [cookies, setCookie, removeCookie] = useCookies(['token'])
   const [user, setUser] = useState(null)
 
-  // Helper function for internal use.
+  // Helper function.
   const fetch = useCallback((endpoint, params, then, withToken = true) => {
     axios.post('http://127.0.0.1:5000/user/' + endpoint, {
       ...params,
@@ -56,7 +56,7 @@ const useUserProvider = () => {
         updateUserInfo() 
       }
     })
-  }, [cookies])
+  }, [])
   // Log the user in.
   const login = useCallback((username, password, onError = () => {}) => {
     fetch("login", { 
@@ -69,11 +69,11 @@ const useUserProvider = () => {
         onError(res.data)
       }
     }, false)
-  }, [cookies])
+  }, [])
   // Log the user out.
   const logout = useCallback(() => {
     fetch("logout", {}, () => removeCookie("token"))
-  }, [cookies])
+  }, [])
   // Register a new user.
   const register = useCallback((username, password, email, onSuccess = () => {}, onError = () => {}) => {
     fetch("register", {
@@ -87,7 +87,23 @@ const useUserProvider = () => {
         onError(res.data)
       }
     }, false)
-  }, [cookies])
+  }, [])
+
+  // Notification stuff...
+  // By default, the notifications are empty, unless updateNotifications is called at least once!
+  const [notifications, setNotifications] = useState([])
+  // Update the notifications.
+  const updateNotifications = useCallback(() => {
+    fetch("info/notifications", {}, (res) => (res.data.result == "ok") && setNotifications(res.data))
+  }, [])
+  // Set all the notifications as read and update the notifications.
+  const readAllNotifications = useCallback(() => {
+    fetch("info/notifications/read_all", {}, updateNotifications)
+  }, [])
+  // Discard a notification and update the notifications.
+  const discardNotification = useCallback((id) => {
+    fetch("info/notifications/delete", { id: id }, updateNotifications)
+  })
 
   const username = useMemo(() => user ? user.username : "...")
   const loggedIn = useMemo(() => user && user.id >= 0, [user])
@@ -98,21 +114,14 @@ const useUserProvider = () => {
   }, [followedCoins, followedSources])
   const areNotificationsOn = useCallback((type, target) => {
     return (type === "coin" ? followedCoins : followedSources).some((follow) => follow.target === target && follow.notify_email)
-    return followedCoins.some((followedCoin) => followedCoin.target.includes(coinName) && followedCoin.notify_email === 1)
   }, [followedCoins])
 
-  const unreadNotifications = useMemo(() => {
-    if(!user) return []
-    return []
-  }, [user])
-
   // Expose data and methods.
-  return { user: user, loggedIn: loggedIn, register: register, login: login, updateUser: updateUser, 
-          username: username,
+  return { user: user, loggedIn: loggedIn, username: username, register: register, login: login, updateUser: updateUser,
+          notifications: notifications, updateNotifications: updateNotifications, readAllNotifications: readAllNotifications, discardNotification: discardNotification,
           followedCoins: followedCoins, followedSources: followedSources, 
           isFollowing: isFollowing, areNotificationsOn: areNotificationsOn, 
-          refetchUser: updateUserInfo, unreadNotifications: unreadNotifications, 
-          logout: logout }
+          refetchUser: updateUserInfo, logout: logout }
 }
 
 // Custom Hook to redirect to the login page if needed.

@@ -1,7 +1,8 @@
 from sqlalchemy import desc, func
+from tqdm import tqdm
 
-from data.database import AggregatePostCount, db
-from misc import TimeRange, TriggerTimeWindow, get_trigger_time_window_seconds
+from data.database import AggregatePostCount, db, Trigger, Follow, Notification, datetime
+from misc import TimeRange, TriggerTimeWindow, get_trigger_time_window_seconds, FollowType
 
 
 def get_cumulatives(aggregate_model, pre_query, low, high) -> (float, float):
@@ -38,23 +39,50 @@ def calculate_cumulative_change_percent(aggregate_model, pre_query, closed_time_
 def calculate_change_map(aggregate_model, curr_time, coins, sources) -> dict:
     change_map = {}
     for time_window in TriggerTimeWindow:
-        time_interval = get_trigger_time_window_seconds(TriggerTimeWindow(time_window))
+        time_interval = get_trigger_time_window_seconds(time_window)
         time_range = TimeRange(curr_time, curr_time + time_interval)
         change_map_window = {}
         # Calculate for coins.
         for coin in coins:
             coin_query = db.session.query(aggregate_model).filter_by(source="coin:" + coin.value)
             change_percent = calculate_cumulative_change_percent(aggregate_model, coin_query, time_range)
-            change_map_window["coin:" + coin.value] = change_percent
+            change_map_window[(FollowType.coin, coin.value)] = change_percent
         # Calculate for sources.
         for source in sources:
             source_query = db.session.query(aggregate_model).filter_by(source="source:" + source)
             change_percent = calculate_cumulative_change_percent(aggregate_model, source_query, time_range)
-            change_map_window["source:" + source] = change_percent
+            change_map_window[(FollowType.source, source)] = change_percent
         change_map[time_window] = change_map_window
     return change_map
 
 
 def deploy_notifications(curr_time: int, coins, sources):
     change_map = calculate_change_map(AggregatePostCount, curr_time, coins, sources)
-    print(change_map)
+    # trigger id => trigger
+    all_affected_triggers = dict()
+    for trigger_time_window, trigger_time_window_change_map in tqdm(change_map.items(),
+                                                                    "Determining the affected triggers..."):
+        for follow_info, change in trigger_time_window_change_map.items():
+            follow_type, follow_target = follow_info
+            affected_triggers = db.session.query(Trigger).join(Follow) \
+                .filter(Follow.type == follow_type) \
+                .filter(Follow.target == follow_target) \
+                .filter(Trigger.time_window == trigger_time_window) \
+                .filter(Trigger.threshold <= change)\
+                .all()
+            # Save the affected triggers.
+            for trigger in affected_triggers:
+                all_affected_triggers[trigger.id] = (change, trigger)
+    new_notifications = []
+    for actual_change, trigger in tqdm(all_affected_triggers.values(), "Deploying notifications..."):
+        user_id = trigger.follow.user.id
+        change_str = "∞" if actual_change == float("inf") else str(int(actual_change))
+        notification_content = trigger.follow.target + " has increased by " + change_str + "%\n"
+        notification_content += "Triggered by " + str(trigger.id)
+        new_notification = Notification(user_id=user_id, content=notification_content,
+                                        time=datetime.fromtimestamp(curr_time), read=False)
+        new_notifications.append(new_notification)
+    db.session.bulk_save_objects(new_notifications)
+    db.session.commit()
+    return all_affected_triggers.values()
+

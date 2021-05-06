@@ -3,6 +3,7 @@ import secrets
 import datetime
 
 from flask import Blueprint, request, jsonify, url_for
+from sqlalchemy import desc
 
 from backend.google_login import construct_request_uri, callback
 from backend.app_helpers import get_json_arg, login_required
@@ -91,6 +92,45 @@ def get_user_info(form, session):
     shown_user.pop("salt")
     shown_user.pop("sessions")
     return jsonify({"result": "ok", "userinfo": shown_user})
+
+
+@user_blueprint.route("/info/notifications", methods=["POST"])
+@login_required
+def read_notifications(form, session):
+    notifications = Notification.query\
+        .filter_by(user_id=session.user_id)\
+        .order_by(desc(Notification.time))\
+        .all()
+    return jsonify(notifications)
+
+
+@user_blueprint.route("/info/notifications/read_all", methods=["POST"])
+@login_required
+def set_all_notifications_to_read(form, session):
+    notifications = Notification.query \
+        .filter_by(user_id=session.user_id) \
+        .all()
+    for notification in notifications:
+        notification.read = True
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/info/notifications/delete", methods=["POST"])
+@login_required
+def discard_notification(form, session):
+    notification_id = get_json_arg(form, "id", int, None)
+    if notification_id is None:
+        return jsonify({"result": "error", "error_msg": "Insufficient arguments."})
+    notification = Notification.query \
+        .filter_by(id=notification_id, user_id=session.user_id) \
+        .first()
+    if notification is None:
+        return jsonify({"result": "error", "error_msg": "Invalid notification."})
+    db.session.delete(notification)
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
 
 
 @user_blueprint.route("/update", methods=["POST"])
@@ -238,14 +278,3 @@ def update_trigger(form, session):
         trigger.threshold = threshold
     db.session.commit()
     return jsonify({"result": "ok", "trigger": trigger})
-
-
-@user_blueprint.route("/notifications/read")
-@login_required
-def read_notifications(form, session):
-    notifications = db.session.query(Notification).join(Trigger).join(Follow) \
-        .filter(Follow.user_id == session.user.id) \
-        .filter(Trigger.follow_id == Follow.id) \
-        .filter(Notification.trigger_id == Trigger.id) \
-        .all()
-    return jsonify(notifications)

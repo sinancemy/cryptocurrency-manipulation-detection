@@ -1,19 +1,32 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { IoNotifications, IoNotificationsOutline } from "react-icons/io5"
 import { useUser } from "../user-hook"
 import { Notification } from "./Notification"
 
-const pollTime = 10000
+const pollTime = 15000
 
 export const Notifier = () => {
-  const { refetchUser, unreadNotifications } = useUser()
+  const { notifications, updateNotifications, readAllNotifications, discardNotification } = useUser()
   const [selected, setSelected] = useState(false)
-  const unreadCount = useMemo(() => unreadNotifications.length, [unreadNotifications])
+  const [selectedFirstUpdate, setSelectedFirstUpdate] = useState(true)
+  const unreadCount = useMemo(() => {
+    console.log(notifications)
+    return notifications.filter(n => !n.read).length
+  }, [notifications])
 
   useEffect(() => {
-    //const refetchInterval = setInterval(refetchUser, pollTime)
-    //return () => clearInterval(refetchInterval)
-  }, [])
+    const refetchInterval = setInterval(updateNotifications, pollTime)
+    return () => clearInterval(refetchInterval)
+  }, [updateNotifications])
+
+  useEffect(() => {
+    if(selected) return
+    if(selectedFirstUpdate) {
+      setSelectedFirstUpdate(false)
+      return
+    }
+    readAllNotifications()
+  }, [selected, readAllNotifications])
 
   return (
       <div className="relative">
@@ -31,8 +44,8 @@ export const Notifier = () => {
           <div className="flex flex-col space-y-1 absolute top-6 right-2 p-2 
                           bg-gray-700 border border-gray-800 z-50 text-sm rounded-b-md rounded-tl-md w-72 shadow-lg 
                           max-h-48 overflow-scroll">
-              {unreadNotifications.length > 0 ? unreadNotifications.map(notif => (
-                  <Notification notif={notif} />
+              {notifications.length > 0 ? notifications.map(notification => (
+                  <Notification notification={notification} onDiscard={() => discardNotification(notification.id)} />
               )) : "No new notifications."}
           </div>
         }

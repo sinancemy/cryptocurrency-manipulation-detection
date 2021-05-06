@@ -24,6 +24,7 @@ class User(db.Model):
     salt = db.Column(db.String(16), nullable=False)
     follows = db.relationship("Follow", backref="user_follows", cascade="all, delete", lazy=True)
     sessions = db.relationship("Session", backref="user_sessions", cascade="all, delete", lazy=True)
+    notifications = db.relationship("Notification", cascade="all, delete")
 
 
 @dataclass
@@ -70,7 +71,6 @@ class Trigger(db.Model):
     follow_id: int
     time_window: TriggerTimeWindow
     threshold: int
-    notifications: 'Notification'
 
     __tablename__ = "triggers"
     __bind_key__ = "app"
@@ -78,7 +78,6 @@ class Trigger(db.Model):
     follow_id = db.Column(db.Integer, db.ForeignKey("follows.id"), nullable=False)
     time_window = db.Column(db.Enum(TriggerTimeWindow), nullable=False)
     threshold = db.Column(db.Integer, nullable=False)
-    notifications = db.relationship("Notification", backref="trigger_notifications", lazy=True)
 
     follow = db.relationship("Follow")
 
@@ -86,15 +85,15 @@ class Trigger(db.Model):
 @dataclass
 class Notification(db.Model):
     id: int
-    trigger_id: int
+    user_id: int
+    content: str
     time: datetime
     read: bool
 
     __tablename__ = "notifications"
     __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
-    trigger_id = db.Column(db.Integer, db.ForeignKey("triggers.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    content = db.Column(db.Text)
     time = db.Column(db.DateTime, nullable=False)
     read = db.Column(db.Boolean, nullable=False, default=False)
-
-    trigger = db.relationship("Trigger")

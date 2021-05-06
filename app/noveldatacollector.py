@@ -41,7 +41,12 @@ def start():
         groups = list(filter(lambda s: s.startswith("*"), get_all_sources()))
         create_aggregate_post_impacts(coin_types, groups, effective_time_range)
         create_aggregate_post_counts(coin_types, groups, effective_time_range)
-        deploy_notifications(t, coin_types, groups)
+        # Deploy the web-site notifications.
+        affected_triggers = deploy_notifications(t, coin_types, groups)
+        # Find the affected triggers that should be notified by e-mail.
+        mail_triggers = list(filter(lambda t: t.follow.notify_email, affected_triggers))
+        # Send the appropriate e-mails.
+
         time.sleep(SLEEP_INTERVAL)
         break
 
