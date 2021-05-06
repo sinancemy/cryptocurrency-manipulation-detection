@@ -29,7 +29,7 @@ const formatDate = timeFormat("%b %d, '%y");
 // accessors
 const getDate = (d) => !d ? new Date(0) : new Date(d.time * 1000);
 const getStockValue = (d) => !d ? 0 : d.price
-const getPostVolumeValue = (d) => !d ? 0 : d.count
+const getPostVolumeValue = (d) => !d ? 0 : d.sum
 const bisectDate = bisector(d => !d ? new Date(1000) : new Date(d.time * 1000)).left;
 
 const timeExtentMap = {
@@ -60,7 +60,7 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
       type: coinType
     }, [], (params) => params[0] !== params[1], (prices) => prices?.reverse())
     // Fetching the post volume.
-    const postVolume = useApiData([], "post_volume", {
+    const postVolume = useApiData([], "aggregate/post_counts", {
       start: shownPriceRange[0],
       end: shownPriceRange[1],
       type: coinType

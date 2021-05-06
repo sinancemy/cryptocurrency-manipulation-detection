@@ -1,8 +1,7 @@
 from flask import Flask
 from flask_mail import Mail, Message
 
-from data.database import db
-from data.database.app_models import Trigger, User, Follow, FollowType
+from data.database import Trigger, User, db
 from app import create_app
 
 

@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from enum import Enum
 import os
@@ -43,6 +44,11 @@ def time_to_str(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 
+def closed_distinct_intervals(closed_time_range: TimeRange, open_length: int) -> iter:
+    for start in range(closed_time_range.low, closed_time_range.high-1, open_length + 1):
+        yield TimeRange(start, min(start + open_length, closed_time_range.high))
+
+
 def interval_to_time_range(p: P.Interval):
     if p.empty:
         return None
@@ -54,3 +60,27 @@ def interval_to_time_range(p: P.Interval):
 def chdir_to_main():
     while not {".gitignore"} <= set(os.listdir()):
         os.chdir("../")
+
+
+class TriggerTimeWindow(str, enum.Enum):
+    one_hour = "1h"
+    two_hours = "2h"
+    five_hours = "5h"
+    one_day = "1d"
+
+
+def get_trigger_time_window_seconds(w: TriggerTimeWindow) -> int:
+    if w == TriggerTimeWindow.one_hour:
+        return 60 * 60
+    if w == TriggerTimeWindow.two_hours:
+        return 2 * 60 * 60
+    if w == TriggerTimeWindow.five_hours:
+        return 5 * 60 * 60
+    if w == TriggerTimeWindow.one_day:
+        return 24 * 60 * 60
+    return None
+
+
+class FollowType(str, enum.Enum):
+    coin = "coin"
+    source = "source"

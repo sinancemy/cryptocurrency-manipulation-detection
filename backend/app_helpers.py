@@ -4,11 +4,11 @@ from typing import Optional
 from flask import request, jsonify
 
 import misc
+from data.collector.sources import get_exported_sources
+from data.database import Session, db, Post
+
 
 # Called from /api blueprint
-from data.database.app_models import Session
-
-
 def get_coin_type_arg() -> Optional[misc.CoinType]:
     coin_type = request.args.get("type", type=str, default=None)
     if coin_type is None:
@@ -53,4 +53,15 @@ def login_required(inner_func):
         if session is None:
             return jsonify({"result": "error", "error_msg": "Invalid session."})
         return inner_func(form, session, *args, **kwargs)
+
     return wrapper
+
+
+def get_all_sources() -> list:
+    db_sources = [{"user": r[0], "source": r[1]} for r in
+                  db.session.query(Post.user, Post.source).distinct(Post.user, Post.source).all()]
+    exported_sources = [{"user": src.user, "source": src.source} for src in get_exported_sources()]
+    # Combine them.
+    all_sources = db_sources + exported_sources
+    uniques_set = {s["user"] + '@' + s["source"] for s in all_sources}
+    return list(uniques_set)

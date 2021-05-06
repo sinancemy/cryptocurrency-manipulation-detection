@@ -4,10 +4,11 @@ import datetime
 
 from flask import Blueprint, request, jsonify, url_for
 
-from google_login import construct_request_uri, callback
-from helpers import get_json_arg, login_required
-from data.database.app_models import User, db, Session, Follow, FollowType, TriggerTimeWindow, Trigger, Notification
-from backend.user import verify_password, new_password
+from backend.google_login import construct_request_uri, callback
+from backend.app_helpers import get_json_arg, login_required
+from data.database.app_models import User, db, Session, Follow, Trigger, Notification
+from misc import TriggerTimeWindow, FollowType
+from backend.password import verify_password, new_password
 
 user_blueprint = Blueprint("user", __name__)
 

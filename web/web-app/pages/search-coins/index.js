@@ -16,12 +16,12 @@ export default function SearchCoins() {
 
   useEffect(() => {
     if (!query || query.trim() === "") {
-      const rearranged = [...coins.filter(c => isFollowingCoin(c.name)), ...coins.filter(c => !isFollowingCoin(c.name))]
+      const rearranged = [...coins.filter(c => isFollowingCoin(c)), ...coins.filter(c => !isFollowingCoin(c))]
       setFilteredCoins(rearranged)
       return
     }
-    const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
-    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+    const filtered = coins.filter((coin) => coin.toLowerCase().includes(query.toLowerCase()))
+    const sorted = [...filtered].sort((a, b) => a.localeCompare(b))
     setFilteredCoins(sorted)
   }, [coins, query, isFollowingCoin])
 
@@ -48,11 +48,11 @@ export default function SearchCoins() {
                   <CoinOverview 
                     isSelected={() => true}
                     setSelected={() => true}
-                    coin={coin.name}
+                    coin={coin}
                     button={(
                       <FollowButton
                         followType={"coin"}
-                        followTarget={coin.name} />
+                        followTarget={coin} />
                     )}/>
                 </div>
               ))}

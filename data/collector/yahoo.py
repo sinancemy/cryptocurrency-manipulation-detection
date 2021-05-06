@@ -1,18 +1,14 @@
-from collections import Set
-
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta
 import numpy as np
 import time
 
-from tqdm import tqdm
 
 from data.collector import Collector
-from data.database.data_models import Price
+from data.database import Price
 
 from misc import TimeRange, CoinType
-import portion as P
 
 
 class YahooPriceCrawler(Collector):

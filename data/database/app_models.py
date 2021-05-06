@@ -1,8 +1,8 @@
-import enum
 from datetime import datetime
 
 from dataclasses import dataclass
 from data.database.config import db
+from misc import TriggerTimeWindow, FollowType
 
 
 @dataclass
@@ -43,14 +43,6 @@ class Session(db.Model):
     user = db.relationship("User")
 
 
-class FollowType(enum.Enum):
-    coin = "coin"
-    source = "source"
-
-    def __deepcopy__(self, memo):
-        return self.value
-
-
 @dataclass
 class Follow(db.Model):
     id: int
@@ -70,16 +62,6 @@ class Follow(db.Model):
     triggers = db.relationship("Trigger", backref="follow_triggers", cascade="all, delete", lazy=True)
 
     user = db.relationship("User")
-
-
-class TriggerTimeWindow(enum.Enum):
-    one_hour = "1h"
-    two_hours = "2h"
-    five_hours = "5h"
-    one_day = "1d"
-
-    def __deepcopy__(self, memo):
-        return self.value
 
 
 @dataclass

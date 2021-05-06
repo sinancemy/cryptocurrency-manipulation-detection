@@ -5,7 +5,7 @@ from praw.models import MoreComments
 from psaw import PushshiftAPI
 
 from data.collector import Collector
-from data.database.data_models import Post
+from data.database import Post
 from misc import *
 
 import warnings
@@ -83,7 +83,7 @@ class RealtimeRedditCrawler(Collector):
             submission = self.spider.submission(id=submission.id)
             # Expand the comments.
             submission.comments.replace_more(limit=3)
-            if not self.settings.collect.comments:
+            if not self.settings.collect_comments:
                 continue
             # Iterate over all the comments.
             for top_comment in submission.comments.list():

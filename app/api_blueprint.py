@@ -1,13 +1,12 @@
 import time
 
+import numpy
 from flask import Blueprint
 from sqlalchemy import desc, and_, or_, func
 
-from backend.json_helpers import post_to_dict, price_to_dict, dictify
-from data.collector.sources import get_all_sources
-from data.database import RangeSelector, MatchSelector, SourceSelector, Database, Price, PostVolume, Post, db
-from data.database.app_models import Follow, FollowType
-from helpers import *
+from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact
+from misc import FollowType
+from backend.app_helpers import *
 
 api_blueprint = Blueprint("api", __name__)
 
@@ -15,7 +14,7 @@ api_blueprint = Blueprint("api", __name__)
 @api_blueprint.route("/posts")
 def get_posts():
     start = request.args.get("start", type=int, default=0)
-    end = request.args.get("end", type=int, default=int(time.time()))  # Connect to the database
+    end = request.args.get("end", type=int, default=int(time.time()))
     coin_type = get_coin_type_arg()
     source = request.args.get("source", type=str, default=None)
     order_by = request.args.get("sort", type=str, default=None)
@@ -45,21 +44,20 @@ def get_posts():
     from_interaction = request.args.get("from_interaction", type=int, default=None)
     from_time = request.args.get("from_time", type=int, default=None)
     from_user = request.args.get("from_user", type=str, default=None)
-    if from_interaction is not None:
+    if from_interaction is not None or from_time is not None or from_user is not None:
+        if from_interaction is not None:
+            from_column = Post.__table__.c["interaction"]
+            from_bound = from_interaction
+        elif from_time is not None:
+            from_column = Post.__table__.c["time"]
+            from_bound = from_time
+        elif from_user is not None:
+            from_column = Post.__table__.c["user"]
+            from_bound = from_user
         if desc == 0:
-            query = query.filter(Post.interaction > from_interaction)
+            query = query.filter(from_column > from_bound)
         else:
-            query = query.filter(Post.interaction < from_interaction)
-    elif from_time is not None:
-        if desc == 0:
-            query = query.filter(Post.time > from_time)
-        else:
-            query = query.filter(Post.time < from_time)
-    elif from_user is not None:
-        if desc == 0:
-            query = query.filter(Post.user > from_user)
-        else:
-            query = query.filter(Post.user < from_user)
+            query = query.filter(from_column < from_bound)
     # Handle ordering
     if desc == 1:
         query = query.order_by(Post.__table__.c[order_by].desc())
@@ -67,11 +65,13 @@ def get_posts():
         query = query.order_by(Post.__table__.c[order_by])
     query = query.limit(limit)
     posts = query.all()
-    # TODO: MAKE PREDICTIONS WHEN THE POST IS COLLECTED AND SAVE IT TO DATABASE. IDEALLY THIS SHOULDN'T BE HERE.
-    if len(posts) > 0:
-        posts = posts  # predictor.predict(posts)
-    # Sort by time.
-    return jsonify(posts)
+    # Replace the impact values by their float array representation.
+    modified_posts = []
+    for p in posts:
+        mp = dataclasses.asdict(p)
+        mp["impact"] = list(numpy.frombuffer(mp["impact"]))
+        modified_posts.append(mp)
+    return jsonify(modified_posts)
 
 
 @api_blueprint.route("/prices")
@@ -93,31 +93,42 @@ def get_prices():
 
 @api_blueprint.route("/coin_list")
 def get_coin_list():
-    coin_types = []
-    for coin_type in misc.CoinType:
-        coin_types.append({"name": coin_type})
-    return jsonify(coin_types)
+    return jsonify([c for c in misc.CoinType])
 
 
 @api_blueprint.route("/source_list")
 def get_source_list():
-    db = Database()
-    return jsonify(get_all_sources(db))
+    return jsonify(get_all_sources())
 
 
-@api_blueprint.route("/post_volume")
-def get_post_volumes():
+@api_blueprint.route("/aggregate/post_counts")
+def get_aggregate_post_counts():
     start = request.args.get("start", type=float, default=0)
     end = request.args.get("end", type=float, default=int(time.time()))
     coin_type = get_coin_type_arg()
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
-    volumes = PostVolume.query \
-        .filter(PostVolume.time <= end) \
-        .filter(PostVolume.time >= start) \
-        .filter(PostVolume.source == "coin:" + coin_type.value) \
+    post_counts = AggregatePostCount.query \
+        .filter(AggregatePostCount.time <= end) \
+        .filter(AggregatePostCount.time >= start) \
+        .filter(AggregatePostCount.source == "coin:" + coin_type.value) \
         .all()
-    return jsonify(volumes)
+    return jsonify(post_counts)
+
+
+@api_blueprint.route("/aggregate/post_impacts")
+def get_aggregate_post_impacts():
+    start = request.args.get("start", type=float, default=0)
+    end = request.args.get("end", type=float, default=int(time.time()))
+    coin_type = get_coin_type_arg()
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    post_counts = AggregatePostImpact.query \
+        .filter(AggregatePostImpact.time <= end) \
+        .filter(AggregatePostImpact.time >= start) \
+        .filter(AggregatePostImpact.source == "coin:" + coin_type.value) \
+        .all()
+    return jsonify(post_counts)
 
 
 @api_blueprint.route("/coin_stats")
@@ -153,7 +164,7 @@ def get_coin_stats():
         .limit(1) \
         .first()
     last_price = last_price[0] if last_price is not None else 0
-    num_followers = Follow.query.filter_by(type=FollowType.coin, target=coin_type).count()
+    num_followers = Follow.query.filter_by(type=FollowType.coin, target=coin_type.value).count()
     return jsonify({
         "num_followers": num_followers,
         "top_sources": top_sources,
@@ -177,7 +188,6 @@ def get_source_stats():
             "num_followers": num_followers
         })
     # Handle the source stat case.
-    # Get the top active users.
     top_active_users = db.session.query(Post.user, func.count(Post.id)) \
         .filter(Post.source == source) \
         .group_by(Post.user) \
@@ -185,7 +195,6 @@ def get_source_stats():
         .limit(limit) \
         .all()
     top_active_users = [{"source": r[0] + "@" + source, "total_msg": r[1]} for r in top_active_users]
-    # Get the top interacted users.
     top_interacted_users = db.session.query(Post.user, func.sum(Post.interaction)) \
         .filter(Post.source == source) \
         .group_by(Post.user) \
@@ -193,18 +202,17 @@ def get_source_stats():
         .limit(limit) \
         .all()
     top_interacted_users = [{"source": r[0] + "@" + source, "total_interaction": r[1]} for r in top_interacted_users]
-    # Get the most relevant coins.
     relevant_coins = db.session.query(Post.coin_type, func.count(Post.id)) \
         .filter(Post.source == source) \
         .group_by(Post.coin_type) \
         .order_by(desc(func.count(Post.id))) \
         .limit(limit) \
         .all()
-    # Get the number of followers.
+    relevant_coins = [{"coin_type": r[0], "total_msg": r[1]} for r in relevant_coins]
     num_followers = Follow.query.filter_by(type=FollowType.source, target=source).count()
     return jsonify({
         "num_followers": num_followers,
         "top_active_users": top_active_users,
         "top_interacted_users": top_interacted_users,
-        "relevant_coins": []
+        "relevant_coins": relevant_coins
     })

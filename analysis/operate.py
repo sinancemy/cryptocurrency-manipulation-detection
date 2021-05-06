@@ -1,11 +1,10 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 
-from data.dataset import CryptoSpeculationDataset, PredictSet
+from data.dataset import CryptoSpeculationDataset
 from analysis.model import CryptoSpeculationModel
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
