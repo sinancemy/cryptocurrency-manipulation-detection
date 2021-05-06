@@ -4,6 +4,7 @@ from app import create_app
 from backend.app_helpers import get_all_sources
 from backend.processor.aggregate_post_impact import create_aggregate_post_impacts
 from backend.processor.aggregate_post_count import create_aggregate_post_counts
+from backend.processor.mail_deployment import Mailer
 from backend.processor.notification_deployment import deploy_notifications
 from backend.processor.predictor import update_impacts
 from data.collector.reddit import RealtimeRedditCrawler
@@ -18,7 +19,7 @@ SLEEP_INTERVAL = 10 * 60 * 60
 
 
 # Collect novel data.
-def start():
+def start(mailer: Mailer):
     social_media_crawlers = [RealtimeRedditCrawler(collect_comments=True)]
     price_crawler = YahooPriceCrawler(resolution="1h")
     data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
@@ -45,8 +46,8 @@ def start():
         affected_triggers = deploy_notifications(t, coin_types, groups)
         # Find the affected triggers that should be notified by e-mail.
         mail_triggers = list(filter(lambda t: t.follow.notify_email, affected_triggers))
-        # Send the appropriate e-mails.
-
+        # Send the appropriate e-mails...
+        mailer.deploy_mails(mail_triggers)
         time.sleep(SLEEP_INTERVAL)
         break
 
@@ -55,4 +56,5 @@ if __name__ == "__main__":
     app = create_app()
     configure_app(app)
     with app.app_context():
-        start()
+        mailer = Mailer(app)
+        start(mailer)

@@ -84,5 +84,6 @@ def deploy_notifications(curr_time: int, coins, sources):
         new_notifications.append(new_notification)
     db.session.bulk_save_objects(new_notifications)
     db.session.commit()
-    return all_affected_triggers.values()
+    # Remove the actual change information.
+    return list(map(lambda t: t[1], all_affected_triggers.values()))
 

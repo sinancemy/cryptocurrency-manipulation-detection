@@ -94,7 +94,9 @@ const useUserProvider = () => {
   const [notifications, setNotifications] = useState([])
   // Update the notifications.
   const updateNotifications = useCallback(() => {
-    fetch("info/notifications", {}, (res) => (res.data.result == "ok") && setNotifications(res.data))
+    fetch("info/notifications", {}, (res) => {
+      if(res.data.result == "ok") setNotifications(res.data.notifications)
+    })
   }, [])
   // Set all the notifications as read and update the notifications.
   const readAllNotifications = useCallback(() => {

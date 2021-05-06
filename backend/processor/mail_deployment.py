@@ -1,8 +1,6 @@
-from flask import Flask
 from flask_mail import Mail, Message
 
-from data.database import Trigger, User, db
-from app import create_app
+from data.database import User
 
 
 class Mailer:
@@ -49,12 +47,5 @@ class Mailer:
             content = content + "<br><p>Sincerely,</p>Şurup Team"
             msg = Message(subject, recipients=[email])
             msg.html = content
+            print("Sending e-mail to " + email)
             self.mail.send(msg)
-
-if __name__ == "__main__":
-    app = create_app()
-    with app.app_context():
-        mailer = Mailer(app)
-        triggers = db.session.query(Trigger).all()
-        mailer.deploy_mails(triggers)
-    # app.run(debug=True)

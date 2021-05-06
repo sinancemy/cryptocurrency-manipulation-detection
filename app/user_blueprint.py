@@ -101,7 +101,7 @@ def read_notifications(form, session):
         .filter_by(user_id=session.user_id)\
         .order_by(desc(Notification.time))\
         .all()
-    return jsonify(notifications)
+    return jsonify({"result": "ok", "notifications": notifications})
 
 
 @user_blueprint.route("/info/notifications/read_all", methods=["POST"])
