@@ -7,6 +7,9 @@ import { localPoint } from '@vx/event';
 import { max, extent, bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 import { useApiData } from "../api-hook"
+import { Glyph } from '@vx/glyph';
+import { AiOutlineArrowUp, AiOutlineLoading } from 'react-icons/ai'
+import { getImpactColor, getImpactIconGraph } from '../Helpers';
 
 export const background = 'transparent';
 export const stockColor = '#1F85DE';
@@ -54,17 +57,36 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
       return [winLow, winHigh]
     }, [timeExtent, currentTime, coinType])
     // Fetching the prices.
-    const stock = useApiData([], "prices", {
+    const { result: stock, isLoading: stockLoading } = useApiData([], "prices", {
       start: shownPriceRange[0],
       end: shownPriceRange[1],
       type: coinType
     }, [], (params) => params[0] !== params[1], (prices) => prices?.reverse())
-    // Fetching the post volume.
-    const postVolume = useApiData([], "aggregate/post_counts", {
+    // Fetching the aggregate post counts.
+    const { result: postVolume, isLoading: postVolumeLoading } = useApiData([], "aggregate/post_counts", {
       start: shownPriceRange[0],
       end: shownPriceRange[1],
       type: coinType
     }, [], (params) => params[0] !== params[1] && showPostVolume)
+    // Fetching the aggregate impacts.
+    const { result: aggrImpacts, isLoading: aggrImpactsLoading } = useApiData([], "aggregate/post_impacts", {
+      start: shownPriceRange[0],
+      end: shownPriceRange[1],
+      type: coinType
+    }, [], (params) => false && params[0] !== params[1])
+
+    const [cleanedAggrImpacts, setCleanedAggrImpacts] = useState([])
+    const isLoading = useMemo(() => stockLoading || postVolumeLoading || aggrImpactsLoading, 
+      [stockLoading, postVolumeLoading, aggrImpactsLoading])
+
+    useEffect(() => {
+      const cleaned = []
+      for(var i = 0; i < aggrImpacts.length; i += 50) {
+        cleaned.push(aggrImpacts[i])
+      }
+      setCleanedAggrImpacts(cleaned)
+    }, [aggrImpacts])
+
     // scales
     const dateScale = useMemo(() => scaleTime({
         domain: extent(stock, getDate),
@@ -146,8 +168,8 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
       const d = date
       const pw0 = d.valueOf() - (timeWindow/2) * 1000 * 60 * 60 * 24
       const pw1 = d.valueOf() + (timeWindow/2) * 1000 * 60 * 60 * 24
-      const i0 = bisectDate(list, pw0)
-      const i1 = bisectDate(list, pw1)
+      const i0 = bisectDate(list, pw0, 0, list.length-1)
+      const i1 = bisectDate(list, pw1, 0, list.length-1)
       return [i0, i1]
     }
     
@@ -174,9 +196,14 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
     }, [timeWindow, selectedDate, postVolume, stock])
 
     // const renderDependencies = [stock, postVolume, tooltipData, width, height, coinType, currentTime, timeExtent, timeWindow, showPostVolume]
-    return  (stock && postVolume &&
-      <div>
-        <svg width={width} height={height} className="animate-blur-in">
+    return  (
+      <div className="relative">
+        { isLoading && (
+        <div className="absolute w-full h-full left-1 top-1 z-10 text-white">
+          <AiOutlineLoading className="animate-spin" />
+        </div>
+        )}
+        <svg width={width} height={height}>
           <rect
             x={0}
             y={0}
@@ -207,6 +234,15 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
             stroke={stockStrokeColor}
             fill={stockColor}
             opacity={0.5}/>
+          { cleanedAggrImpacts.map((aggrImpact, i) => {
+            const x = dateScale(getDate(aggrImpact))
+            const y = 30
+            return (
+              <Glyph left={x} top={y}>
+                  { getImpactIconGraph(aggrImpact.avg) }
+              </Glyph>
+            )
+          }) }
           {tooltipData && (
           <LinePath
             data={tooltipData.priceTimeWindow}
@@ -357,7 +393,7 @@ export const Graph = ({ width, height, coinType, currentTime, timeExtent, timeWi
               {formatDate(getDate(tooltipData.selectedPoint))}
             </Tooltip>
             <Tooltip 
-              top={(tooltipTop[0] + tooltipTop[1])/2 - 24} 
+              top={12} 
               left={Math.min(tooltipLeft + 12, xMax - 135)} 
               style={{
                 ...tooltipStyles,

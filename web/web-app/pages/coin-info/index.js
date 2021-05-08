@@ -18,7 +18,7 @@ export default function CoinInfo() {
   const router = useRouter()
   const coinName = router.query.coin
   const { user, isFollowingCoin } = useUser()
-  const coinStats = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
+  const { result: coinStats } = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
   const [selectedSources, setSelectedSources] = useState([])
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")

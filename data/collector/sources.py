@@ -50,7 +50,7 @@ def parse_source(source) -> Optional[Source]:
 
 
 def get_exported_sources() -> list:
-    sources = [c.get_all_sources() for c in CRAWLERS]
+    sources = [[s for s in c.get_all_sources()] for c in CRAWLERS]
     sources_flat = functools.reduce(list.__add__, sources)
     sources_unique = set(sources_flat)
     sources_converted = map(parse_source, sources_unique)

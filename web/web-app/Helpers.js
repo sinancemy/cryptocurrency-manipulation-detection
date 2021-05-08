@@ -62,9 +62,17 @@ const positiveImpactIcon = <BsArrowUpRight />
 const negativeImpactIcon = <BsArrowDownRight />
 const neutralImpactIcon = <BsArrowRight/>
 
+const graphPositiveImpactIcon = <BsArrowUpRight />
+const graphNegativeImpactIcon = <BsArrowDownRight />
+const graphNeutralImpactIcon = <BsArrowRight />
+
 export const getImpactColor = (impact) => (impact > 1) ? positiveImpactColor 
                                         : (impact < -1 ) ? negativeImpactColor
                                         : neutralImpactColor
+
+export const getImpactIconGraph = (impact) => (impact > 1) ? graphPositiveImpactIcon 
+                                        : (impact < -1 ) ? graphNegativeImpactIcon
+                                        : graphNeutralImpactIcon
 
 export const getImpactIcon = (impact) => (impact > 1) ? positiveImpactIcon 
                                         : (impact < -1 ) ? negativeImpactIcon

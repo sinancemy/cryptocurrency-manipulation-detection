@@ -36,9 +36,8 @@ export const PostOverview = ({ post }) => {
   }, [contentRef])
 
   const shouldShowExpander = useMemo(() => isOverflown && !selected, [isOverflown, selected])
-  const shouldShowLink = useMemo(() => !isOverflown|| selected, [isOverflown, selected])
 
-  return (post &&
+  return (
     <div className="my-2">
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} aligned={false}>
       <MultipurposeCard.Left>
@@ -84,7 +83,6 @@ export const PostOverview = ({ post }) => {
             </p> 
           }
         </div>
-        
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
         <div className={`flex px-4 py-2 flex-col w-32`}>
@@ -95,7 +93,7 @@ export const PostOverview = ({ post }) => {
             <IoChatbubblesSharp />
           </div>
           <div className={`px-2 flex flex-row lg:justify-end text-${mutedColor}`}>
-            <MiniImpact impact={ post.impact } />
+            <MiniImpact avgImpact={post.avg_impact} impact={post.impact} />
           </div>
           <div className={`flex py-1 items-center flex-row lg:justify-end text-xs text-${mutedColor}`}>
             <span>

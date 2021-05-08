@@ -3,6 +3,7 @@ import { HiLightningBolt } from "react-icons/hi"
 import { IoClose } from "react-icons/io5"
 import { useUser } from "../user-hook"
 import { SimpleCycler } from "./SimpleCycler"
+import { SimpleDropdown } from "./SimpleDropdown"
 
 export const Trigger = ({ trigger }) => {
 
@@ -34,12 +35,12 @@ export const Trigger = ({ trigger }) => {
         <HiLightningBolt />
         <div>Notify when the posts increase by</div>
         <div>
-          <SimpleCycler options={["5%", "10%", "15%", "20%"]} selected={trigger.threshold + "%"} 
+          <SimpleDropdown options={["5%", "10%", "15%", "20%"]} selected={trigger.threshold + "%"} 
             setSelected={(t) => updateThreshold(t.substring(0, t.length-1))} />
         </div>
         <div>within the last </div>
         <div>
-          <SimpleCycler options={["1h", "2h", "5h", "1d"]} selected={trigger.time_window} setSelected={updateTimeWindow} />
+          <SimpleDropdown options={["1h", "2h", "5h", "1d"]} selected={trigger.time_window} setSelected={updateTimeWindow} />
         </div>
       </div>
       <div className="text-base">

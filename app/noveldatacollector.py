@@ -7,7 +7,7 @@ from backend.processor.aggregate_post_count import create_aggregate_post_counts
 from backend.processor.mail_deployment import Mailer
 from backend.processor.notification_deployment import deploy_notifications
 from backend.processor.predictor import update_impacts
-from data.collector.reddit import RealtimeRedditCrawler
+from data.collector.reddit import RealtimeRedditCrawler, ArchivedRedditCrawler
 from data.collector.twitter import TwitterCrawler
 from data.collector.yahoo import YahooPriceCrawler
 from data.database import configure_app
@@ -15,12 +15,12 @@ from data.reader.datareader import DataReader
 
 from misc import TimeRange, CoinType
 
-SLEEP_INTERVAL = 10 * 60 * 60
+SLEEP_INTERVAL = 60 * 60 * 24 * 15
 
 
 # Collect novel data.
 def start(mailer: Mailer):
-    social_media_crawlers = [RealtimeRedditCrawler(collect_comments=True)]
+    social_media_crawlers = [TwitterCrawler()]
     price_crawler = YahooPriceCrawler(resolution="1h")
     data_reader = DataReader(social_media_crawlers=social_media_crawlers, price_crawler=price_crawler)
     coin_types = [CoinType.btc, CoinType.eth, CoinType.doge]
@@ -35,13 +35,14 @@ def start(mailer: Mailer):
         new_posts = []
         for c in coin_types:
             data_reader.update_coin_type(c)
-            # posts, _ = data_reader.read(effective_time_range, SLEEP_INTERVAL)
+            posts, _ = data_reader.read(effective_time_range, SLEEP_INTERVAL)
+            new_posts += posts
             # new_posts += posts
         # Post-processing...
         update_impacts(new_posts)
         groups = list(filter(lambda s: s.startswith("*"), get_all_sources()))
-        create_aggregate_post_impacts(coin_types, groups, effective_time_range)
-        create_aggregate_post_counts(coin_types, groups, effective_time_range)
+        # create_aggregate_post_impacts(coin_types, groups, effective_time_range)
+        create_aggregate_post_counts(coin_types, [], effective_time_range)
         # Deploy the web-site notifications.
         affected_triggers = deploy_notifications(t, coin_types, groups)
         # Find the affected triggers that should be notified by e-mail.

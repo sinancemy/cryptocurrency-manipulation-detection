@@ -30,6 +30,7 @@ const useUserProvider = () => {
 
   // Helper function.
   const fetch = useCallback((endpoint, params, then, withToken = true) => {
+    console.log(cookies["token"])
     axios.post('http://127.0.0.1:5000/user/' + endpoint, {
       ...params,
       token: withToken ? cookies["token"] : null
@@ -56,7 +57,7 @@ const useUserProvider = () => {
         updateUserInfo() 
       }
     })
-  }, [])
+  }, [cookies])
   // Log the user in.
   const login = useCallback((username, password, onError = () => {}) => {
     fetch("login", { 
@@ -97,15 +98,15 @@ const useUserProvider = () => {
     fetch("info/notifications", {}, (res) => {
       if(res.data.result == "ok") setNotifications(res.data.notifications)
     })
-  }, [])
+  }, [cookies])
   // Set all the notifications as read and update the notifications.
   const readAllNotifications = useCallback(() => {
     fetch("info/notifications/read_all", {}, updateNotifications)
-  }, [])
+  }, [cookies])
   // Discard a notification and update the notifications.
   const discardNotification = useCallback((id) => {
     fetch("info/notifications/delete", { id: id }, updateNotifications)
-  })
+  }, [cookies])
 
   const username = useMemo(() => user ? user.username : "...")
   const loggedIn = useMemo(() => user && user.id >= 0, [user])

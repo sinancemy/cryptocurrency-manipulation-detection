@@ -11,7 +11,7 @@ export default function SearchCoins() {
 
   const isFollowingCoin = useCallback((coin) => isFollowing("coin", coin), [isFollowing])
   const [query, setQuery] = useState("");
-  const coins = useApiData([], "coin_list")
+  const { result: coins } = useApiData([], "coin_list")
   const [filteredCoins, setFilteredCoins] = useState([]);
 
   useEffect(() => {
@@ -28,10 +28,10 @@ export default function SearchCoins() {
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
       <div className="col-start-2">
-        <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true}>
+        <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true} width={"full"}>
           <DashboardPanel.Header>
             <h1 className="font-bold text-center text-2xl mt-4 mb-4">
-              Search Coins
+              Coins
             </h1>
             <div className="col-start-2 grid grid-cols-12">
               <input

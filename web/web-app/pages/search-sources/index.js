@@ -14,7 +14,7 @@ export default function SearchSources() {
 
   const isFollowingSource = useCallback((source) => isFollowing("source", source), [isFollowing])
   const [query, setQuery] = useState("");  
-  const sources = useApiData([], "source_list", {}, [])
+  const { result: sources } = useApiData([], "source_list", {}, [])
   const [filteredSources, setFilteredSources] = useState([])
 
   useEffect(() => {
@@ -31,10 +31,10 @@ export default function SearchSources() {
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
       <div className="col-start-2">
-        <DashboardPanel collapsable={false}>
+        <DashboardPanel collapsable={false} width={"full"}>
           <DashboardPanel.Header>
             <h1 className="font-bold text-center text-2xl mt-4 mb-4">
-              Search Sources
+              Sources
             </h1>
             <div className="col-start-2 grid grid-cols-12">
               <input

@@ -8,7 +8,7 @@ const color = "transparent"
 const selectedColor = "gray-850"
 const textColor = "gray-100"
 
-export const SourceCard = ({ source, isSelected, onToggle }) => {
+export const SourceCard = ({ source, isSelected = () => true, onToggle = () => {} }) => {
 
   const isUser = useCallback(() => getSourceParts(source)[0] !== "*", [source])
 

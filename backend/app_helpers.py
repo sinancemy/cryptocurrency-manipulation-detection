@@ -65,3 +65,11 @@ def get_all_sources() -> list:
     all_sources = db_sources + exported_sources
     uniques_set = {s["user"] + '@' + s["source"] for s in all_sources}
     return list(uniques_set)
+
+
+def get_all_users() -> list:
+    return list(filter(lambda s: not s.startswith("*@"), get_all_sources()))
+
+
+def get_all_groups() -> list:
+    return list(filter(lambda s: s.startswith("*@"), get_all_sources()))

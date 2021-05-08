@@ -11,15 +11,20 @@ export const fetchFromApi = (endpoint, params, then) => {
 // Parameter values are automatically added to the dependency list.
 export const useApiData = (initialState, endpoint, params = {}, deps = [], shouldFetch = () => true, postProcessor = (x) => x) => {
     const [result, setResult] = useState(initialState)
+    const [isLoading, setIsLoading] = useState(false)
     const effectiveParams = useMemo(() => Object.values(params), [params])
     // Fetch depending on the given dependencies.
     useEffect(() => {
       //console.log(effectiveParams)
       // Wait...
       if(!shouldFetch(effectiveParams)) return
-      fetchFromApi(endpoint, params, (data) => setResult(postProcessor(data)))
+      setIsLoading(true)
+      fetchFromApi(endpoint, params, (data) => {
+        setResult(postProcessor(data))
+        setIsLoading(false)
+      })
     }, [...effectiveParams, ...deps])
-    return result
+    return { result: result, isLoading: isLoading }
 }
 
 export function useTraceUpdate(props) {

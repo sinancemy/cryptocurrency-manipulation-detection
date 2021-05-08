@@ -18,14 +18,20 @@ class PostVolumeCalculator:
 
     def calculate_for_coin(self, coin: CoinType, time_range: TimeRange) -> iter:
         source = "coin:" + coin.value
-        pre_query = Post.query.filter_by(coin_type=coin)
+        pre_query = Post.query\
+            .distinct(Post.unique_id)\
+            .group_by(Post.unique_id) \
+            .filter_by(coin_type=coin)
         for p in self.calculate(time_range, source, pre_query):
             yield p
 
     def calculate_for_source(self, source: str, time_range: TimeRange) -> iter:
         postvolume_source = "source:" + source
         source_parts = source.split("@")
-        pre_query = Post.query.filter_by(source=source_parts[1])
+        pre_query = Post.query\
+            .distinct(Post.unique_id)\
+            .group_by(Post.unique_id) \
+            .filter_by(source=source_parts[1])
         for p in self.calculate(time_range, postvolume_source, pre_query):
             yield p
 

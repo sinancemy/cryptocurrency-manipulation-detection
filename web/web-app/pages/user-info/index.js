@@ -74,7 +74,8 @@ export default function UserInfo() {
                 <SortSelector
                   minimal={true}
                   sortByState={[sortByOption, setSortByOption]}
-                  sortOrderState={[sortOrderOption, setSortOrderOption]} />
+                  sortOrderState={[sortOrderOption, setSortOrderOption]}
+                  sortByOptions={["time", "interaction", "impact"]} />
               </div>
             </DashboardPanel.Header>
             <DashboardPanel.Body>

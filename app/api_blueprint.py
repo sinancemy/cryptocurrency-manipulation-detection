@@ -7,12 +7,14 @@ from sqlalchemy import desc, and_, or_, func
 from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact
 from misc import FollowType
 from backend.app_helpers import *
+import Levenshtein
 
 api_blueprint = Blueprint("api", __name__)
 
 
 @api_blueprint.route("/posts")
 def get_posts():
+    time.sleep(1)
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))
     coin_type = get_coin_type_arg()
@@ -23,7 +25,8 @@ def get_posts():
     # We return 50 posts per request at most.
     limit = min(limit, 50)
     # Construct the initial query.
-    query = Post.query.filter(Post.time >= start).filter(Post.time <= end)
+    query = Post.query.distinct(Post.unique_id).group_by(Post.unique_id).filter(Post.time >= start).filter(
+        Post.time <= end)
     if coin_type is not None:
         query = query.filter(Post.coin_type == coin_type)
     if source is not None and "@" in source:
@@ -40,24 +43,18 @@ def get_posts():
     # Disallow invalid sorting options to prevent SQL injections.
     if order_by is not None and order_by not in ["interaction", "impact", "time", "user"]:
         order_by = None
-    # Handle the parameters for infinite scrolling.
-    from_interaction = request.args.get("from_interaction", type=int, default=None)
-    from_time = request.args.get("from_time", type=int, default=None)
-    from_user = request.args.get("from_user", type=str, default=None)
-    if from_interaction is not None or from_time is not None or from_user is not None:
-        if from_interaction is not None:
-            from_column = Post.__table__.c["interaction"]
-            from_bound = from_interaction
-        elif from_time is not None:
-            from_column = Post.__table__.c["time"]
-            from_bound = from_time
-        elif from_user is not None:
-            from_column = Post.__table__.c["user"]
-            from_bound = from_user
-        if desc == 0:
-            query = query.filter(from_column > from_bound)
-        else:
-            query = query.filter(from_column < from_bound)
+    if order_by == "impact":
+        order_by = "avg_impact"
+    # Handle the infinite scrolling.
+    if order_by is not None:
+        order_by_types = {"interaction": int, "avg_impact": float, "time": int, "user": str}
+        from_bound = request.args.get("from", type=order_by_types[order_by], default=None)
+        if from_bound is not None:
+            from_column = Post.__table__.c[order_by]
+            if desc == 0:
+                query = query.filter(from_column > from_bound)
+            else:
+                query = query.filter(from_column < from_bound)
     # Handle ordering
     if desc == 1:
         query = query.order_by(Post.__table__.c[order_by].desc())
@@ -76,6 +73,7 @@ def get_posts():
 
 @api_blueprint.route("/prices")
 def get_prices():
+    time.sleep(1)
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))
     coin_type = get_coin_type_arg()
@@ -99,6 +97,38 @@ def get_coin_list():
 @api_blueprint.route("/source_list")
 def get_source_list():
     return jsonify(get_all_sources())
+
+
+def string_comparator(haystack: str, needle: str):
+    needle = needle.strip().lower()
+    haystack = haystack.strip().lower()
+    if needle == haystack:
+        return 0
+    if haystack.startswith(needle):
+        return 1
+    if haystack.endswith(needle):
+        return 2
+    if len(needle) > 3 and needle in haystack:
+        return 3
+    return Levenshtein.distance(needle, haystack) + 3
+
+
+@api_blueprint.route("/search")
+def search():
+    search_type = request.args.get("type", type=str, default=None)
+    query = request.args.get("query", type=str, default=None)
+    if search_type is None or search_type not in ["coin", "user", "group"]:
+        return jsonify({"result": "error", "error_msg": "Invalid search type."})
+    if search_type == "coin":
+        comparator = lambda x: string_comparator(x.value, query)
+        alls = [c for c in misc.CoinType]
+    elif search_type == "user":
+        comparator = lambda x: string_comparator(x.split("@")[0], query)
+        alls = filter(lambda x: comparator(x) < 10, get_all_users())
+    elif search_type == "group":
+        comparator = lambda x: string_comparator(x.split("@")[1], query)
+        alls = filter(lambda x: comparator(x) < 10, get_all_groups())
+    return jsonify(sorted(alls, key=comparator)[:10])
 
 
 @api_blueprint.route("/aggregate/post_counts")
@@ -189,21 +219,22 @@ def get_source_stats():
         })
     # Handle the source stat case.
     top_active_users = db.session.query(Post.user, func.count(Post.id)) \
-        .filter(Post.source == source) \
+        .filter(Post.source == source_parts[1]) \
         .group_by(Post.user) \
         .order_by(desc(func.count(Post.id))) \
         .limit(limit) \
         .all()
-    top_active_users = [{"source": r[0] + "@" + source, "total_msg": r[1]} for r in top_active_users]
+    top_active_users = [{"source": r[0] + "@" + source_parts[1], "total_msg": r[1]} for r in top_active_users]
     top_interacted_users = db.session.query(Post.user, func.sum(Post.interaction)) \
-        .filter(Post.source == source) \
+        .filter(Post.source == source_parts[1]) \
         .group_by(Post.user) \
         .order_by(desc(func.sum(Post.interaction))) \
         .limit(limit) \
         .all()
-    top_interacted_users = [{"source": r[0] + "@" + source, "total_interaction": r[1]} for r in top_interacted_users]
+    top_interacted_users = [{"source": r[0] + "@" + source_parts[1], "total_interaction": r[1]} for r in
+                            top_interacted_users]
     relevant_coins = db.session.query(Post.coin_type, func.count(Post.id)) \
-        .filter(Post.source == source) \
+        .filter(Post.source == source_parts[1]) \
         .group_by(Post.coin_type) \
         .order_by(desc(func.count(Post.id))) \
         .limit(limit) \

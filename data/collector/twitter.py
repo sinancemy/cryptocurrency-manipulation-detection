@@ -1,3 +1,5 @@
+import functools
+
 import twint
 import datetime
 from data.database import Post
@@ -45,7 +47,10 @@ class TwitterCrawler(Collector):
 
     @staticmethod
     def get_all_sources() -> list:
-        return ["*@twitter"] + [username + "@twitter" for username in usernames]
+        return ["*@twitter/" + s for s in functools.reduce(list.__add__, COIN_KEYWORDS.values())] \
+               + [username + "@twitter/" + s
+                  for username in usernames
+                  for s in functools.reduce(list.__add__, COIN_KEYWORDS.values())]
 
     def collect(self, time_range: TimeRange):
         for username in usernames:
@@ -75,7 +80,7 @@ class TwitterCrawler(Collector):
                     interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count,
                                                                     tweet.retweets_count)
                     yield Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
-                               interaction=interaction_score, source="twitter", time=unix_timestamp,
+                               interaction=interaction_score, source="twitter/" + keyword, time=unix_timestamp,
                                coin_type=self.settings.coin)
 
 # For Testing

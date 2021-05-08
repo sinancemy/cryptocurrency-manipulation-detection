@@ -25,7 +25,7 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
   }, [selectedSources, coinType, selectedRange, sortBy, sortOrder])
 
   // Fetching the posts (initializer).
-  const posts = useApiData([], "posts", fetchPostsParams, [], () => !disabled)
+  const { result: posts, isLoading: isLoadingPosts } = useApiData([], "posts", fetchPostsParams, [], () => !disabled)
   // The first movement to the shown posts.
   useEffect(() => {
     if(!posts) return
@@ -46,6 +46,7 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
     return (sortBy === "time") ? last.time
           : (sortBy === "interaction") ? last.interaction
           : (sortBy === "user") ? last.user
+          : (sortBy === "impact") ? last.avg_impact
           : 0
   }, [shownPosts, sortBy])
 
@@ -54,7 +55,7 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
     setLoadingMore(true)
     fetchFromApi("posts", {
       ...fetchPostsParams,
-      ["from_" + sortBy]: lastScrolled
+      ["from"]: lastScrolled
       }, (data) => {
         setCanLoadMore(data.length === API_POST_LIMIT)
         // Concatenate the new posts into the shown posts.
@@ -65,21 +66,28 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
 
   return useMemo(() => (
     shownPosts.length > 0 ? (
-      <div className="overflow-y-auto max-h-128">
-        {shownPosts.map(post => (
-          <PostOverview post={post} />
-        ))}
-        <div className="flex flex-row justify-center w-full">
-          { canLoadMore ? (
-            <CuteButton onClick={loadMore} width="full" size="baseline" isDisabled={() => loadingMore}>
-                <AiOutlineLoading className={`animate-spin mr-2 ${!loadingMore && 'invisible'}`} />
-                Load more
-            </CuteButton>
-          ) : (
-            <CuteButton width="full" size="baseline" isDisabled={() => true} textColor={"white"}>
-              That's all
-            </CuteButton>
-          )}
+      <div className="relative">
+        { isLoadingPosts && (
+          <div className="absolute z-10 w-full h-full">
+              <AiOutlineLoading className="animate-spin" />
+          </div>
+        )}
+        <div className={`overflow-y-auto max-h-128 ${isLoadingPosts && 'opacity-50'}`}>
+          {shownPosts.map(post => (
+            <PostOverview post={post} />
+          ))}
+          <div className="flex flex-row justify-center w-full">
+            { canLoadMore ? (
+              <CuteButton onClick={loadMore} width="full" size="baseline" isDisabled={() => loadingMore}>
+                  <AiOutlineLoading className={`animate-spin mr-2 ${!loadingMore && 'invisible'}`} />
+                  Load more
+              </CuteButton>
+            ) : (
+              <CuteButton width="full" size="baseline" isDisabled={() => true} textColor={"white"}>
+                That's all
+              </CuteButton>
+            )}
+          </div>
         </div>
       </div>
       ) : (selectedRange) ? (
@@ -87,5 +95,5 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
       ) : (
         <div className="mt-2">Please select a range from the graph and select your sources from the left panel to see the posts.</div>
     )
-  ), [shownPosts, canLoadMore, loadingMore])
+  ), [shownPosts, canLoadMore, loadingMore, isLoadingPosts])
 }

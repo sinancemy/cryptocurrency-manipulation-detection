@@ -1,18 +1,21 @@
+import { SimpleCycler } from "./SimpleCycler"
 import { SimpleDropdown } from "./SimpleDropdown"
 
-export const SortSelector = ({ minimal = false, sortByState, sortOrderState, 
-                                showPostsState }) => {
+export const SortSelector = ({ minimal = false, sortByState, sortOrderState, showPostsState, 
+                              sortByOptions=['time', 'interaction', 'user', 'impact'],
+                              sortOrderOptions=['ascending', 'descending'],
+                              showPostsOptions=['relevant', 'all'] }) => {
   return (
     <div className="flex text-xs items-center">
       <div className={`flex items-center ${!minimal && 'border-r'} border-gray-780 mr-2 px-2`}>
         <span className="mr-1">sort by</span>
           <SimpleDropdown 
-            options={['time', 'interaction', 'user', 'impact']} 
+            options={sortByOptions} 
             selected={sortByState[0]} 
             setSelected={sortByState[1]} />
           <span className="mx-1">in</span>
-          <SimpleDropdown 
-            options={['ascending', 'descending']} 
+          <SimpleCycler 
+            options={sortOrderOptions} 
             selected={sortOrderState[0]} 
             setSelected={sortOrderState[1]} />
           <span className="mx-1">order</span>
@@ -20,8 +23,8 @@ export const SortSelector = ({ minimal = false, sortByState, sortOrderState,
       { !minimal &&
       <div className="flex items-center px-2">
         <span className="mx-1">show</span>
-          <SimpleDropdown 
-            options={['relevant', 'all']} 
+          <SimpleCycler 
+            options={showPostsOptions} 
             selected={showPostsState[0]} 
             setSelected={showPostsState[1]} />
         <span className="mx-1">posts</span>
