@@ -1,7 +1,8 @@
 import dataclasses
 from dataclasses import dataclass
+
 from misc import CoinType
-from data.database.config import db
+from data.database.db import db
 
 
 @dataclass
@@ -41,8 +42,8 @@ class AggregatePostCount(db.Model):
     id: int
     time: int
     next_time: int
-    cum: int
     sum: int
+    smas: str
     source: str
 
     __tablename__ = "aggr_post_counts"
@@ -50,8 +51,8 @@ class AggregatePostCount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     time = db.Column(db.Integer)
     next_time = db.Column(db.Integer)
-    cum = db.Column(db.Integer)
     sum = db.Column(db.Integer)
+    smas = db.Column(db.String)
     source = db.Column(db.String)
 
 

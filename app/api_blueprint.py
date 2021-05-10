@@ -1,10 +1,13 @@
+import json
 import time
 
 import numpy
 from flask import Blueprint
 from sqlalchemy import desc, and_, or_, func
 
-from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact
+from backend.processor.aggregate_post_count import SMA_MAP
+from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact, \
+    StreamedAggregatePostCount
 from misc import FollowType
 from backend.app_helpers import *
 import Levenshtein
@@ -14,7 +17,6 @@ api_blueprint = Blueprint("api", __name__)
 
 @api_blueprint.route("/posts")
 def get_posts():
-    time.sleep(1)
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))
     coin_type = get_coin_type_arg()
@@ -73,7 +75,6 @@ def get_posts():
 
 @api_blueprint.route("/prices")
 def get_prices():
-    time.sleep(1)
     start = request.args.get("start", type=int, default=0)
     end = request.args.get("end", type=int, default=int(time.time()))
     coin_type = get_coin_type_arg()
@@ -131,10 +132,24 @@ def search():
     return jsonify(sorted(alls, key=comparator)[:10])
 
 
+@api_blueprint.route("/aggregate/streamed_post_counts")
+def get_streamed_aggregate_post_counts():
+    start = request.args.get("start", type=float, default=0)
+    coin_type = get_coin_type_arg()
+    if coin_type is None:
+        return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    post_counts = StreamedAggregatePostCount.query \
+        .filter(StreamedAggregatePostCount.time >= start) \
+        .filter(StreamedAggregatePostCount.source == "coin:" + coin_type.value) \
+        .all()
+    return jsonify(post_counts)
+
+
 @api_blueprint.route("/aggregate/post_counts")
 def get_aggregate_post_counts():
-    start = request.args.get("start", type=float, default=0)
-    end = request.args.get("end", type=float, default=int(time.time()))
+    start = request.args.get("start", type=int, default=0)
+    end = request.args.get("end", type=int, default=int(time.time()))
+    extent = request.args.get("extent", type=str, default="d")
     coin_type = get_coin_type_arg()
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
@@ -143,6 +158,15 @@ def get_aggregate_post_counts():
         .filter(AggregatePostCount.time >= start) \
         .filter(AggregatePostCount.source == "coin:" + coin_type.value) \
         .all()
+    if extent not in SMA_MAP.keys():
+        return jsonify({"result": "error", "error_msg": "Invalid SMA."})
+    post_counts = [dataclasses.asdict(p) for p in post_counts]
+    for p in post_counts:
+        # Select the correct SMA
+        smas = json.loads(p['smas'])
+        p['sma'] = smas[extent]
+    # Remove unnecessary data.
+    post_counts = post_counts[::SMA_MAP[extent]]
     return jsonify(post_counts)
 
 

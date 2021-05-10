@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from dataclasses import dataclass
-from data.database.config import db
+from data.database.db import db
 from misc import TriggerTimeWindow, FollowType
 
 

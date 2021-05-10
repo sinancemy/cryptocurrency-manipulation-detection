@@ -1,0 +1,14 @@
+{ 
+    "manifest_version": 2,
+    "name": "TweetDeck Injector",
+    "version": "0.1",
+    "permissions": ["activeTab", "http://*/"],
+    "content_scripts": [
+        {
+            "matches": ["https://tweetdeck.twitter.com/*"],
+            "js": ["contentScript.js"],
+            "run_at": "document_start"
+        }
+    ],
+    "web_accessible_resources": ["script.js"]
+}

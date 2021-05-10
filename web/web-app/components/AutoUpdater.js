@@ -4,7 +4,7 @@ import { AiOutlineLoading } from "react-icons/ai"
 
 export default function AutoUpdater({ onTimedUpdate }) { 
   const ticks = 1000
-  const updateTime = 4000
+  const updateTime = 20000
     // Original: 1583625601
   const [enabled, setEnabled] = useState(false)
   const [remTime, setRemTime] = useState(updateTime)

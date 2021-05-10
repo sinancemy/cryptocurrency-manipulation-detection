@@ -23,13 +23,11 @@ class DataReader(object):
     def read(self, time_range: TimeRange, price_window: int) -> (list, list):
         print("DataReader: Invoked to run within", time_range)
         # Collect all the posts within the time range.
-        posts = sorted(reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers)),
+        posts = sorted(reduce(list.__add__, map(lambda c: c.read_cached(time_range), self.cached_post_readers), []),
                        key=lambda x: x.time)
         # Collect all the possible prices according to the window.
-        prices = []
-        if len(posts) > 0:
-            min_price_time = posts[0].time - price_window
-            max_price_time = posts[-1].time + price_window
-            prices = self.cached_price_reader.read_cached(TimeRange(min_price_time, max_price_time))
+        min_price_time = time_range.low - price_window
+        max_price_time = time_range.high + price_window
+        prices = self.cached_price_reader.read_cached(TimeRange(min_price_time, max_price_time))
         # Sort and return.
         return posts, sorted(prices, key=lambda x: x.time)

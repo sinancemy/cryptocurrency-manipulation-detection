@@ -8,7 +8,6 @@ from torch import FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
-from data.database import configure_app, db
 from data.reader.datareader import DataReader
 from analysis.trends import analyze_trends
 from data.vectorize import Vocabulary, DiscreteDomain, Vectorizer
@@ -231,11 +230,3 @@ def _collect_dataset():
                                        time_range=TimeRange(1559347200, 1612137600))
     dataset.save()
 
-
-if __name__ == "__main__":
-    app = Flask(__name__)
-    configure_app(app)
-    with app.app_context():
-        db.init_app(app)
-        db.create_all()
-        _example()

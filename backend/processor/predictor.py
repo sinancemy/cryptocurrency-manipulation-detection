@@ -30,12 +30,13 @@ class Predictor:
             yield impact
 
 
-def update_impacts(posts):
+def update_impacts(posts, commit=True):
     pred = Predictor("test_model", "Jun19_Feb21_Big")
     for post, prediction in tqdm(zip(posts, pred.predict(posts)), "Updating predictions..."):
         post.impact = prediction.tobytes()
         post.avg_impact = mean(list(prediction))
-    db.session.commit()
+    if commit:
+        db.session.commit()
 
 
 def _example():

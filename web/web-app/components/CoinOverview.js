@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { IoChatbubblesSharp } from "react-icons/io5"
 import { FiDollarSign } from "react-icons/fi"
-import { getCoinColor, getCoinIcon } from "../Helpers"
+import { getCoinColor, getCoinIcon } from "../helpers"
 import axios from "axios"
 import { CuteButton } from "./CuteButton"
 import { MultipurposeCard } from "./MultipurposeCard"

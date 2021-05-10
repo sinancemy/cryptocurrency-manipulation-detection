@@ -38,8 +38,8 @@ def convert_to_unix(datestamp, timestamp):
 
 class TwitterCrawler(Collector):
 
-    def __init__(self, coin: CoinType = CoinType.btc):
-        super().__init__(coin=coin)
+    def __init__(self, coin: CoinType = CoinType.btc, only_users=False):
+        super().__init__(coin=coin, only_users=only_users)
         self.config = twint.Config()
         self.config.Limit = 1
         self.config.Store_object = True
@@ -56,7 +56,8 @@ class TwitterCrawler(Collector):
         for username in usernames:
             # print("TwitterCrawler:", "Collecting from @" + username, "with time range", time_range)
             tweets = []
-            self.config.Username = username
+            if self.settings.only_users:
+                self.config.Username = username
             self.config.Store_object_tweets_list = tweets
             for keyword in COIN_KEYWORDS[self.settings.coin]:
                 self.config.Search = keyword
@@ -82,6 +83,8 @@ class TwitterCrawler(Collector):
                     yield Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
                                interaction=interaction_score, source="twitter/" + keyword, time=unix_timestamp,
                                coin_type=self.settings.coin)
+            if not self.settings.only_users:
+                break
 
 # For Testing
 # TwitterCrawler().collect_posts(CoinType.BTC, TimeRange(int(datetime.datetime.now().timestamp()) - 86400 * 10,
