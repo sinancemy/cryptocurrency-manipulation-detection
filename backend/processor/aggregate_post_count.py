@@ -1,6 +1,5 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime
 
 import pandas as pd
 from tqdm import tqdm
@@ -20,53 +19,55 @@ class PostVolumeResult:
 
 # In minutes.
 SMA_MAP = {
-    "d": 4,  # one minutes
-    "w": 20,  # five minutes
-    "m": 60 * 2,  # half hours
-    "y": 60 * 24  # six hours
+    "d": 4,  # four minutes
+    "w": 20,  # twenty minutes
+    "m": 60 * 2,  # two hours
+    "y": 60 * 24  # one day
 }
 
 
 class PostVolumeCalculator:
 
-    def __init__(self, interval: int):
+    def __init__(self, interval: int, calculate_smas: bool):
+        self.calculate_smas = calculate_smas
         self.interval = interval
-
-    def count_posts(self, low: datetime, high: datetime, pre_query, model_time_column):
-        return pre_query \
-            .filter(model_time_column < high.timestamp()) \
-            .filter(model_time_column >= low.timestamp()) \
-            .count()
 
     def calculate(self, time_range: TimeRange, source, pre_query, model_time_column):
         tqdm.pandas()
         max_sma = max(SMA_MAP.values())
-        df = pd.DataFrame()
+        df = pd.DataFrame(dtype=int)
         # Shift the lower end back for SMA calculation.
-        l = datetime.utcfromtimestamp(time_range.low) - pd.DateOffset(minutes=max_sma)
-        h = datetime.utcfromtimestamp(time_range.high)
-        df['time_start'] = pd.date_range(start=l, end=h, freq=pd.DateOffset(minutes=1))
+        l = time_range.low - 60 * max_sma if self.calculate_smas else time_range.low
+        h = time_range.high
+        df['time_start'] = pd.Series(range(l, h, 60)).astype(int)
         df['time_end'] = df['time_start'].shift(periods=-1)
+        # Nothing to calculate.
+        if df.shape[0] < 2:
+            return
         # Discard the last row
         df = df.iloc[:-1]
         # Fetch all the posts within the time range into the memory.
         posts = pre_query \
-            .filter(model_time_column >= int(l.timestamp())) \
-            .filter(model_time_column <= int(h.timestamp())) \
+            .filter(model_time_column >= l) \
+            .filter(model_time_column <= h) \
             .order_by(model_time_column) \
             .all()
-        dt = pd.to_datetime(list(map(lambda r: r[0], posts)), unit='s')
-        dt = dt.to_series()
+        dt = pd.Series(list(map(lambda r: r[0], posts)))
         # Get the counts.
-        df['count'] = df.progress_apply(lambda r: dt.between(r[0], r[1]).sum(axis=0), axis=1)
+        df['count'] = df.progress_apply(lambda r: dt.between(int(r[0]), int(r[1])).sum(axis=0), axis=1)
         # Calculate SMAs.
-        sdf = pd.DataFrame()
-        for sma_key, sma_amount in SMA_MAP.items():
-            sdf[sma_key] = df['count'].rolling(sma_amount).mean()
-        for i, r in df[max_sma - 1:].iterrows():
-            smas = {sdf_row[0]: sdf_row[1] for sdf_row in sdf.iloc[i].to_dict().items()}
-            yield PostVolumeResult(time=r['time_start'].timestamp(), next_time=r['time_end'].timestamp(),
-                                   smas=json.dumps(smas), sum=r['count'], source=source)
+        if self.calculate_smas:
+            sdf = pd.DataFrame()
+            for sma_key, sma_amount in SMA_MAP.items():
+                sdf[sma_key] = df['count'].rolling(sma_amount).mean()
+            for i, r in df[max_sma - 1:].iterrows():
+                smas = {sdf_row[0]: sdf_row[1] for sdf_row in sdf.iloc[i].to_dict().items()}
+                yield PostVolumeResult(time=int(r['time_start']), next_time=int(r['time_end']),
+                                       smas=json.dumps(smas), sum=r['count'], source=source)
+        else:
+            for i, r in df.iterrows():
+                yield PostVolumeResult(time=int(r['time_start']), next_time=int(r['time_end']),
+                                       smas=json.dumps({}), sum=r['count'], source=source)
 
     def calculate_for_coin(self, time_range: TimeRange, coin: CoinType, pre_query, model_time_column) -> iter:
         source = "coin:" + coin.value
@@ -82,8 +83,8 @@ class PostVolumeCalculator:
             yield p
 
 
-def _create(interval, coins, sources, closed_time_range: TimeRange, pre_query, model_time_field, converter):
-    calculator = PostVolumeCalculator(interval=interval)
+def create_with(interval, coins, sources, closed_time_range: TimeRange, pre_query, model_time_field, converter, calculate_smas=True):
+    calculator = PostVolumeCalculator(interval=interval, calculate_smas=calculate_smas)
     for coin in coins:
         print("Calculating aggregate post counts for", coin.value)
         result = list(
@@ -111,7 +112,7 @@ def create_aggregate_post_counts(coins: list, sources: list, closed_time_range: 
     model_time_field = Post.__table__.c["time"]
     converter = lambda res: AggregatePostCount(time=res.time, next_time=res.next_time, smas=res.smas, sum=res.sum,
                                                source=res.source)
-    _create(60, coins, sources, closed_time_range, pre_query, model_time_field, converter)
+    create_with(60, coins, sources, closed_time_range, pre_query, model_time_field, converter)
 
 
 def create_streamed_aggregate_post_counts(coins: list, sources: list, closed_time_range: TimeRange):
@@ -124,4 +125,4 @@ def create_streamed_aggregate_post_counts(coins: list, sources: list, closed_tim
     model_time_field = StreamedPost.__table__.c["time"]
     converter = lambda res: StreamedAggregatePostCount(time=res.time, next_time=res.next_time, sum=res.sum,
                                                        source=res.source)
-    _create(60, coins, sources, closed_time_range, pre_query, model_time_field, converter)
+    create_with(60, coins, sources, closed_time_range, pre_query, model_time_field, converter, False)

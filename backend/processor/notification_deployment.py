@@ -1,7 +1,9 @@
+import time
+
 from sqlalchemy import desc, func
 from tqdm import tqdm
 
-from data.database import AggregatePostCount, db, Trigger, Follow, Notification, datetime
+from data.database import AggregatePostCount, db, Trigger, Follow, Notification
 from misc import TimeRange, TriggerTimeWindow, get_trigger_time_window_seconds, FollowType
 
 
@@ -80,7 +82,7 @@ def deploy_notifications(curr_time: int, coins, sources):
         notification_content = trigger.follow.target + " has increased by " + change_str + "%\n"
         notification_content += "Triggered by " + str(trigger.id)
         new_notification = Notification(user_id=user_id, content=notification_content,
-                                        time=datetime.fromtimestamp(curr_time), read=False)
+                                        time=time.time(), read=False)
         new_notifications.append(new_notification)
     db.session.bulk_save_objects(new_notifications)
     db.session.commit()

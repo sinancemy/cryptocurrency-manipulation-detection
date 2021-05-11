@@ -81,7 +81,7 @@ class TwitterCrawler(Collector):
                     interaction_score = calculate_interaction_score(tweet.replies_count, tweet.likes_count,
                                                                     tweet.retweets_count)
                     yield Post(unique_id="tw" + str(tweet_id), user=username, content=tweet_body,
-                               interaction=interaction_score, source="twitter/" + keyword, time=unix_timestamp,
+                               interaction=interaction_score, source="twitter/" + keyword.lower(), time=unix_timestamp,
                                coin_type=self.settings.coin)
             if not self.settings.only_users:
                 break

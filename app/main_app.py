@@ -5,9 +5,7 @@ from flask_cors import CORS
 
 from data.database import db
 from app.db_config import configure_database
-from app.user_blueprint import user_blueprint
-from app.api_blueprint import api_blueprint
-from app.stream_blueprint import stream_blueprint
+from app.blueprints import user_blueprint, api_blueprint, stream_blueprint
 
 NPM_OUT = "../web/web-app/out"
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { fetchFromApi, useApiData, useTraceUpdate } from "../api-hook"
+import { fetchFromApi, useApiData } from "../api-hook"
 import { CuteButton } from "./CuteButton"
 import { PostOverview } from "./PostOverview"
 import { AiOutlineLoading } from "react-icons/ai"

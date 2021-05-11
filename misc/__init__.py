@@ -41,7 +41,7 @@ class TimeRange(object):
 
 
 def time_to_str(timestamp):
-    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 
 def closed_distinct_intervals(closed_time_range: TimeRange, open_length: int) -> iter:

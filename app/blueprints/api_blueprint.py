@@ -7,12 +7,30 @@ from sqlalchemy import desc, and_, or_, func
 
 from backend.processor.aggregate_post_count import SMA_MAP
 from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact, \
-    StreamedAggregatePostCount
+    StreamedAggregatePostCount, StreamedPost
 from misc import FollowType
 from backend.app_helpers import *
 import Levenshtein
 
 api_blueprint = Blueprint("api", __name__)
+
+
+@api_blueprint.route("/info")
+def get_info():
+    genesis = db.session.query(Price.time).order_by(Price.time).first()[0]
+    last_epoch = db.session.query(Post.time).order_by(desc(Post.time)).first()[0]
+    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time)\
+        .order_by(desc(StreamedAggregatePostCount.time))\
+        .first()[0]
+    last_price_update = db.session.query(Price.time)\
+        .order_by(desc(Price.time))\
+        .first()[0]
+    return jsonify({
+        "genesis": genesis,
+        "last_epoch": last_epoch,
+        "last_streamed_post_update": last_streamed_post_update,
+        "last_price_update": last_price_update
+    })
 
 
 @api_blueprint.route("/posts")
@@ -27,8 +45,12 @@ def get_posts():
     # We return 50 posts per request at most.
     limit = min(limit, 50)
     # Construct the initial query.
-    query = Post.query.distinct(Post.unique_id).group_by(Post.unique_id).filter(Post.time >= start).filter(
-        Post.time <= end)
+    query = db.session\
+        .query(Post)\
+        .distinct(Post.unique_id)\
+        .group_by(Post.unique_id)\
+        .filter(Post.time >= start)\
+        .filter(Post.time <= end)
     if coin_type is not None:
         query = query.filter(Post.coin_type == coin_type)
     if source is not None and "@" in source:
@@ -134,10 +156,14 @@ def search():
 
 @api_blueprint.route("/aggregate/streamed_post_counts")
 def get_streamed_aggregate_post_counts():
-    start = request.args.get("start", type=float, default=0)
     coin_type = get_coin_type_arg()
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
+    last_crawled_post = db.session.query(Post.time).order_by(desc(Post.time)).limit(1).first()
+    if last_crawled_post is None:
+        start = 0
+    else:
+        start = last_crawled_post.time
     post_counts = StreamedAggregatePostCount.query \
         .filter(StreamedAggregatePostCount.time >= start) \
         .filter(StreamedAggregatePostCount.source == "coin:" + coin_type.value) \
@@ -145,12 +171,26 @@ def get_streamed_aggregate_post_counts():
     return jsonify(post_counts)
 
 
+EXTENT_SECONDS_MAP = {
+    'd': 60 * 60 * 24,
+    'w': 60 * 60 * 24 * 7,
+    'm': 60 * 60 * 24 * 30,
+    'y': 60 * 60 * 24 * 365,
+}
+
+
 @api_blueprint.route("/aggregate/post_counts")
 def get_aggregate_post_counts():
-    start = request.args.get("start", type=int, default=0)
-    end = request.args.get("end", type=int, default=int(time.time()))
     extent = request.args.get("extent", type=str, default="d")
     coin_type = get_coin_type_arg()
+    last_crawled_post = db.session.query(Post.time).order_by(desc(Post.time)).limit(1).first()
+    if last_crawled_post is None:
+        end = 0
+    else:
+        end = last_crawled_post.time
+    if extent not in EXTENT_SECONDS_MAP.keys():
+        extent = "d"
+    start = max(end - EXTENT_SECONDS_MAP[extent], 0)
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     post_counts = AggregatePostCount.query \
@@ -164,7 +204,8 @@ def get_aggregate_post_counts():
     for p in post_counts:
         # Select the correct SMA
         smas = json.loads(p['smas'])
-        p['sma'] = smas[extent]
+        p['sum'] = smas[extent]
+        p.pop('smas')
     # Remove unnecessary data.
     post_counts = post_counts[::SMA_MAP[extent]]
     return jsonify(post_counts)

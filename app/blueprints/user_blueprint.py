@@ -1,6 +1,6 @@
 import dataclasses
 import secrets
-import datetime
+import time
 
 from flask import Blueprint, request, jsonify, url_for
 from sqlalchemy import desc
@@ -34,7 +34,7 @@ def login():
         return jsonify({"result": "error", "error_type": 2, "error_msg": "Invalid password."})
     new_token = secrets.token_hex(64)
     new_session = Session(user_id=user.id, token=new_token,
-                          expiration=datetime.datetime.now() + datetime.timedelta(hours=10))
+                          expiration=time.time() + 60 * 24 * 10)
     db.session.add(new_session)
     db.session.commit()
     return jsonify({"result": "ok", "token": new_token})
@@ -97,9 +97,9 @@ def get_user_info(form, session):
 @user_blueprint.route("/info/notifications", methods=["POST"])
 @login_required
 def read_notifications(form, session):
-    notifications = Notification.query\
-        .filter_by(user_id=session.user_id)\
-        .order_by(desc(Notification.time))\
+    notifications = Notification.query \
+        .filter_by(user_id=session.user_id) \
+        .order_by(desc(Notification.time)) \
         .all()
     return jsonify({"result": "ok", "notifications": notifications})
 
@@ -130,7 +130,6 @@ def discard_notification(form, session):
     db.session.delete(notification)
     db.session.commit()
     return jsonify({"result": "ok"})
-
 
 
 @user_blueprint.route("/update", methods=["POST"])

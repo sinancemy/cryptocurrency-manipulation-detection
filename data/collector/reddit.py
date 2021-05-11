@@ -45,7 +45,8 @@ def calculate_interaction_score(num_comments, score):
 
 class RealtimeRedditCrawler(Collector):
 
-    def __init__(self, coin: CoinType = CoinType.btc, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT, collect_comments=False):
+    def __init__(self, coin: CoinType = CoinType.btc, limit: int = DEFAULT_PRAW_SUBMISSION_LIMIT,
+                 collect_comments=False):
         super().__init__(coin=coin, limit=limit, collect_comments=collect_comments)
         self.spider = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET,
                                   user_agent=USER_AGENT)
@@ -77,7 +78,7 @@ class RealtimeRedditCrawler(Collector):
             submission_text = submission.title + submission.selftext
             submission_model = Post(unique_id="rs" + submission.id,
                                     user=(submission.author.name if submission.author is not None else "deleted"),
-                                    content=submission_text, interaction=interaction_score, source=subreddit_source,
+                                    content=submission_text, interaction=interaction_score, source=subreddit_source.lower(),
                                     time=created_time, coin_type=coin)
             posts.append(submission_model)
             submission = self.spider.submission(id=submission.id)
@@ -96,7 +97,7 @@ class RealtimeRedditCrawler(Collector):
                 comment_model = Post(unique_id="rc" + top_comment.id,
                                      user=(top_comment.author.name if top_comment.author is not None else "deleted"),
                                      content=top_comment.body, interaction=comment_interaction_score,
-                                     source=subreddit_source, time=top_comment.created_utc, coin_type=coin)
+                                     source=subreddit_source.lower(), time=top_comment.created_utc, coin_type=coin)
                 posts.append(comment_model)
         return posts
 
@@ -120,7 +121,8 @@ class ArchivedRedditCrawler(Collector):
                                                   **self.settings.api_settings)
                 for p in sbm:
                     content = p.title + (" " + p.selftext if hasattr(p, 'selftext') else "")
-                    yield Post(coin_type=self.settings.coin, user=p.author, content=content, source="reddit/" + subreddit,
+                    yield Post(coin_type=self.settings.coin, user=p.author, content=content,
+                               source="reddit/" + subreddit,
                                interaction=calculate_interaction_score(p.num_comments, p.score), time=p.created_utc,
                                unique_id="rs" + p.id)
                 # Skip collecting the comments.
@@ -129,5 +131,7 @@ class ArchivedRedditCrawler(Collector):
                 cmt = self.api.search_comments(subreddit=subreddit, before=tr.high, after=tr.low,
                                                **self.settings.api_settings)
                 for p in cmt:
-                    yield Post(coin_type=self.settings.coin, user=p.author, content=p.body, source="reddit/" + subreddit,
-                               interaction=calculate_interaction_score(0, p.score), time=p.created_utc, unique_id="rc" + p.id)
+                    yield Post(coin_type=self.settings.coin, user=p.author, content=p.body,
+                               source="reddit/" + subreddit,
+                               interaction=calculate_interaction_score(0, p.score), time=p.created_utc,
+                               unique_id="rc" + p.id)

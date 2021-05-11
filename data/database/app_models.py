@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from dataclasses import dataclass
 from data.database.db import db
 from misc import TriggerTimeWindow, FollowType
@@ -32,14 +30,14 @@ class Session(db.Model):
     id: int
     token: str
     user_id: int
-    expiration: datetime
+    expiration: int
 
     __tablename__ = "sessions"
     __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     token = db.Column(db.String(16), nullable=False)
-    expiration = db.Column(db.DateTime, nullable=False)
+    expiration = db.Column(db.Integer, nullable=False)
 
     user = db.relationship("User")
 
@@ -87,7 +85,7 @@ class Notification(db.Model):
     id: int
     user_id: int
     content: str
-    time: datetime
+    time: int
     read: bool
 
     __tablename__ = "notifications"
@@ -95,5 +93,5 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     content = db.Column(db.Text)
-    time = db.Column(db.DateTime, nullable=False)
+    time = db.Column(db.Integer, nullable=False)
     read = db.Column(db.Boolean, nullable=False, default=False)

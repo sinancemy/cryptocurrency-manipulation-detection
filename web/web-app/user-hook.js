@@ -30,7 +30,6 @@ const useUserProvider = () => {
 
   // Helper function.
   const fetch = useCallback((endpoint, params, then, withToken = true) => {
-    console.log(cookies["token"])
     axios.post('http://127.0.0.1:5000/user/' + endpoint, {
       ...params,
       token: withToken ? cookies["token"] : null
