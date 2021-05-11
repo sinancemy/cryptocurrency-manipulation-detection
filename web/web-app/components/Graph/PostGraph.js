@@ -1,82 +1,45 @@
 import {Line, LinePath} from "@vx/shape"
-import React, {useEffect, useMemo, useState} from "react"
+import React, {useMemo} from "react"
 import {tooltipColor, tooltipReflectionColor, volumeLineColor} from "./colors"
-import {getDate, getPrice, useHover, useSelection} from "./misc"
-import {max} from "d3-array"
-import {scaleLinear} from "@vx/scale"
-import {useApiData} from "../../api-hook"
+import {getDate, getPostCount, useHover} from "./misc"
 import {SelectedPortion} from "./SelectedPortion"
 
-const getAggrPostCountValue = (d) => !d ? 0 : d.sum
-
-export const PostGraph = ({ width, height, coinType, currentTime, timeExtent, selectionWindow, lastEpoch,
-                            hoveredDate, dragStartDate, dragEndDate, onSelected, onHover, onHoverExit, timeScale }) => {
+export const PostGraph = ({ width, height, lastEpoch, hoveredDate, dragStartDate, dragEndDate, timeScale, postCounts, postCountScale }) => {
 
   const yMax = height
   const xMax = width
-  // Fetching the post counts.
-  const { result: aggrPostCounts, isLoading: isLoadingPosts } = useApiData([], "aggregate/post_counts", {
-    extent: timeExtent,
-    type: coinType
-  }, [timeScale], (params) => params[0] !== params[1])
-  const shouldStreamRealtime = useMemo(() => timeExtent === 'd' || timeExtent === 'w',
-    [timeExtent])
-  // Fetching the realtime post counts.
-  const { result: aggrStreamedPostCounts, isLoading: isLoadingStreamedPosts } = useApiData([], "aggregate/streamed_post_counts", {
-    type: coinType
-  }, [timeScale], (params) => params[0] !== params[1] && shouldStreamRealtime)
-  // Defining their merge.
-  const [shownAggrPostCounts, setShownAggrPostCounts] = useState([])
-  const isLoading = useMemo(() => isLoadingPosts || isLoadingStreamedPosts, [isLoadingPosts, isLoadingStreamedPosts])
 
-  // Count scale (y).
-  const aggrPostCountScale = useMemo(() => {
-    const high = max(shownAggrPostCounts, getAggrPostCountValue) || 0
-    return scaleLinear({
-      domain: [0, high],
-      range: [yMax, 20]
-    })
-  }, [shownAggrPostCounts, yMax])
-
-  useEffect(() => {
-    let merged = [...aggrPostCounts]
-    if(shouldStreamRealtime && aggrStreamedPostCounts.length > 0) {
-      merged = [...aggrPostCounts, ...aggrStreamedPostCounts]
-    }
-    setShownAggrPostCounts(merged)
-  }, [aggrPostCounts, aggrStreamedPostCounts, shouldStreamRealtime])
-
-  const { hoveredPoint, hoveredSlice } = useHover(hoveredDate, shownAggrPostCounts, selectionWindow, timeExtent, onHover, onHoverExit)
+  const { hoveredPoint, hoveredSlice } = useHover(hoveredDate, postCounts)
   const isSelecting = useMemo(() => dragStartDate && dragEndDate, [dragStartDate, dragEndDate])
 
   return (
     <g>
       <LinePath
-        data={shownAggrPostCounts}
+        data={postCounts}
         x={d => timeScale(getDate(d))}
-        y={d => aggrPostCountScale(getAggrPostCountValue(d))}
-        yScale={aggrPostCountScale}
+        y={d => postCountScale(getPostCount(d))}
+        yScale={postCountScale}
         strokeWidth={2}
-        stroke={isLoading ? 'gray' : volumeLineColor}
+        stroke={volumeLineColor}
         opacity={isSelecting ? 0.2 : 0.8}
       />
-      <SelectedPortion points={shownAggrPostCounts} startDate={dragStartDate} endDate={dragEndDate}
-                       xScale={timeScale} yScale={aggrPostCountScale}
-                       getY={getAggrPostCountValue} getX={getDate}
+      <SelectedPortion points={postCounts} startDate={dragStartDate} endDate={dragEndDate}
+                       xscale={timeScale} yscale={postCountScale}
+                       getY={getPostCount} getX={getDate}
                        selectionStrokeColor={volumeLineColor} />
       {hoveredSlice && (
         <LinePath
           data={hoveredSlice}
           x={d => timeScale(getDate(d))}
-          y={d => aggrPostCountScale(getAggrPostCountValue(d))}
-          yScale={aggrPostCountScale}
+          y={d => postCountScale(getPostCount(d))}
+          yScale={postCountScale}
           strokeWidth={2}
           stroke={tooltipReflectionColor}/>
       )}
       {hoveredPoint && (
         <circle
           cx={timeScale(hoveredDate)}
-          cy={aggrPostCountScale(getAggrPostCountValue(hoveredPoint))}
+          cy={postCountScale(getPostCount(hoveredPoint))}
           r={4}
           fill={tooltipColor}
           stroke="white"
@@ -84,7 +47,7 @@ export const PostGraph = ({ width, height, coinType, currentTime, timeExtent, se
           pointerEvents="none"
         />
       )}
-      {lastEpoch && shouldStreamRealtime && (
+      {lastEpoch && (
         <Line
           from={{ x: timeScale(lastEpoch), y: 0 }}
           to={{ x: timeScale(lastEpoch), y: yMax }}

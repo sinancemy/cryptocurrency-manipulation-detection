@@ -1,45 +1,21 @@
 import React, {useMemo} from 'react'
-import {AreaClosed, Line, LinePath} from '@vx/shape'
-import {scaleLinear, scaleTime} from '@vx/scale'
+import {AreaClosed, Line} from '@vx/shape'
+import {scaleLinear} from '@vx/scale'
 import {GridColumns, GridRows} from '@vx/grid'
 import {max} from 'd3-array'
-import {useApiData} from "../../api-hook"
 import {SelectedPortion} from "./SelectedPortion"
 import {gridColor, stockColor, stockStrokeColor, tooltipColor, tooltipReflectionColor} from "./colors"
 import {
   getDate,
   getPrice,
-  timeExtentSeconds,
   useHover,
 } from "./misc"
 
-export const PriceGraph = ({ width, height, coinType, currentTime, timeExtent, timeScale,
-                             hoveredDate, dragStartDate, dragEndDate, onSelected }) => {
+export const PriceGraph = ({ width, height, timeScale, hoveredDate, dragStartDate, dragEndDate, prices, priceScale }) => {
   const xMax = width
   const yMax = height
-  // The price range that will be shown on the graph.
-  const shownPriceRange = useMemo(() => {
-    if(!timeExtent || !coinType) return [0, 0]
-    const winHigh = currentTime
-    const winLow = winHigh - timeExtentSeconds[timeExtent]
-    return [winLow, winHigh]
-  }, [timeExtent, currentTime, coinType])
-  // Fetching the prices.
-  const { result: prices, isLoading: isLoading } = useApiData([], "prices", {
-    start: shownPriceRange[0],
-    end: shownPriceRange[1],
-    type: coinType
-  }, [currentTime], (params) => params[0] !== params[1], (prices) => prices?.reverse())
-  // Price scale.
-  const priceScale = useMemo(() => {
-    const high = max(prices, getPrice) || 0
-    return scaleLinear({
-      domain: [0, high + high/8],
-      range: [yMax, 0]
-    })
-  }, [prices, yMax]);
 
-  const { hoveredPoint } = useHover(hoveredDate, prices, timeExtent)
+  const { hoveredPoint } = useHover(hoveredDate, prices)
   const isSelecting = useMemo(() => dragStartDate && dragEndDate, [dragStartDate, dragEndDate])
 
   return  (
@@ -68,7 +44,7 @@ export const PriceGraph = ({ width, height, coinType, currentTime, timeExtent, t
         fill={stockColor}
         opacity={isSelecting ? 0.1 : 0.5}/>
       <SelectedPortion points={prices} startDate={dragStartDate} endDate={dragEndDate}
-                       xScale={timeScale} yScale={priceScale}
+                       xscale={timeScale} yscale={priceScale}
                        getY={getPrice} getX={getDate}
                        selectionFilledColor={stockColor}
                        selectionAreaBorderColor={stockStrokeColor}/>

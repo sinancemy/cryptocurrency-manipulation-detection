@@ -24,7 +24,7 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
   })
 
   return (options && selected && setSelected &&
-    <div class="relative inline-block text-left text-xs">
+    <div className="relative inline-block text-left text-xs">
       <div>
           <button {...triggerProps}
             type="button" 

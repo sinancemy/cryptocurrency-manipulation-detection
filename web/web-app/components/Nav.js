@@ -17,9 +17,7 @@ export default function Nav() {
   return (
     <div className="flex flex-row items-center w-100 space-x-8 px-8 bg-blue-50 h-16 text-gray-300 font-semibold text-sm">
       <div className="text-3xl text-yellow-50 animate-pulse">
-        <Link href="/">
-          <RiHeartPulseFill />
-        </Link>
+        <RiHeartPulseFill />
       </div>
       {loggedIn ? (
       <>

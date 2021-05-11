@@ -41,7 +41,7 @@ export const Notifier = () => {
   return (
       <div>
         <button {...triggerProps} onClick={() => setSelected(!selected)}>
-          <span class="relative inline-block">
+          <span className="relative inline-block">
             <IoNotifications />
             { unreadCount > 0 &&
             <span class="absolute text-xs top-0 right-0 transform translate-x-1/2 -translate-y-1/2 px-1 bg-red-600 rounded-lg">

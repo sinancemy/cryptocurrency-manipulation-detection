@@ -22,7 +22,7 @@ export const CoinCard = ({ coin, isSelected = () => true, onToggle = () => {} })
               type="radio"
               className="hidden"
               name="coin-type"
-              onClick={onToggle}
+              onChange={onToggle}
               checked={isSelected()} />
             <Link href={`/coin-info?coin=` + coin}>
               <span className="hover:underline">

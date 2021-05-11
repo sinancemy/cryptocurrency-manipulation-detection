@@ -1,5 +1,5 @@
 import {bisector} from "d3-array"
-import {useCallback, useEffect, useMemo, useState} from "react"
+import {useEffect, useMemo} from "react"
 
 export const timeExtentSeconds = {
   "d": 60 * 60 * 24,
@@ -12,11 +12,7 @@ export const timeExtentSeconds = {
 export const getDate = (d) => !d ? new Date(0) : new Date(d.time * 1000)
 export const getPrice = (d) => !d ? 0 : d.price
 export const bisectDate = bisector(d => !d ? new Date(1000) : new Date(d.time * 1000)).left
-
-export const invertScale = (x, scale) => {
-  if(!x) return null
-  return scale.invert(x)
-}
+export const getPostCount = (d) => !d ? 0 : d.sum
 
 export const calculatePoint = (date, points) => {
   if(!date) return null
@@ -61,8 +57,7 @@ export const useSelection = (startDate, endDate, points) => {
   return { dragStartPoint, dragEndPoint, selectedSlice }
 }
 
-export const useHover = (hoveredDate, points, selectionWindow, timeExtent,
-                         onHover = () => {}, onHoverExit = () => {}) => {
+export const useHover = (hoveredDate, points, onHover = () => {}, onHoverExit = () => {}) => {
   const hoveredPoint = useMemo(() => calculatePoint(hoveredDate, points),
     [points, hoveredDate])
   useEffect(() => {

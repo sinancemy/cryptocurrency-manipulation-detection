@@ -157,7 +157,7 @@ export default function DashboardPage() {
                     <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]*1000), false) }</span>
                   </div>
                   )}
-                  <span class="flex-grow"></span>
+                  <span className="flex-grow"></span>
                   <SortSelector
                     sortByState={[sortByOption, setSortByOption]}
                     sortOrderState={[sortOrderOption, setSortOrderOption]}
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                 <input 
                   type="checkbox"
                   checked={showPostVolume}
-                  onClick={() => setShowPostVolume(!showPostVolume)}
+                  onChange={() => setShowPostVolume(!showPostVolume)}
                 />
                 <p className="ml-2">Show heartbeat</p>
               </label>
