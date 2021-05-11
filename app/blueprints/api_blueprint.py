@@ -33,6 +33,40 @@ def get_info():
     })
 
 
+def create_source_conditions(sources: list, model) -> list:
+    source_conditions = []
+    for source in sources:
+        source_parts = source.split("@")
+        if source_parts[0] == "*":
+            source_conditions.append(model.source == source_parts[1])
+        else:
+            source_conditions.append(and_(model.source == source_parts[1],
+                                          model.user == source_parts[0]))
+    return source_conditions
+
+
+def prepare_post_query(model, start, end, coin_type, sources, order_by, orderable_columns, from_bound, desc, limit):
+    query = db.session.query(model)\
+        .filter(model.time >= start)\
+        .filter(model.time <= end)
+    if coin_type is not None:
+        query = query.filter(model.coin_type == coin_type)
+    if sources is not None:
+        source_conditions = create_source_conditions(sources, model)
+        query = query.filter(or_(*source_conditions))
+    if order_by is not None and order_by in orderable_columns:
+        if from_bound is not None:
+            from_column = model.__table__.c[order_by]
+            if desc == 1:
+                query = query.filter(from_column < from_bound)
+            else:
+                query = query.filter(from_column > from_bound)
+        if desc == 1:
+            query = query.order_by(model.__table__.c[order_by].desc())
+        else:
+            query = query.order_by(model.__table__.c[order_by])
+    return query.limit(limit)
+
 @api_blueprint.route("/posts")
 def get_posts():
     start = request.args.get("start", type=int, default=0)
@@ -45,25 +79,10 @@ def get_posts():
     # We return 50 posts per request at most.
     limit = min(limit, 50)
     # Construct the initial query.
-    query = db.session\
-        .query(Post)\
-        .distinct(Post.unique_id)\
-        .group_by(Post.unique_id)\
-        .filter(Post.time >= start)\
-        .filter(Post.time <= end)
-    if coin_type is not None:
-        query = query.filter(Post.coin_type == coin_type)
     if source is not None and "@" in source:
         sources = source.split(";")
-        source_conditions = []
-        for source in sources:
-            source_parts = source.split("@")
-            if source_parts[0] == "*":
-                source_conditions.append(Post.source == source_parts[1])
-            else:
-                source_conditions.append(and_(Post.source == source_parts[1],
-                                              Post.user == source_parts[0]))
-        query = query.filter(or_(*source_conditions))
+    else:
+        sources = None
     # Disallow invalid sorting options to prevent SQL injections.
     if order_by is not None and order_by not in ["interaction", "impact", "time", "user"]:
         order_by = None
@@ -73,26 +92,27 @@ def get_posts():
     if order_by is not None:
         order_by_types = {"interaction": int, "avg_impact": float, "time": int, "user": str}
         from_bound = request.args.get("from", type=order_by_types[order_by], default=None)
-        if from_bound is not None:
-            from_column = Post.__table__.c[order_by]
-            if desc == 0:
-                query = query.filter(from_column > from_bound)
-            else:
-                query = query.filter(from_column < from_bound)
-    # Handle ordering
-    if desc == 1:
-        query = query.order_by(Post.__table__.c[order_by].desc())
     else:
-        query = query.order_by(Post.__table__.c[order_by])
-    query = query.limit(limit)
-    posts = query.all()
+        from_bound = None
+    posts = [dataclasses.asdict(p) for p in
+             prepare_post_query(Post, start, end, coin_type, sources, order_by, ["interaction", "impact", "time", "user"],
+                                from_bound, desc, limit).all()]
     # Replace the impact values by their float array representation.
-    modified_posts = []
     for p in posts:
-        mp = dataclasses.asdict(p)
-        mp["impact"] = list(numpy.frombuffer(mp["impact"]))
-        modified_posts.append(mp)
-    return jsonify(modified_posts)
+        p["impact"] = list(numpy.frombuffer(p["impact"]))
+        p["streamed"] = False
+    # Get the streamed posts.
+    streamed_posts = [dataclasses.asdict(p) for p in
+                      prepare_post_query(StreamedPost, start, end, coin_type, sources, order_by, ["time", "user"],
+                                         from_bound, desc, limit).all()]
+    for p in streamed_posts:
+        p["avg_impact"] = 0
+        p["impact"] = [0, 0, 0, 0]
+        p["interaction"] = 0
+        p["streamed"] = True
+    # Merge the posts.
+    all_posts = posts + streamed_posts
+    return jsonify(all_posts[:limit])
 
 
 @api_blueprint.route("/prices")
