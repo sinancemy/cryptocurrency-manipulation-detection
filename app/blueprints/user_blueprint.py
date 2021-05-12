@@ -192,6 +192,34 @@ def reset_password():
     return jsonify({"result": "ok"})
 
 
+@user_blueprint.route("/change_password", methods=["POST"])
+@login_required
+def change_password(form, session):
+    form = request.get_json()
+    newPassword = get_json_arg(form, "newPassword", type=str, default="")
+    oldPassword = get_json_arg(form, "oldPassword", type=str, default="")
+    if not verify_password(oldPassword, session.user.password, session.user.salt):
+        return jsonify({"result": "error"})
+    hash, salt = new_password(newPassword)
+    session.user.password = hash
+    session.user.salt = salt
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/change_email", methods=["POST"])
+@login_required
+def change_email(form, session):
+    form = request.get_json()
+    password = get_json_arg(form, "password", type=str, default="")
+    newEmail = get_json_arg(form, "newEmail", type=str, default="")
+    if not verify_password(password, session.user.password, session.user.salt):
+        return jsonify({"result": "error"})
+    session.user.email = newEmail
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
 @user_blueprint.route("/follow/create", methods=["POST"])
 @login_required
 def create_follow(form, session):

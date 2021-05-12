@@ -9,16 +9,18 @@ import { FormInput2 } from "../../components/FormInput2";
 
 export default function Profile() {
   useRequireLogin()
-  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user, updateUser } = useUser()
+  const { username, email, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user, updateUser, change_email, change_password } = useUser()
   const followedGroups = useMemo(() => followedSources.filter(f => f.target.startsWith("*@")), [followedSources])
   const followedUsers = useMemo(() => followedSources.filter(f => !f.target.startsWith("*@")), [followedSources])
   const [oldPassword, setOldPassword] = useState(null)
   const [correctPassword, setCorrectPassword] = useState(null)
   const [correctReenteredPassword, setCorrectReenteredPassword] = useState(null)
   const [isLoading, setLoading] = useState(false);
-  const [oldEmail, setOldEmail] = useState(null)
   const [correctEmail, setCorrectEmail] = useState(null)
-  const [emailErrorMsg, setEmailErrorMsg] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
+  const [successMsg, setSuccessMsg] = useState("");
+  const [successMsg1, setSuccessMsg1] = useState("");
+  const [errorMsg1, setErrorMsg1] = useState("")
 
   // Username field checker.
   const simpleFieldChecker = useCallback((val) => {
@@ -39,16 +41,39 @@ export default function Profile() {
   const canSubmit = useMemo(() => correctPassword && correctReenteredPassword, 
   [correctPassword, correctReenteredPassword])
 
+  const canSubmit1 = useMemo(() => correctPassword && correctEmail, 
+  [correctPassword, correctEmail])
+
   const [selectedPage, setSelectedPage] = useState(0)
 
+  
   const onSubmit = useCallback((e) => {
     e.preventDefault()
-    const endpoint = "update"
-        updateUser(endpoint, {
-          password: correctPassword,
-          email: correctEmail,
+    const endpoint = "change_password"
+        /*updateUser(endpoint, {
+          newPassword: correctPassword,
+          oldPassword: oldPassword,
+        })*/
+        change_password(oldPassword, correctPassword, (ok) => {
+          setSuccessMsg1("Password changed.")
+        }, (err) => {
+          setErrorMsg1("Password cannot be changed.")
         })
-  }, [canSubmit, correctPassword, correctEmail])
+  }, [canSubmit, correctPassword, oldPassword])
+
+  const onSubmit1 = useCallback((e) => {
+    e.preventDefault()
+    /*const endpoint = "change_email"
+        updateUser(endpoint, {
+          newEmail: correctEmail,
+          password: correctPassword,
+        })*/
+        change_email(correctPassword,correctEmail, (ok) => {
+          setSuccessMsg("Email changed.")
+        }, (err) => {
+          setErrorMsg("Email cannot be changed.")
+        })
+  }, [canSubmit1, correctPassword, correctEmail])
 
   return (
     <div className="animate-fade-in-down">
@@ -119,25 +144,39 @@ export default function Profile() {
               <DashboardPanel.Body>
               <TabbedView options={["Change Email", "Change Password"]}>
                   <div>
-                  <form onSubmit={onSubmit}>
-                  <FormInput2 type={"text"} 
-                     type={"text"} 
-                     label={"Enter Old E-mail"} 
-                     placeholder={"Your e-mail"} 
-                     errorMsg={emailErrorMsg}
-                     isDisabled={isLoading} 
-                     checker={emailChecker}
-                     setCorrectValue={setOldEmail}  />
+                  <form onSubmit={onSubmit1}>
+                  {successMsg !== "" ? (
+              <div
+                class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative"
+                role="alert">
+                {successMsg}
+              </div>
+            ) : null}
+            {errorMsg !== "" ? (
+              <div
+                class="animate-fade-in-down bg-red-100 border border-red-400 text-sm text-red-700 px-4 py-3 mb-3 rounded relative"
+                role="alert">
+                {errorMsg}
+              </div>
+            ) : null}
+                  <div className="block text-700 text-md font-bold mb-2">Your email: {email} </div>
                     <FormInput2 type={"text"} 
                       label={"Enter New E-mail"} 
                       placeholder={"New e-mail"} 
-                      errorMsg={emailErrorMsg}
+                      errorMsg={""}
                       isDisabled={isLoading} 
-                      checker={(val) => [val !== oldEmail, "Your new e-mail cannot be same as your old e-mail"]} 
+                      checker={emailChecker} 
                       setCorrectValue={setCorrectEmail}  />
+                      <FormInput2 type={"password"} 
+                      label={"Enter Password"} 
+                      placeholder={"Your password"} 
+                      errorMsg={""}
+                      isDisabled={isLoading} 
+                      checker={simpleFieldChecker} 
+                      setCorrectValue={setCorrectPassword}  />
                     <button
                         type="submit"
-                        disabled={!canSubmit || isLoading}
+                        disabled={!canSubmit1 || isLoading}
                         class="w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 text-center rounded disabled:opacity-50 hover:bg-yellow-500" >
                         {isLoading ? (
                         <AiOutlineLoading className={`animate-spin`} />
@@ -149,6 +188,20 @@ export default function Profile() {
                     </div>
                     <div>
                     <form onSubmit={onSubmit}>
+                    {successMsg1 !== "" ? (
+              <div
+                class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative"
+                role="alert">
+                {successMsg1}
+              </div>
+            ) : null}
+            {errorMsg1 !== "" ? (
+              <div
+                class="animate-fade-in-down bg-red-100 border border-red-400 text-sm text-red-700 px-4 py-3 mb-3 rounded relative"
+                role="alert">
+                {errorMsg1}
+              </div>
+            ) : null}
                     <FormInput2 type={"password"} 
                       label={"Enter Old Password"} 
                       placeholder={"Old password"} 
@@ -174,7 +227,7 @@ export default function Profile() {
                     <button
                         type="submit"
                         disabled={!canSubmit || isLoading}
-                        class="w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 text-center rounded disabled:opacity-50 hover:bg-yellow-500" >
+                        class="w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 text-center rounded disabled:opacity-50 hover:bg-yellow-500">
                         {isLoading ? (
                         <AiOutlineLoading className={`animate-spin`} />
                         ) : (

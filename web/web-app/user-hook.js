@@ -100,6 +100,32 @@ const useUserProvider = () => {
     }
   }, false)
 }, [fetch])
+// Update password
+const change_password = useCallback((oldPassword, newPassword, onSuccess = () => {}, onError = () => {}) => {
+  fetch("change_password", { 
+    oldPassword: oldPassword, 
+    newPassword: newPassword
+  }, (res) => {
+    if(res.data.result === "ok") {
+      onSuccess(oldPassword, newPassword)
+    } else {
+      onError(res.data)
+    }
+  }, false)
+}, [fetch])
+// Update email
+const change_email = useCallback((password, newEmail, onSuccess = () => {}, onError = () => {}) => {
+  fetch("change_email", { 
+    password: password, 
+    newEmail: newEmail
+  }, (res) => {
+    if(res.data.result === "ok") {
+      onSuccess(password, newEmail)
+    } else {
+      onError(res.data)
+    }
+  }, false)
+}, [fetch])
   // Deletes the user.
   const delete_user = useCallback(() => {
     fetch("delete_user", {}, () => removeCookie("token"))
@@ -124,6 +150,7 @@ const useUserProvider = () => {
   }, [cookies])
 
   const username = useMemo(() => user ? user.username : "...")
+  const email = useMemo(() => user ? user.email : "...")
   const loggedIn = useMemo(() => user && user.id >= 0, [user])
   const followedCoins = useMemo(() => user ? user.follows.filter(f => f.type === "coin" ) : [], [user])
   const followedSources = useMemo(() => user ? user.follows.filter(f => f.type === "source") : [], [user])
@@ -135,11 +162,11 @@ const useUserProvider = () => {
   }, [followedCoins])
 
   // Expose data and methods.
-  return { user: user, loggedIn: loggedIn, username: username, register: register, login: login, updateUser: updateUser,
+  return { user: user, loggedIn: loggedIn, username: username, email: email, register: register, login: login, updateUser: updateUser,
           notifications: notifications, updateNotifications: updateNotifications, readAllNotifications: readAllNotifications, discardNotification: discardNotification,
           followedCoins: followedCoins, followedSources: followedSources, 
           isFollowing: isFollowing, areNotificationsOn: areNotificationsOn, 
-          refetchUser: updateUserInfo, logout: logout, delete_user: delete_user, send_mail: send_mail, fetch: fetch }
+          refetchUser: updateUserInfo, logout: logout, delete_user: delete_user, send_mail: send_mail, fetch: fetch, change_password: change_password, change_email: change_email }
 }
 
 // Custom Hook to redirect to the login page if needed.
