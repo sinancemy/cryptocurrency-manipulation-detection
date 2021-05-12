@@ -1,6 +1,8 @@
 from sqlalchemy import desc
 
-from data.database import db, Post
+from data.database import db, Post, StreamedAggregatePostCount, Price
+
+GENESIS = 1615386994
 
 POST_COUNT_INTERVAL = 60
 STREAMED_POST_COUNT_INTERVAL = 20
@@ -54,10 +56,26 @@ def get_as_dict():
     }
 
 
-def get_last_epoch():
+def get_last_epoch(default=GENESIS):
     last_crawled_post = db.session.query(Post.time).order_by(desc(Post.time)).limit(1).first()
     if last_crawled_post is None:
-        last_epoch = 0
-    else:
-        last_epoch = last_crawled_post.time
-    return last_epoch
+        return default
+    return last_crawled_post.time
+
+
+def get_last_stream_update(default=GENESIS):
+    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time) \
+        .order_by(desc(StreamedAggregatePostCount.time)) \
+        .first()
+    if last_streamed_post_update is None:
+        return default
+    return last_streamed_post_update[0]
+
+
+def get_last_price_update(default=GENESIS):
+    last_price_update = db.session.query(Price.time) \
+        .order_by(desc(Price.time)) \
+        .first()
+    if last_price_update is None:
+        return default
+    return last_price_update[0]

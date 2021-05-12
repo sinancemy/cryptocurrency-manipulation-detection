@@ -17,19 +17,11 @@ api_blueprint = Blueprint("api", __name__)
 
 @api_blueprint.route("/info")
 def get_info():
-    genesis = db.session.query(Price.time).order_by(Price.time).first()[0]
-    last_epoch = db.session.query(Post.time).order_by(desc(Post.time)).first()[0]
-    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time) \
-        .order_by(desc(StreamedAggregatePostCount.time)) \
-        .first()[0]
-    last_price_update = db.session.query(Price.time) \
-        .order_by(desc(Price.time)) \
-        .first()[0]
     return jsonify({
-        "genesis": genesis,
-        "last_epoch": last_epoch,
-        "last_streamed_post_update": last_streamed_post_update,
-        "last_price_update": last_price_update,
+        "genesis": api_settings.GENESIS,
+        "last_epoch": api_settings.get_last_epoch(),
+        "last_streamed_post_update": api_settings.get_last_stream_update(),
+        "last_price_update": api_settings.get_last_price_update(),
         "available_settings": api_settings.get_as_dict()
     })
 

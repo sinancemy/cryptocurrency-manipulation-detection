@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 from data.database import db
 from app.db_config import configure_database
-from app.blueprints import user_blueprint, api_blueprint, stream_blueprint
+from app.blueprints import user_blueprint, api_blueprint, stream_blueprint, update_blueprint
 
 NPM_OUT = "../web/web-app/out"
 
@@ -19,6 +19,7 @@ def create_app():
     app.register_blueprint(user_blueprint, url_prefix="/user")
     app.register_blueprint(api_blueprint, url_prefix="/api")
     app.register_blueprint(stream_blueprint, url_prefix="/stream")
+    app.register_blueprint(update_blueprint, url_prefix="/update")
 
     # Route the frontend.
     @app.route("/app")
