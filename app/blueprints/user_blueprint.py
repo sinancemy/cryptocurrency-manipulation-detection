@@ -2,14 +2,16 @@ import dataclasses
 import secrets
 import time
 
-from flask import Blueprint, request, jsonify, url_for
+from flask import Blueprint, request, jsonify, url_for, current_app
 from sqlalchemy import desc
 
 from backend.google_login import construct_request_uri, callback
 from backend.app_helpers import get_json_arg, login_required
-from data.database.app_models import User, db, Session, Follow, Trigger, Notification
+from data.database.app_models import User, db, Session, Follow, Trigger, Notification, PasswordReset
 from misc import TriggerTimeWindow, FollowType
 from backend.password import verify_password, new_password
+from app.main_app import create_app
+from backend.processor.mail_deployment import Mailer
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -152,6 +154,40 @@ def update_user(form, session):
 def delete_user(form, session):
     user = User.query.filter_by(id=session.user_id).first()
     db.session.delete(user)
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/send_mail", methods=["POST"])
+def send_mail():
+    form = request.get_json()
+    email = get_json_arg(form, "email", type=str, default="")
+    user = User.query.filter(User.email == email).first()
+    if user is None:
+        return jsonify({"result": "error"})
+    code = secrets.token_hex(16)
+    reset = PasswordReset(user_id=user.id, code=code)
+    db.session.add(reset)
+    db.session.commit()
+    app = current_app
+    mailer = Mailer(app)
+    mailer.send_reset_mail(email, code)
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/reset_password", methods=["POST"])
+def reset_password():
+    form = request.get_json()
+    code = get_json_arg(form, "code", type=str, default="")
+    password = get_json_arg(form, "password", type=str, default="")
+    reset = PasswordReset.query.filter_by(code=code).first()
+    if reset is None:
+        return jsonify({"result": "error"})
+    currentUser = User.query.filter_by(id=reset.user_id).first()
+    pw_hash, salt = new_password(password)
+    currentUser.password = pw_hash
+    currentUser.salt = salt
+    db.session.delete(reset)
     db.session.commit()
     return jsonify({"result": "ok"})
 

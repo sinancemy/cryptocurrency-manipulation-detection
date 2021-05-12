@@ -3,16 +3,15 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading } from "react-icons/ai";
 import { FormInput } from "../../components/FormInput";
-import { useRequireGuest, useUser } from "../../user-hook";
+import { useUser} from "../../user-hook";
 import Link from "next/link"
 
 export default function ForgotPassword() {
   //useRequireGuest()
 
   const router = useRouter()
-  const { register, login } = useUser()
+  const { send_mail } = useUser()
   const [correctEmail, setCorrectEmail] = useState(null)
-  const [usernameErrorMsg, setUsernameErrorMsg] = useState("");
   const [emailErrorMsg, setEmailErrorMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("")
   const [successMsg, setSuccessMsg] = useState("");
@@ -27,7 +26,15 @@ export default function ForgotPassword() {
 
   const canSubmit = useMemo(() => correctEmail, 
   [correctEmail])
-
+  
+  const onSubmit = useCallback((e) => {
+    e.preventDefault()
+    send_mail(correctEmail, (ok) => {
+      setSuccessMsg("Password reset request is sent to your email.")
+    }, (err) => {
+      setErrorMsg("Email cannot be sent.")
+    })
+  }, [canSubmit, correctEmail])
 
   return (
     <div className="min-h-screen flex flex-col animate-fade-in-down">
@@ -37,8 +44,7 @@ export default function ForgotPassword() {
             <h1 className="font-bold text-center text-2xl">Forgot Password?</h1>
           </div>
           <form
-            class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg"
-            onSubmit={""}>
+            class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg">
             {successMsg !== "" ? (
               <div
                 class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative"
@@ -66,6 +72,7 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={!canSubmit || isLoading}
+                onClick={onSubmit}
                 class="w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 text-center rounded disabled:opacity-50 hover:bg-yellow-500" >
                 {isLoading ? (
                   <AiOutlineLoading className={`animate-spin`} />

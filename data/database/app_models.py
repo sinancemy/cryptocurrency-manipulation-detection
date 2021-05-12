@@ -95,3 +95,16 @@ class Notification(db.Model):
     content = db.Column(db.Text)
     time = db.Column(db.Integer, nullable=False)
     read = db.Column(db.Boolean, nullable=False, default=False)
+
+
+@dataclass
+class PasswordReset(db.Model):
+    id: int
+    user_id: int
+    code: str
+
+    __tablename__ = "password_resets"
+    __bind_key__ = "app"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    code = db.Column(db.String)

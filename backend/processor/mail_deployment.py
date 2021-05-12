@@ -49,3 +49,15 @@ class Mailer:
             msg.html = content
             print("Sending e-mail to " + email)
             self.mail.send(msg)
+
+    def send_reset_mail(self, email: str, code: str):
+        link = "http://localhost:3000/change-password?code=" + code
+        user = User.query.filter(User.email == email).first()
+        email = user.email
+        subject = "Password Reset"
+        content = "<h2>Dear " + user.username + ",</h2>" + "<p>Here is the link to reset your password: </p><br>" + link
+        content = content + "<br><p>Sincerely,</p>Şurup Team"
+        msg = Message(subject, recipients=[email])
+        msg.html = content
+        print("Sending e-mail to " + email)
+        self.mail.send(msg)

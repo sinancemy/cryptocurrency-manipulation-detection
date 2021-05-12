@@ -6,7 +6,6 @@ import { SimpleMenu } from "../../components/SimpleMenu"
 import { useCallback, useMemo, useState } from "react"
 import { MenuPages } from "../../components/MenuPages"
 import { FormInput2 } from "../../components/FormInput2";
-import Link from "next/link"
 
 export default function Profile() {
   useRequireLogin()

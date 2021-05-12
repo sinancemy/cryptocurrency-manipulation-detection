@@ -88,10 +88,22 @@ const useUserProvider = () => {
       }
     }, false)
   }, [])
+ // Send reset mail.
+ const send_mail = useCallback((email, onSuccess = () => {}, onError = () => {}) => {
+  fetch("send_mail", { 
+    email: email, 
+  }, (res) => {
+    if(res.data.result === "ok") {
+      onSuccess(email)
+    } else {
+      onError(res.data)
+    }
+  }, false)
+}, [fetch])
   // Deletes the user.
   const delete_user = useCallback(() => {
-    updateUser("delete_user", {}, () => removeCookie("token"))
-  }, [])
+    fetch("delete_user", {}, () => removeCookie("token"))
+  }, [fetch])
 
   // Notification stuff...
   // By default, the notifications are empty, unless updateNotifications is called at least once!
@@ -127,7 +139,7 @@ const useUserProvider = () => {
           notifications: notifications, updateNotifications: updateNotifications, readAllNotifications: readAllNotifications, discardNotification: discardNotification,
           followedCoins: followedCoins, followedSources: followedSources, 
           isFollowing: isFollowing, areNotificationsOn: areNotificationsOn, 
-          refetchUser: updateUserInfo, logout: logout, delete_user: delete_user }
+          refetchUser: updateUserInfo, logout: logout, delete_user: delete_user, send_mail: send_mail, fetch: fetch }
 }
 
 // Custom Hook to redirect to the login page if needed.

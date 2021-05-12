@@ -3,13 +3,14 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading } from "react-icons/ai";
 import { FormInput } from "../../components/FormInput";
-import { useRequireGuest, useUser } from "../../user-hook";
+import { useRequireGuest, useUser , reset_password} from "../../user-hook";
+import Link from "next/link"
 
 export default function ForgotPassword() {
   //useRequireGuest()
 
   const router = useRouter()
-  const { updateUser} = useUser()
+  const { updateUser, fetch} = useUser()
   const [correctPassword, setCorrectPassword] = useState(null)
   const [correctReenteredPassword, setCorrectReenteredPassword] = useState(null)
 
@@ -32,11 +33,12 @@ export default function ForgotPassword() {
 
   const onSubmit = useCallback((e) => {
     e.preventDefault()
-    const endpoint = "update"
-    updateUser(endpoint, {
+    const endpoint = "http://127.0.0.1:5000/user/reset_password"
+    axios.post(endpoint, {
       password: correctPassword,
-      email: "",
+      code: router.query.code,
     })
+    setSuccessMsg("Password Changed")
   }, [correctPassword])
 
 
@@ -48,8 +50,7 @@ export default function ForgotPassword() {
             <h1 className="font-bold text-center text-2xl">Change Password</h1>
           </div>
           <form
-            class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg"
-            onSubmit={onSubmit}>
+            class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg">
             {successMsg !== "" ? (
               <div
                 class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative"
@@ -83,12 +84,15 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={!canSubmit || isLoading}
+                onClick={onSubmit}
                 class="w-full bg-yellow-50 text-blue-50 h-10 py-2 px-4 text-center rounded disabled:opacity-50 hover:bg-yellow-500" >
+                <Link href="/login">
                 {isLoading ? (
                   <AiOutlineLoading className={`animate-spin`} />
                 ) : (
                   "Reset Password"
                 )}
+                </Link>
               </button>
             </div>
           </form>
