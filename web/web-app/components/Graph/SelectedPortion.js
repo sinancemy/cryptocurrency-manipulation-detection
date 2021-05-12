@@ -1,15 +1,21 @@
 import {useSelection} from "./misc"
-import {AreaClosed, Line, LinePath} from "@vx/shape"
+import {AreaClosed, LinePath} from "@vx/shape"
 import React, {useMemo} from "react"
 import {tooltipColor} from "./colors"
 
-export const SelectedPortion = ({ points, startDate, endDate, xscale, yscale, getX, getY,
+export const SelectedPortion = ({ points, leftDate, rightDate, startDate, endDate, xscale, yscale, getX, getY,
                                   selectionFilledColor = "transparent",
                                   selectionStrokeColor = "transparent",
-                                  selectionAreaBorderColor = "transparent"}) => {
+                                  selectionAreaBorderColor = "transparent",
+                                  circleFillColor = "transparent" }) => {
 
-  const { dragStartPoint, dragEndPoint, selectedSlice } = useSelection(startDate, endDate, points)
-  const xStart = useMemo(() => xscale(getX(dragStartPoint)), [xscale, getX, dragStartPoint])
+  const {
+    dragStartPoint,
+    dragEndPoint,
+    dragLeftPoint,
+    dragRightPoint,
+    selectedSlice
+  } = useSelection(leftDate, rightDate, startDate, endDate, points)
   const xEnd = useMemo(() => xscale(getX(dragEndPoint)), [xscale, getX, dragEndPoint])
   const yStart = useMemo(() => yscale(getY(dragStartPoint)), [yscale, getY, dragStartPoint])
   const yEnd = useMemo(() => yscale(getY(dragEndPoint)), [yscale, getY, dragEndPoint])
@@ -39,40 +45,33 @@ export const SelectedPortion = ({ points, startDate, endDate, xscale, yscale, ge
         />
         </>
       )}
-      {dragStartPoint && (
-        <g transform={`translate(${xscale(getX(dragStartPoint))},
-                                 ${yscale(getY(dragStartPoint))})`}>
+      {dragLeftPoint && (
+        <g transform={`translate(${xscale(getX(dragLeftPoint))},
+                                 ${yscale(getY(dragLeftPoint))})`}>
           <circle
             r={4}
-            fill={tooltipColor}
+            fill={circleFillColor}
             stroke="white"
-            strokeWidth={1}
+            strokeWidth={2}
             pointerEvents="none"
           />
         </g>
       )}
-      {dragEndPoint && (
+      {dragRightPoint && (
         <circle
-          cx={xscale(getX(dragEndPoint))}
-          cy={yscale(getY(dragEndPoint))}
+          cx={xscale(getX(dragRightPoint))}
+          cy={yscale(getY(dragRightPoint))}
           r={4}
-          fill={tooltipColor}
+          fill={circleFillColor}
           stroke="white"
           strokeWidth={2}
           pointerEvents="none"
         />
       )}
-      {(dragStartPoint && dragEndPoint) && (
+      {(dragLeftPoint && dragRightPoint) && (
         <>
-          <Line
-            from={{ x: xStart, y: yStart }}
-            to={{ x: xEnd, y: yEnd }}
-            stroke={tooltipColor}
-            strokeWidth={1}
-            pointerEvents="none"
-          />
-          <text x={(xStart + xEnd)/2} y={(yStart + yEnd)/2} fill={"white"} fontSize={12}>
-            { percentChange.toFixed(0) }%
+          <text x={xEnd} y={yEnd - 10} fill={"white"} fontSize={12}>
+            { percentChange < 0 ? '-' : '+' } { Math.abs(percentChange).toFixed(0) }%
           </text>
         </>
       )}

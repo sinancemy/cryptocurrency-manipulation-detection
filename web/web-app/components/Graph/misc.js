@@ -1,12 +1,5 @@
 import {bisector} from "d3-array"
-import {useEffect, useMemo} from "react"
-
-export const timeExtentSeconds = {
-  "d": 60 * 60 * 24,
-  "w": 60 * 60 * 24 * 7,
-  "m": 60 * 60 * 24 * 30,
-  "y": 60 * 60 * 24 * 365
-}
+import {useCallback, useEffect, useMemo} from "react"
 
 // Accessors
 export const getDate = (d) => !d ? new Date(0) : new Date(d.time * 1000)
@@ -25,36 +18,27 @@ export const calculatePointIndex = (date, points) => {
   return bisectDate(points, date)
 }
 
-export const calculateSlice = (date, points, selectionWindow, timeExtent) => {
-  if(!date) return null
-  const normalizedSelectionWindow = selectionWindow * (timeExtentSeconds[timeExtent]/(60 * 60 * 24 * 5))
-  const startDate = date.valueOf() - (normalizedSelectionWindow/2) * 1000 * 60 * 60
-  const endDate = date.valueOf() + (normalizedSelectionWindow/2) * 1000 * 60 * 60
-  const i0 = bisectDate(points, startDate)
-  const i1 = bisectDate(points, endDate)
-  return points.slice(i0, i1)
-}
+export const useSelection = (leftDate, rightDate, startDate, endDate, points) => {
 
-export const useSelection = (startDate, endDate, points) => {
-  const dragStartPoint = useMemo(() => {
-    if(!startDate || !points) return null
-    return calculatePoint(startDate, points)
-  }, [startDate, points])
+  const dateToPoint = useCallback((date) => {
+    if(!date || !points) return null
+    return calculatePoint(date, points)
+  }, [points])
 
-  const dragEndPoint = useMemo(() => {
-    if(!endDate || !points) return null
-    return calculatePoint(endDate, points)
-  }, [endDate, points])
+  const dragLeftPoint = useMemo(() => dateToPoint(leftDate), [leftDate])
+  const dragRightPoint = useMemo(() => dateToPoint(rightDate), [rightDate])
+  const dragStartPoint = useMemo(() => dateToPoint(startDate), [startDate])
+  const dragEndPoint = useMemo(() => dateToPoint(endDate), [endDate])
 
   const selectedSlice = useMemo(() => {
-    if(!points || !startDate || !endDate) {
+    if(!points || !leftDate || !rightDate) {
       return null
     }
-    const selectedSliceStart = calculatePointIndex(startDate, points)
-    const selectedSliceEnd = calculatePointIndex(endDate, points)
+    const selectedSliceStart = calculatePointIndex(leftDate, points)
+    const selectedSliceEnd = calculatePointIndex(rightDate, points)
     return points.slice(selectedSliceStart, selectedSliceEnd)
-  }, [startDate, endDate, points])
-  return { dragStartPoint, dragEndPoint, selectedSlice }
+  }, [leftDate, rightDate, points])
+  return { dragStartPoint, dragEndPoint, dragLeftPoint, dragRightPoint, selectedSlice }
 }
 
 export const useHover = (hoveredDate, points, onHover = () => {}, onHoverExit = () => {}) => {

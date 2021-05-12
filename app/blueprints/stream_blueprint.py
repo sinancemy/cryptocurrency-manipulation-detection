@@ -9,7 +9,6 @@ from data.collector.twitter import COIN_KEYWORDS
 from data.database import db, StreamedPost
 
 stream_blueprint = Blueprint("stream", __name__)
-stream_update_lock = threading.Lock()
 
 
 def parse_twitter_post(user, content) -> iter:

@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
   return useMemo(() => (coinType &&
     <div>
-      <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col 
+      <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col
                       lg:flex lg:flex-row lg:justify-center">
         <div className="px-1 flex-none">
         <DashboardPanel width={72}>

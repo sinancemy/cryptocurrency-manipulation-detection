@@ -1,15 +1,15 @@
 import {useEffect, useMemo, useState} from "react"
-import {getPostCount, getPrice, timeExtentSeconds} from "./misc"
+import {getPostCount, getPrice} from "./misc"
 import {useApiData} from "../../api-hook"
 import {max} from "d3-array"
 import {scaleLinear} from "@vx/scale"
 
-export const usePrices = (coinType, currentTime, timeExtent, yMax) => {
+export const usePrices = (coinType, currentTime, apiInfo, timeExtent, yMax) => {
   // The price range that will be shown on the graph.
   const shownPriceRange = useMemo(() => {
-    if(!timeExtent || !coinType) return [0, 0]
+    if(!timeExtent || !coinType || !apiInfo) return [0, 0]
     const winHigh = currentTime
-    const winLow = winHigh - timeExtentSeconds[timeExtent]
+    const winLow = winHigh - apiInfo.available_settings.extents[timeExtent]
     return [winLow, winHigh]
   }, [timeExtent, currentTime, coinType])
   // Fetching the prices.
@@ -29,17 +29,18 @@ export const usePrices = (coinType, currentTime, timeExtent, yMax) => {
   return { prices, isLoadingPrices, priceScale }
 }
 
-export const usePostCounts = (coinType, currentTime, timeExtent, yMax) => {
+export const usePostCounts = (coinType, currentTime, timeExtent, sma, yMax) => {
   const { result: aggrPostCounts, isLoading: isLoadingOldPosts } = useApiData([], "aggregate/post_counts", {
     extent: timeExtent,
-    type: coinType
-  }, [currentTime], (params) => params[0] !== params[1])
+    type: coinType,
+    sma: sma
+  }, [currentTime], (params) => params[0] && params[1] && params[2])
   const streamingRealtime = useMemo(() => timeExtent === 'd' || timeExtent === 'w',
     [timeExtent])
   // Fetching the realtime post counts.
   const { result: aggrStreamedPostCounts, isLoading: isLoadingStreamedPosts } = useApiData([], "aggregate/streamed_post_counts", {
     type: coinType
-  }, [currentTime, streamingRealtime], (params) => params[0] !== params[1] && streamingRealtime)
+  }, [currentTime, streamingRealtime], (params) => params[0] && streamingRealtime)
   // Defining their merge.
   const [shownAggrPostCounts, setShownAggrPostCounts] = useState([])
   const isLoadingPostCounts = useMemo(() => isLoadingOldPosts || isLoadingStreamedPosts, [isLoadingOldPosts, isLoadingStreamedPosts])

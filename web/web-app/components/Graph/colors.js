@@ -5,4 +5,4 @@ export const gridColor = '#fff';
 export const selectionColor = 'orange';
 export const tooltipColor = "orange";
 export const tooltipReflectionColor = "orange"
-export const volumeLineColor = "rgba(0,255,3,0.99)"
+export const volumeLineColor = "#ff4747"

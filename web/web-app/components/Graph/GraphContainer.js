@@ -1,29 +1,26 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from "react"
 import {PriceGraph} from "./PriceGraph"
 import {Bar} from "@vx/shape"
-import {useApiData} from "../../api-hook"
 import {PostGraph} from "./PostGraph"
 import {localPoint} from "@vx/event"
 import {scaleTime} from "@vx/scale"
-import {calculatePoint, timeExtentSeconds, useMouseUpGlobal} from "./misc"
+import {calculatePoint, getDate, getPostCount, getPrice, useHover, useMouseUpGlobal} from "./misc"
 import {useDrag} from "./drag"
 import {usePostCounts, usePrices} from "./data-hooks"
 import {AiOutlineLoading} from "react-icons/ai"
 import {GraphTooltip} from "./GraphTooltip"
+import {SelectedPortion} from "./SelectedPortion"
+import {stockColor, stockStrokeColor, volumeLineColor} from "./colors"
+import {GraphHoverTooltip} from "./GraphHoverTooltip"
 
-export const GraphContainer = ({
-                                 width, height, coinType, currentTime, timeExtent,
-                                 onSelectedRange = () => {
-                                 }
-                               }) => {
-
-  const {result: apiInfo} = useApiData(null, "info", [], [currentTime])
+export const GraphContainer = ({ apiInfo, width, height, coinType, currentTime, timeExtent, sma,
+                                 onSelectedRange = () => {} }) => {
 
   // Calculate the global time scale.
   const globalTimeScale = useMemo(() => {
     if (!apiInfo) return null
     const maxTime = Math.min(apiInfo.last_streamed_post_update, currentTime)
-    const minTime = Math.max(apiInfo.genesis, maxTime - timeExtentSeconds[timeExtent])
+    const minTime = Math.max(apiInfo.genesis, maxTime - apiInfo.available_settings.extents[timeExtent])
     return scaleTime({
       domain: [new Date(minTime * 1000), new Date(maxTime * 1000)],
       range: [0, width]
@@ -47,8 +44,10 @@ export const GraphContainer = ({
     onMouseDownDrag,
     onMouseMoveDrag,
     onMouseUpDrag,
-    minX,
-    maxX,
+    leftX,
+    rightX,
+    startX,
+    endX,
     isDragging
   } = useDrag(width)
 
@@ -63,30 +62,32 @@ export const GraphContainer = ({
     onMouseMoveDrag(event)
   }
   // Convert the drag points to dates.
-  const dragStartDate = useMemo(() => {
-    if (!minX || !globalTimeScale) return null
-    return globalTimeScale.invert(minX * width)
-  }, [minX, width, globalTimeScale])
-
-  const dragEndDate = useMemo(() => {
-    if (!maxX || !globalTimeScale) return null
-    return globalTimeScale.invert(maxX * width)
-  }, [maxX, width, globalTimeScale])
+  const xToDate = useCallback((x) => {
+    if(!x || !globalTimeScale) return null
+    return globalTimeScale.invert(x * width)
+  }, [globalTimeScale, width])
+  const dragStartDate = useMemo(() => xToDate(startX), [startX])
+  const dragEndDate = useMemo(() => xToDate(endX), [endX])
+  const dragLeftDate = useMemo(() => xToDate(leftX), [leftX])
+  const dragRightDate = useMemo(() => xToDate(rightX), [rightX])
 
   // Invoke the callback when necessary.
   useEffect(() => {
-    if (isDragging || !dragStartDate || !dragEndDate) return
-    onSelectedRange(dragStartDate, dragEndDate)
-  }, [dragStartDate, dragEndDate, isDragging])
+    if (isDragging || !dragLeftDate || !dragRightDate) return
+    onSelectedRange(dragLeftDate, dragRightDate)
+  }, [globalTimeScale, dragLeftDate, dragRightDate, isDragging])
 
   // Fetching the prices.
-  const {prices, isLoadingPrices, priceScale} = usePrices(coinType, currentTime, timeExtent, height)
+  const {prices, isLoadingPrices, priceScale} = usePrices(coinType, currentTime, apiInfo, timeExtent, height)
 
   // Fetching the post counts.
-  const {postCounts, isLoadingPostCounts, postCountScale} = usePostCounts(coinType, currentTime, timeExtent, height)
+  const {postCounts, isLoadingPostCounts, postCountScale} = usePostCounts(coinType, currentTime, timeExtent, sma, height)
 
   const isLoading = useMemo(() => isLoadingPrices || isLoadingPostCounts,
     [isLoadingPostCounts, isLoadingPrices])
+
+  const { hoveredPoint: hoveredPricePoint } = useHover(hoveredDate, prices)
+  const { hoveredPoint: hoveredPostPoint } = useHover(hoveredDate, postCounts)
 
   return (
     <div ref={graphContainerRef} className="relative">
@@ -98,17 +99,38 @@ export const GraphContainer = ({
       <svg width={width} height={height}>
         <PriceGraph width={width} height={height}
                     prices={prices} priceScale={priceScale}
-                    hoveredDate={hoveredDate}
-                    dragStartDate={dragStartDate}
-                    dragEndDate={dragEndDate}
+                    isDragging={isDragging}
                     timeScale={globalTimeScale}/>
         <PostGraph width={width} height={height}
                    postCounts={postCounts} postCountScale={postCountScale}
-                   hoveredDate={hoveredDate}
-                   dragStartDate={dragStartDate}
-                   dragEndDate={dragEndDate}
+                   isDragging={isDragging}
                    lastEpoch={apiInfo ? new Date(apiInfo.last_epoch * 1000) : null}
                    timeScale={globalTimeScale}/>
+        { globalTimeScale && (
+        <>
+          <SelectedPortion points={prices}
+                           leftDate={dragLeftDate} rightDate={dragRightDate}
+                           startDate={dragStartDate} endDate={dragEndDate}
+                           xscale={globalTimeScale} yscale={priceScale}
+                           getY={getPrice} getX={getDate}
+                           selectionFilledColor={stockColor}
+                           selectionAreaBorderColor={stockStrokeColor}
+                           circleFillColor={stockColor} />
+          <SelectedPortion points={postCounts}
+                           leftDate={dragLeftDate} rightDate={dragRightDate}
+                           startDate={dragStartDate} endDate={dragEndDate}
+                           xscale={globalTimeScale} yscale={postCountScale}
+                           getY={getPostCount} getX={getDate}
+                           selectionStrokeColor={volumeLineColor}
+                           circleFillColor={volumeLineColor} />
+          </>
+          )}
+        { hoveredDate && (
+          <GraphHoverTooltip yMax={height} postScale={postCountScale} priceScale={priceScale}
+                             timeScale={globalTimeScale} hoveredDate={hoveredDate}
+                             hoveredPricePoint={hoveredPricePoint}
+                             hoveredPostPoint={hoveredPostPoint}/>
+        )}
         <Bar x={0} y={0} width={width} height={height}
              draggable={"true"}
              fill="transparent"
@@ -119,8 +141,8 @@ export const GraphContainer = ({
       <GraphTooltip width={width} height={height} xMax={width}
                     xscale={globalTimeScale} date={hoveredDate}
                     priceScale={priceScale} postScale={postCountScale}
-                    pricePoint={calculatePoint(hoveredDate, prices)}
-                    postPoint={calculatePoint(hoveredDate, postCounts)}/>
+                    pricePoint={hoveredPricePoint}
+                    postPoint={hoveredPostPoint}/>
     </div>
   )
 

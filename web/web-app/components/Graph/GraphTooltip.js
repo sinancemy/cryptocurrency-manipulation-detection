@@ -9,7 +9,7 @@ export const GraphTooltip =  ({ xMax, yMax, date, xscale, priceScale, postScale,
   const top = useMemo(() => (priceScale && postScale && pricePoint && postPoint) ? (priceScale(getPrice(pricePoint)) + postScale(getPostCount(postPoint)))/2 : null,
     [priceScale, postScale, pricePoint, postPoint] )
 
-  return (date && left && top && pricePoint && postPoint &&
+  return (!(date && left && top && pricePoint && postPoint) ? null :
       <>
         <Tooltip width={120}
           left={Math.max(Math.min(xMax-130, left), 120)}

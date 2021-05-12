@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy import desc
 
 from app.blueprints.api_blueprint import api_blueprint, request
-from app.blueprints.stream_blueprint import stream_blueprint, stream_update_lock
+from app.blueprints.stream_blueprint import stream_blueprint
 from backend.processor.aggregate_post_count import create_aggregate_post_counts, create_streamed_aggregate_post_counts
 from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
 from data.collector.twitter import TwitterCrawler
@@ -61,12 +61,12 @@ def update_posts():
     for coin in COINS:
         for cr in cached_post_readers:
             cr.collector.settings.coin = coin
-            new_posts += cr.read_cached(effective_time_range)
+            # new_posts += cr.read_cached(effective_time_range)
     # Post-processing...
     # update_impacts(new_posts)
     # groups = list(filter(lambda s: s.startswith("*"), get_all_sources()))
     # create_aggregate_post_impacts(coin_types, groups, effective_time_range)
-    create_aggregate_post_counts(COINS, [], effective_time_range)
+    create_aggregate_post_counts(COINS, [], TimeRange(START_TIME, last_update))
     return "ok"
 
 
@@ -94,16 +94,13 @@ def update_stream():
     if curr_time is None:
         print("Update stream endpoint: Invalid time. Using current time.")
         curr_time = time.time()
-    stream_update_lock.acquire()
     # Get last update time.
     last_update = get_last_stream_update_time()
     print("Update stream endpoint: Updating from", last_update)
     if last_update is None:
         print("No streamed posts received yet.")
-        stream_update_lock.release()
         return "ok"
     create_streamed_aggregate_post_counts(COINS, [], TimeRange(last_update + 1, curr_time))
     # TODO: Deploy notifications.
     db.session.commit()
-    stream_update_lock.release()
     return "ok"

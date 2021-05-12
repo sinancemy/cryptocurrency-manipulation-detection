@@ -5,7 +5,7 @@ import numpy
 from flask import Blueprint
 from sqlalchemy import desc, and_, or_, func
 
-from backend.processor.aggregate_post_count import SMA_MAP
+from backend import api_settings
 from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact, \
     StreamedAggregatePostCount, StreamedPost
 from misc import FollowType
@@ -19,17 +19,18 @@ api_blueprint = Blueprint("api", __name__)
 def get_info():
     genesis = db.session.query(Price.time).order_by(Price.time).first()[0]
     last_epoch = db.session.query(Post.time).order_by(desc(Post.time)).first()[0]
-    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time)\
-        .order_by(desc(StreamedAggregatePostCount.time))\
+    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time) \
+        .order_by(desc(StreamedAggregatePostCount.time)) \
         .first()[0]
-    last_price_update = db.session.query(Price.time)\
-        .order_by(desc(Price.time))\
+    last_price_update = db.session.query(Price.time) \
+        .order_by(desc(Price.time)) \
         .first()[0]
     return jsonify({
         "genesis": genesis,
         "last_epoch": last_epoch,
         "last_streamed_post_update": last_streamed_post_update,
-        "last_price_update": last_price_update
+        "last_price_update": last_price_update,
+        "available_settings": api_settings.get_as_dict()
     })
 
 
@@ -46,8 +47,8 @@ def create_source_conditions(sources: list, model) -> list:
 
 
 def prepare_post_query(model, start, end, coin_type, sources, order_by, orderable_columns, from_bound, desc, limit):
-    query = db.session.query(model)\
-        .filter(model.time >= start)\
+    query = db.session.query(model) \
+        .filter(model.time >= start) \
         .filter(model.time <= end)
     if coin_type is not None:
         query = query.filter(model.coin_type == coin_type)
@@ -66,6 +67,7 @@ def prepare_post_query(model, start, end, coin_type, sources, order_by, orderabl
         else:
             query = query.order_by(model.__table__.c[order_by])
     return query.limit(limit)
+
 
 @api_blueprint.route("/posts")
 def get_posts():
@@ -95,7 +97,8 @@ def get_posts():
     else:
         from_bound = None
     posts = [dataclasses.asdict(p) for p in
-             prepare_post_query(Post, start, end, coin_type, sources, order_by, ["interaction", "impact", "time", "user"],
+             prepare_post_query(Post, start, end, coin_type, sources, order_by,
+                                ["interaction", "impact", "time", "user"],
                                 from_bound, desc, limit).all()]
     # Replace the impact values by their float array representation.
     for p in posts:
@@ -103,8 +106,8 @@ def get_posts():
         p["streamed"] = False
     # Get the streamed posts.
     streamed_posts = [dataclasses.asdict(p) for p in
-                      prepare_post_query(StreamedPost, start, end, coin_type, sources, order_by, ["time", "user"],
-                                         from_bound, desc, limit).all()]
+                      prepare_post_query(StreamedPost, start, end, coin_type, sources, order_by,
+                                         ["time", "user"], from_bound, desc, limit).all()]
     for p in streamed_posts:
         p["avg_impact"] = 0
         p["impact"] = [0, 0, 0, 0]
@@ -191,26 +194,15 @@ def get_streamed_aggregate_post_counts():
     return jsonify(post_counts)
 
 
-EXTENT_SECONDS_MAP = {
-    'd': 60 * 60 * 24,
-    'w': 60 * 60 * 24 * 7,
-    'm': 60 * 60 * 24 * 30,
-    'y': 60 * 60 * 24 * 365,
-}
-
-
 @api_blueprint.route("/aggregate/post_counts")
 def get_aggregate_post_counts():
-    extent = request.args.get("extent", type=str, default="d")
+    extent = request.args.get("extent", type=str, default=None)
+    sma = request.args.get("sma", type=str, default=None)
     coin_type = get_coin_type_arg()
-    last_crawled_post = db.session.query(Post.time).order_by(desc(Post.time)).limit(1).first()
-    if last_crawled_post is None:
-        end = 0
-    else:
-        end = last_crawled_post.time
-    if extent not in EXTENT_SECONDS_MAP.keys():
-        extent = "d"
-    start = max(end - EXTENT_SECONDS_MAP[extent], 0)
+    extent = api_settings.check_extent(extent)
+    sma = api_settings.check_sma(extent, sma)
+    end = api_settings.get_last_epoch()
+    start = max(end - api_settings.EXTENT_TO_SECONDS[extent], 0)
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     post_counts = AggregatePostCount.query \
@@ -218,16 +210,15 @@ def get_aggregate_post_counts():
         .filter(AggregatePostCount.time >= start) \
         .filter(AggregatePostCount.source == "coin:" + coin_type.value) \
         .all()
-    if extent not in SMA_MAP.keys():
-        return jsonify({"result": "error", "error_msg": "Invalid SMA."})
     post_counts = [dataclasses.asdict(p) for p in post_counts]
     for p in post_counts:
         # Select the correct SMA
         smas = json.loads(p['smas'])
-        p['sum'] = smas[extent]
+        p['sum'] = smas[sma]
         p.pop('smas')
     # Remove unnecessary data.
-    post_counts = post_counts[::SMA_MAP[extent]]
+    sma_window = int(api_settings.SMA_TO_SECONDS[sma] / api_settings.POST_COUNT_INTERVAL)
+    post_counts = post_counts[::sma_window]
     return jsonify(post_counts)
 
 
