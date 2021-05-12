@@ -10,7 +10,7 @@ import Link from "next/link"
 
 export default function Profile() {
   useRequireLogin()
-  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user } = useUser()
+  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user, updateUser } = useUser()
   const followedGroups = useMemo(() => followedSources.filter(f => f.target.startsWith("*@")), [followedSources])
   const followedUsers = useMemo(() => followedSources.filter(f => !f.target.startsWith("*@")), [followedSources])
   const [oldPassword, setOldPassword] = useState(null)
@@ -41,6 +41,15 @@ export default function Profile() {
   [correctPassword, correctReenteredPassword])
 
   const [selectedPage, setSelectedPage] = useState(0)
+
+  const onSubmit = useCallback((e) => {
+    e.preventDefault()
+    const endpoint = "update"
+        updateUser(endpoint, {
+          password: correctPassword,
+          email: correctEmail,
+        })
+  }, [canSubmit, correctPassword, correctEmail])
 
   return (
     <div className="animate-fade-in-down">
@@ -111,6 +120,7 @@ export default function Profile() {
               <DashboardPanel.Body>
               <TabbedView options={["Change Email", "Change Password"]}>
                   <div>
+                  <form onSubmit={onSubmit}>
                   <FormInput2 type={"text"} 
                      type={"text"} 
                      label={"Enter Old E-mail"} 
@@ -136,8 +146,10 @@ export default function Profile() {
                           "Change Email"
                         )}
                     </button>
+                    </form>
                     </div>
                     <div>
+                    <form onSubmit={onSubmit}>
                     <FormInput2 type={"password"} 
                       label={"Enter Old Password"} 
                       placeholder={"Old password"} 
@@ -170,6 +182,7 @@ export default function Profile() {
                           "Change Password"
                         )}
                     </button>
+                    </form>
                     </div>
                   </TabbedView>
               </DashboardPanel.Body>

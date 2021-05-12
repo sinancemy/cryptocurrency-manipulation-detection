@@ -4,29 +4,40 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading } from "react-icons/ai";
 import { FormInput } from "../../components/FormInput";
 import { useRequireGuest, useUser } from "../../user-hook";
-import Link from "next/link"
 
 export default function ForgotPassword() {
   //useRequireGuest()
 
   const router = useRouter()
-  const { register, login } = useUser()
-  const [correctEmail, setCorrectEmail] = useState(null)
-  const [usernameErrorMsg, setUsernameErrorMsg] = useState("");
-  const [emailErrorMsg, setEmailErrorMsg] = useState("");
+  const { updateUser} = useUser()
+  const [correctPassword, setCorrectPassword] = useState(null)
+  const [correctReenteredPassword, setCorrectReenteredPassword] = useState(null)
+
   const [errorMsg, setErrorMsg] = useState("")
   const [successMsg, setSuccessMsg] = useState("");
   const [isLoading, setLoading] = useState(false);
 
   // Username field checker.
-  const emailChecker = useCallback((val) => {
-    const re = /^\S+@\S+$/
-    const valid = re.test(val.toLowerCase())
-    return [valid, "Invalid e-mail."]
+  const simpleFieldChecker = useCallback((val) => {
+    if (val === "") {
+      return [false, "This field is required."]
+    } else if (val.length < 5) {
+      return [false, "Too short."]
+    }
+    return [true, null]
   }, [])
 
-  const canSubmit = useMemo(() => correctEmail, 
-  [correctEmail])
+  const canSubmit = useMemo(() => correctPassword && correctReenteredPassword, 
+  [correctPassword, correctReenteredPassword])
+
+  const onSubmit = useCallback((e) => {
+    e.preventDefault()
+    const endpoint = "update"
+    updateUser(endpoint, {
+      password: correctPassword,
+      email: "",
+    })
+  }, [correctPassword])
 
 
   return (
@@ -34,11 +45,11 @@ export default function ForgotPassword() {
       <div className="p-5 md:p-0 mx-auto md:w-full md:max-w-md">
         <div className="px-5 py-7">
           <div className="rounded-t-lg bg-white py-5 px-5 shadow-lg">
-            <h1 className="font-bold text-center text-2xl">Forgot Password?</h1>
+            <h1 className="font-bold text-center text-2xl">Change Password</h1>
           </div>
           <form
             class="bg-gray-50 rounded-b-lg border-t border-b border-gray-200 pt-6 px-6 shadow-lg"
-            onSubmit={""}>
+            onSubmit={onSubmit}>
             {successMsg !== "" ? (
               <div
                 class="animate-fade-in-down bg-green-100 border border-green-400 text-sm text-green-700 px-4 py-3 mb-3 rounded relative"
@@ -54,15 +65,21 @@ export default function ForgotPassword() {
               </div>
             ) : null}
             <div class="flex flex-col space-y-2 pb-8">
-            <FormInput 
-                type={"text"} 
-                label={"Enter E-mail"} 
-                placeholder={"Your e-mail"} 
-                errorMsg={emailErrorMsg}
+              <FormInput type={"password"} 
+                label={"Enter New Password"} 
+                placeholder={"New password"} 
+                errorMsg={""}
                 isDisabled={isLoading} 
-                checker={emailChecker}
-                setCorrectValue={setCorrectEmail}  />
-                <Link href="email-sent">
+                checker={simpleFieldChecker} 
+                setCorrectValue={setCorrectPassword}  />
+              <FormInput 
+                type={"password"} 
+                label={"Password (again)"} 
+                placeholder={"Re-enter your new password"}  
+                errorMsg={""}
+                isDisabled={isLoading} 
+                checker={(val) => [val === correctPassword, "Passwords do not match"]} 
+                setCorrectValue={setCorrectReenteredPassword}  />
               <button
                 type="submit"
                 disabled={!canSubmit || isLoading}
@@ -73,7 +90,6 @@ export default function ForgotPassword() {
                   "Reset Password"
                 )}
               </button>
-              </Link>
             </div>
           </form>
         </div>
