@@ -6,10 +6,11 @@ import { SimpleMenu } from "../../components/SimpleMenu"
 import { useCallback, useMemo, useState } from "react"
 import { MenuPages } from "../../components/MenuPages"
 import { FormInput2 } from "../../components/FormInput2";
+import Link from "next/link"
 
 export default function Profile() {
   useRequireLogin()
-  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn } = useUser()
+  const { username, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user } = useUser()
   const followedGroups = useMemo(() => followedSources.filter(f => f.target.startsWith("*@")), [followedSources])
   const followedUsers = useMemo(() => followedSources.filter(f => !f.target.startsWith("*@")), [followedSources])
   const [oldPassword, setOldPassword] = useState(null)
@@ -18,7 +19,7 @@ export default function Profile() {
   const [isLoading, setLoading] = useState(false);
   const [oldEmail, setOldEmail] = useState(null)
   const [correctEmail, setCorrectEmail] = useState(null)
-  const [emailErrorMsg, setEmailErrorMsg] = useState("");
+  const [emailErrorMsg, setEmailErrorMsg] = useState("")
 
   // Username field checker.
   const simpleFieldChecker = useCallback((val) => {
@@ -40,6 +41,7 @@ export default function Profile() {
   [correctPassword, correctReenteredPassword])
 
   const [selectedPage, setSelectedPage] = useState(0)
+
   return (
     <div className="animate-fade-in-down">
       <div className="text-white bg-gray-900 mt-4">
@@ -178,9 +180,11 @@ export default function Profile() {
               </DashboardPanel.Header>
               <DashboardPanel.Body>
                 <div>Your account will be deleted permanently.</div>
-                <button className="bg-yellow-50 text-blue-50 py-2 px-4 my-5 rounded">
+                <div>
+                <button className="bg-yellow-50 text-blue-50 py-2 px-4 my-5 rounded" onClick={delete_user}>
                   Delete Account
                 </button>
+                </div>
               </DashboardPanel.Body>
             </DashboardPanel>
           </MenuPages>

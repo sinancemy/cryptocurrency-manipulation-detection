@@ -147,6 +147,15 @@ def update_user(form, session):
     return jsonify({"result": "ok"})
 
 
+@user_blueprint.route("/delete_user", methods=["POST"])
+@login_required
+def delete_user(form, session):
+    user = User.query.filter_by(id=session.user_id).first()
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
 @user_blueprint.route("/follow/create", methods=["POST"])
 @login_required
 def create_follow(form, session):

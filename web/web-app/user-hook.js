@@ -88,6 +88,10 @@ const useUserProvider = () => {
       }
     }, false)
   }, [])
+  // Deletes the user.
+  const delete_user = useCallback(() => {
+    updateUser("delete_user", {}, () => removeCookie("token"))
+  }, [])
 
   // Notification stuff...
   // By default, the notifications are empty, unless updateNotifications is called at least once!
@@ -123,7 +127,7 @@ const useUserProvider = () => {
           notifications: notifications, updateNotifications: updateNotifications, readAllNotifications: readAllNotifications, discardNotification: discardNotification,
           followedCoins: followedCoins, followedSources: followedSources, 
           isFollowing: isFollowing, areNotificationsOn: areNotificationsOn, 
-          refetchUser: updateUserInfo, logout: logout }
+          refetchUser: updateUserInfo, logout: logout, delete_user: delete_user }
 }
 
 // Custom Hook to redirect to the login page if needed.
