@@ -18,7 +18,7 @@ export const PriceGraph = ({ width, height, timeScale, hoveredDate, dragStartDat
   const { hoveredPoint } = useHover(hoveredDate, prices)
   const isSelecting = useMemo(() => dragStartDate && dragEndDate, [dragStartDate, dragEndDate])
 
-  return  (
+  return  (timeScale &&
     <g>
       <GridRows
         scale={priceScale}

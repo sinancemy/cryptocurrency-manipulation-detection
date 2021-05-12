@@ -1,7 +1,7 @@
-import {useCallback, useMemo, useState} from "react"
+import {useCallback, useEffect, useMemo, useState} from "react"
 import {localPoint} from "@vx/event"
 
-export const useDrag = (width, onDragComplete = () => {}) => {
+export const useDrag = (width) => {
   const [start, setStart] = useState(null)
   const [end, setEnd] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -18,12 +18,6 @@ export const useDrag = (width, onDragComplete = () => {}) => {
 
   const onMouseUpDrag = useCallback(() => {
     setIsDragging(false)
-    if(minX.valueOf() === maxX) {
-      setStart(null)
-      setEnd(null)
-      return
-    }
-    onDragComplete(minX, maxX)
   }, [minX, maxX])
 
   const onMouseDownDrag = useCallback((event) => {
@@ -37,12 +31,17 @@ export const useDrag = (width, onDragComplete = () => {}) => {
   const onMouseMoveDrag = useCallback((event) => {
     if(!isDragging) return
     const { x } = localPoint(event) || { x: 0 }
-    if(x === start) {
-      setEnd(null)
-      return
-    }
     setEnd(x/width)
   }, [start, width, isDragging])
+
+  // Reset the drag when isDragging is flipped off.
+  useEffect(() => {
+    if(isDragging || !minX || !maxX) return
+    if(minX.valueOf() === maxX.valueOf()) {
+      setStart(null)
+      setEnd(null)
+    }
+  }, [isDragging])
 
   return { isDragging, onMouseDownDrag, onMouseMoveDrag, onMouseUpDrag, minX, maxX }
 }

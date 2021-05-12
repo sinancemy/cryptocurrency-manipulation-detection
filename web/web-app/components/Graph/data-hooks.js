@@ -39,7 +39,7 @@ export const usePostCounts = (coinType, currentTime, timeExtent, yMax) => {
   // Fetching the realtime post counts.
   const { result: aggrStreamedPostCounts, isLoading: isLoadingStreamedPosts } = useApiData([], "aggregate/streamed_post_counts", {
     type: coinType
-  }, [currentTime], (params) => params[0] !== params[1] && streamingRealtime)
+  }, [currentTime, streamingRealtime], (params) => params[0] !== params[1] && streamingRealtime)
   // Defining their merge.
   const [shownAggrPostCounts, setShownAggrPostCounts] = useState([])
   const isLoadingPostCounts = useMemo(() => isLoadingOldPosts || isLoadingStreamedPosts, [isLoadingOldPosts, isLoadingStreamedPosts])

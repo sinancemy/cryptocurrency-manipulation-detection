@@ -6,13 +6,13 @@ import {SelectedPortion} from "./SelectedPortion"
 
 export const PostGraph = ({ width, height, lastEpoch, hoveredDate, dragStartDate, dragEndDate, timeScale, postCounts, postCountScale }) => {
 
-  const yMax = height
   const xMax = width
+  const yMax = height
 
   const { hoveredPoint, hoveredSlice } = useHover(hoveredDate, postCounts)
   const isSelecting = useMemo(() => dragStartDate && dragEndDate, [dragStartDate, dragEndDate])
 
-  return (
+  return (timeScale &&
     <g>
       <LinePath
         data={postCounts}

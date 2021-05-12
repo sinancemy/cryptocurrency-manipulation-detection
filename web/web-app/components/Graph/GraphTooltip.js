@@ -5,11 +5,11 @@ import {dateToString} from "../../helpers"
 
 export const GraphTooltip =  ({ xMax, yMax, date, xscale, priceScale, postScale, pricePoint, postPoint }) => {
 
-  const left = useMemo(() => xscale(date), [date, xscale])
-  const top = useMemo(() => (priceScale(getPrice(pricePoint)) + postScale(getPostCount(postPoint)))/2,
+  const left = useMemo(() => (xscale && date) ? xscale(date) : null, [date, xscale])
+  const top = useMemo(() => (priceScale && postScale && pricePoint && postPoint) ? (priceScale(getPrice(pricePoint)) + postScale(getPostCount(postPoint)))/2 : null,
     [priceScale, postScale, pricePoint, postPoint] )
 
-  return (date &&
+  return (date && left && top && pricePoint && postPoint &&
       <>
         <Tooltip width={120}
           left={Math.max(Math.min(xMax-130, left), 120)}

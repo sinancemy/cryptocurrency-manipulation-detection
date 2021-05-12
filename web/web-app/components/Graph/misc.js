@@ -69,3 +69,17 @@ export const useHover = (hoveredDate, points, onHover = () => {}, onHoverExit = 
   }, [hoveredPoint])
   return { hoveredPoint }
 }
+
+export const useMouseUpGlobal = (ref, onMouseUp) => {
+  useEffect(() => {
+    const handleMouseUp = (event) => {
+      if (ref.current) {
+        onMouseUp(event)
+      }
+    }
+    document.addEventListener("mouseup", handleMouseUp)
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [ref])
+}
