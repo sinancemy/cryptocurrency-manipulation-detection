@@ -57,7 +57,7 @@ export default function Profile() {
         change_password(oldPassword, correctPassword, (ok) => {
           setSuccessMsg1("Password changed.")
         }, (err) => {
-          setErrorMsg1("Password cannot be changed.")
+          setErrorMsg1("You have entered your current password wrong.")
         })
   }, [canSubmit, correctPassword, oldPassword])
 

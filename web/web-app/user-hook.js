@@ -111,7 +111,7 @@ const change_password = useCallback((oldPassword, newPassword, onSuccess = () =>
     } else {
       onError(res.data)
     }
-  }, false)
+  }, true)
 }, [fetch])
 // Update email
 const change_email = useCallback((password, newEmail, onSuccess = () => {}, onError = () => {}) => {
@@ -124,7 +124,7 @@ const change_email = useCallback((password, newEmail, onSuccess = () => {}, onEr
     } else {
       onError(res.data)
     }
-  }, false)
+  }, true)
 }, [fetch])
   // Deletes the user.
   const delete_user = useCallback(() => {
