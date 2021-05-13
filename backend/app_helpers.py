@@ -30,6 +30,8 @@ def get_token_arg() -> str:
 
 def get_json_arg(form, key, type, default):
     val = form.get(key, default)
+    if val is None:
+        return default
     try:
         val = type(val)
     except (TypeError, ValueError):

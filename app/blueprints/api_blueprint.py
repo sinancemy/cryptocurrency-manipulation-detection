@@ -6,8 +6,8 @@ from flask import Blueprint
 from sqlalchemy import desc, and_, or_, func
 
 from backend import api_settings
-from data.database import Price, AggregatePostCount, Follow, dataclasses, AggregatePostImpact, \
-    StreamedAggregatePostCount, StreamedPost
+from data.database import Price, Follow, dataclasses, StreamedPost
+from data.database.aggregate_models import AggregatePostCount, AggregatePostImpact, StreamedAggregatePostCount
 from misc import FollowType
 from backend.app_helpers import *
 import Levenshtein
@@ -20,8 +20,8 @@ def get_info():
     return jsonify({
         "genesis": api_settings.GENESIS,
         "last_epoch": api_settings.get_last_epoch(),
-        "last_streamed_post_update": api_settings.get_last_stream_update(),
-        "last_price_update": api_settings.get_last_price_update(),
+        "last_streamed_post_update": api_settings.get_last_aggr_stream_time(),
+        "last_price_update": api_settings.get_last_price_time(),
         "available_settings": api_settings.get_as_dict()
     })
 
@@ -193,7 +193,7 @@ def get_aggregate_post_counts():
     coin_type = get_coin_type_arg()
     extent = api_settings.check_extent(extent)
     sma = api_settings.check_sma(extent, sma)
-    end = api_settings.get_last_epoch()
+    end = api_settings.get_last_aggr_post_time()
     start = max(end - api_settings.EXTENT_TO_SECONDS[extent], 0)
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})

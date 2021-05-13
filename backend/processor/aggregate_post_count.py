@@ -5,7 +5,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from backend import api_settings
-from data.database import AggregatePostCount, Post, db, StreamedAggregatePostCount, StreamedPost
+from data.database import Post, db, StreamedPost
+from data.database.aggregate_models import AggregatePostCount, StreamedAggregatePostCount
 from misc import TimeRange, CoinType
 
 

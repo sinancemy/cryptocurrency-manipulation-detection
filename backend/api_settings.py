@@ -1,6 +1,7 @@
 from sqlalchemy import desc
 
-from data.database import db, Post, StreamedAggregatePostCount, Price
+from data.database import db, Post, Price, StreamedPost
+from data.database.aggregate_models import StreamedAggregatePostCount, AggregatePostCount
 from misc import delta_time
 
 GENESIS = 1615386994
@@ -23,7 +24,6 @@ EXTENT_TO_DEFAULT_SMA = {
     "1m": "2h",
     "1y": "1d"
 }
-
 
 SMA_TO_SECONDS = {
     "1m": delta_time.minutes(1),
@@ -62,28 +62,57 @@ def get_as_dict():
 
 
 def get_last_epoch(default=GENESIS):
-    last_crawled_post = db.session.query(Post.time).order_by(desc(Post.time)).limit(1).first()
-    if last_crawled_post is None:
+    return get_last_aggr_post_time(default=default)
+
+
+def get_last_aggr_post_time(default=GENESIS):
+    last_crawled_post_update_time = db.session.query(AggregatePostCount.next_time) \
+        .order_by(desc(AggregatePostCount.next_time)) \
+        .limit(1) \
+        .scalar()
+    if last_crawled_post_update_time is None:
         return default
-    return last_crawled_post.time
+    return last_crawled_post_update_time
 
 
-def get_last_stream_update(default=GENESIS):
-    last_streamed_post_update = db.session.query(StreamedAggregatePostCount.time) \
-        .order_by(desc(StreamedAggregatePostCount.time)) \
-        .first()
-    if last_streamed_post_update is None:
+def get_last_aggr_stream_time(default=GENESIS):
+    last_streamed_post_update_time = db.session.query(StreamedAggregatePostCount.next_time) \
+        .order_by(desc(StreamedAggregatePostCount.next_time)) \
+        .limit(1) \
+        .scalar()
+    if last_streamed_post_update_time is None:
         return default
-    return last_streamed_post_update[0]
+    return last_streamed_post_update_time
 
 
-def get_last_price_update(default=GENESIS):
-    last_price_update = db.session.query(Price.time) \
+def get_last_streamed_post_time(default=GENESIS):
+    last_crawled_post_time = db.session.query(StreamedPost.time) \
+        .order_by(desc(StreamedPost.time)) \
+        .limit(1) \
+        .scalar()
+    if last_crawled_post_time is None:
+        return default
+    return last_crawled_post_time
+
+
+def get_last_crawled_post_time(default=GENESIS):
+    last_crawled_post_time = db.session.query(Post.time) \
+        .order_by(desc(Post.time)) \
+        .limit(1) \
+        .scalar()
+    if last_crawled_post_time is None:
+        return default
+    return last_crawled_post_time
+
+
+def get_last_price_time(default=GENESIS):
+    last_price_update_time = db.session.query(Price.time) \
         .order_by(desc(Price.time)) \
-        .first()
-    if last_price_update is None:
+        .limit(1) \
+        .scalar()
+    if last_price_update_time is None:
         return default
-    return last_price_update[0]
+    return last_price_update_time
 
 
 TRIGGER_TIME_WINDOW_TO_SECONDS = {

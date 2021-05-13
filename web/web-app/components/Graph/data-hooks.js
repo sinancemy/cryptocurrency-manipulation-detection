@@ -35,7 +35,7 @@ export const usePostCounts = (coinType, currentTime, timeExtent, sma, yMax) => {
     type: coinType,
     sma: sma
   }, [currentTime], (params) => params[0] && params[1] && params[2])
-  const streamingRealtime = useMemo(() => timeExtent === 'd' || timeExtent === 'w',
+  const streamingRealtime = useMemo(() => timeExtent === '6h' || timeExtent === '1d' || timeExtent === '1w',
     [timeExtent])
   // Fetching the realtime post counts.
   const { result: aggrStreamedPostCounts, isLoading: isLoadingStreamedPosts } = useApiData([], "aggregate/streamed_post_counts", {

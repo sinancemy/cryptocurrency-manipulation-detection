@@ -1,7 +1,8 @@
 from sqlalchemy import func
 from tqdm import tqdm
 
-from data.database import Post, db, AggregatePostImpact
+from data.database import Post, db
+from data.database.aggregate_models import AggregatePostImpact
 from misc import TimeRange, CoinType, closed_distinct_intervals
 
 
