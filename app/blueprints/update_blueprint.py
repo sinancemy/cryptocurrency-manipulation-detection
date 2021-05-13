@@ -11,7 +11,7 @@ from data.collector.twitter import TwitterCrawler
 from data.collector.yahoo import YahooPriceCrawler
 from data.database import Post, Price, db
 from data.reader.cachedreader import CachedReader
-from misc import CoinType, TimeRange
+from misc import CoinType, TimeRange, delta_time
 
 COINS = [CoinType.btc, CoinType.eth, CoinType.doge]
 
@@ -48,6 +48,20 @@ def collect_prices():
     from_time = api_settings.get_last_price_time(default=GENESIS)
     effective_time_range = TimeRange(from_time + 1, curr_time)
     print("Collect prices endpoint: Collecting new prices within", effective_time_range)
+
+    print(effective_time_range)
+    old_threshold = int(time.time()) - delta_time.days(5)
+    if effective_time_range.in_range(old_threshold):
+
+        old_effective_time_range = TimeRange(effective_time_range.low, old_threshold+5)
+        effective_time_range = TimeRange(old_threshold+5, effective_time_range.high)
+        print("old effective", old_effective_time_range)
+        print("new effective", effective_time_range)
+
+        old_price_reader = CachedReader(YahooPriceCrawler(resolution="1h"), Price)
+        for coin in COINS:
+            old_price_reader.collector.settings.coin = coin
+            old_price_reader.read_cached(old_effective_time_range)
     price_reader = CachedReader(YahooPriceCrawler(resolution="1m"), Price)
     for coin in COINS:
         price_reader.collector.settings.coin = coin
@@ -87,4 +101,4 @@ def update_stream():
 @update_blueprint.route("/notifications", methods=["POST"])
 def update_notifications():
     deploy_notifications(int(time.time()), COINS, [])
-
+    return "ok"

@@ -86,6 +86,8 @@ class NotificationDeployer:
         notify_email = trigger.follow.notify_email
 
         should_send_email = notify_email and not has_unread
+        n = Notification()
+
         return None, False
 
 
