@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import List
+
 from data.database.db import db
-from misc import TriggerTimeWindow, FollowType
+from misc import FollowType
 
 
 @dataclass
@@ -10,8 +12,8 @@ class User(db.Model):
     email: str
     password: str
     salt: str
-    follows: 'Follow'
-    sessions: 'Session'
+    follows: List['Follow']
+    sessions: List['Session']
 
     __tablename__ = "users"
     __bind_key__ = "app"
@@ -49,7 +51,7 @@ class Follow(db.Model):
     type: FollowType
     target: str
     notify_email: bool
-    triggers: 'Trigger'
+    triggers: List['Trigger']
 
     __tablename__ = "follows"
     __bind_key__ = "app"
@@ -67,15 +69,17 @@ class Follow(db.Model):
 class Trigger(db.Model):
     id: int
     follow_id: int
-    time_window: TriggerTimeWindow
+    time_window: str
     threshold: int
+    notifications: List['Notification']
 
     __tablename__ = "triggers"
     __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     follow_id = db.Column(db.Integer, db.ForeignKey("follows.id"), nullable=False)
-    time_window = db.Column(db.Enum(TriggerTimeWindow), nullable=False)
+    time_window = db.Column(db.Enum(db.String), nullable=False)
     threshold = db.Column(db.Integer, nullable=False)
+    notifications = db.relationship("Notification", backref='trigger_notifications', cascade="all, delete", lazy=True)
 
     follow = db.relationship("Follow")
 
@@ -84,6 +88,7 @@ class Trigger(db.Model):
 class Notification(db.Model):
     id: int
     user_id: int
+    trigger_id: int
     content: str
     time: int
     read: bool
@@ -92,6 +97,9 @@ class Notification(db.Model):
     __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    trigger_id = db.Column(db.Integer, db.ForeignKey("triggers.id"), nullable=True)
     content = db.Column(db.Text)
     time = db.Column(db.Integer, nullable=False)
     read = db.Column(db.Boolean, nullable=False, default=False)
+
+    trigger = db.relationship("Trigger")

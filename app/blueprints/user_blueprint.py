@@ -5,10 +5,11 @@ import time
 from flask import Blueprint, request, jsonify, url_for
 from sqlalchemy import desc
 
+from backend import api_settings
 from backend.google_login import construct_request_uri, callback
 from backend.app_helpers import get_json_arg, login_required
 from data.database.app_models import User, db, Session, Follow, Trigger, Notification
-from misc import TriggerTimeWindow, FollowType
+from misc import FollowType
 from backend.password import verify_password, new_password
 
 user_blueprint = Blueprint("user", __name__)
@@ -204,10 +205,12 @@ def update_follow(form, session):
 @login_required
 def create_trigger(form, session):
     follow_id = get_json_arg(form, "follow_id", type=int, default=None)
-    time_window = get_json_arg(form, "time_window", type=TriggerTimeWindow, default=TriggerTimeWindow.one_hour)
+    time_window = get_json_arg(form, "time_window", type=str, default=api_settings.DEFAULT_TRIGGER_TIME_WINDOW)
     threshold = get_json_arg(form, "threshold", type=int, default=5)
     if follow_id is None:
         return jsonify({"result": "error", "error_msg": "No follow id provided."})
+    if time_window not in api_settings.TRIGGER_TIME_WINDOWS:
+        return jsonify({"result": "error", "error_msg": "Invalid time window."})
     follow = Follow.query.filter_by(id=follow_id, user_id=session.user_id).first()
     if follow is None:
         return jsonify({"result": "error", "error_msg": "Invalid follow id."})
@@ -261,10 +264,12 @@ def delete_trigger(form, session):
 @login_required
 def update_trigger(form, session):
     trigger_id = get_json_arg(form, "id", type=int, default=None)
-    time_window = get_json_arg(form, "time_window", type=TriggerTimeWindow, default=None)
+    time_window = get_json_arg(form, "time_window", type=str, default=None)
     threshold = get_json_arg(form, "threshold", type=int, default=None)
     if trigger_id is None:
         return jsonify({"result": "error", "error_msg": "No trigger id provided."})
+    if time_window is None and threshold is None:
+        return jsonify({"result": "error", "error_msg": "Nothing to update."})
     trigger = db.session.query(Trigger).join(Follow) \
         .filter(Follow.user_id == session.user.id) \
         .filter(Trigger.id == trigger_id) \

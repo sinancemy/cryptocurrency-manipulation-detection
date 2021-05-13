@@ -52,7 +52,7 @@ class AggregatePostCount(db.Model):
     time = db.Column(db.Integer)
     next_time = db.Column(db.Integer)
     sum = db.Column(db.Integer)
-    smas = db.Column(db.String)
+    smas = db.Column(db.Text)
     source = db.Column(db.String)
 
 
