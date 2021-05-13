@@ -59,7 +59,7 @@ def collect_prices():
 def update_posts():
     from_time = api_settings.get_last_aggr_post_time(default=GENESIS)
     to_time = api_settings.get_last_crawled_post_time(default=None)
-    if to_time is None or from_time == to_time:
+    if to_time is None or from_time >= to_time:
         return "no new posts"
     effective_time_range = TimeRange(from_time + 1, to_time)
     print("Update posts endpoint: Updating within", effective_time_range)
@@ -74,7 +74,7 @@ def update_posts():
 def update_stream():
     from_time = api_settings.get_last_aggr_stream_time(default=GENESIS)
     to_time = api_settings.get_last_streamed_post_time(default=None)
-    if to_time is None or from_time == to_time:
+    if to_time is None or from_time >= to_time:
         return "no new streamed posts"
     effective_time_range = TimeRange(from_time + 1, to_time)
     print("Update stream endpoint: Updating within", effective_time_range)
