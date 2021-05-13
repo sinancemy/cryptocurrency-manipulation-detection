@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from typing import List
-
 from data.database.db import db
 from misc import FollowType
 
@@ -103,3 +101,17 @@ class Notification(db.Model):
     read = db.Column(db.Boolean, nullable=False, default=False)
 
     trigger = db.relationship("Trigger")
+
+
+
+@dataclass
+class PasswordReset(db.Model):
+    id: int
+    user_id: int
+    code: str
+
+    __tablename__ = "password_resets"
+    __bind_key__ = "app"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    code = db.Column(db.String)

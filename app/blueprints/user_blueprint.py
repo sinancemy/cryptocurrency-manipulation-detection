@@ -2,7 +2,7 @@ import dataclasses
 import secrets
 import time
 
-from flask import Blueprint, request, jsonify, url_for
+from flask import Blueprint, request, jsonify, url_for, current_app
 from sqlalchemy import desc
 
 from backend import api_settings
@@ -11,6 +11,8 @@ from backend.app_helpers import get_json_arg, login_required
 from data.database.app_models import User, db, Session, Follow, Trigger, Notification
 from misc import FollowType
 from backend.password import verify_password, new_password
+from app.main_app import create_app
+from backend.processor.mail_deployment import Mailer
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -144,6 +146,77 @@ def update_user(form, session):
         session.user.salt = salt
     if email is not None:
         session.user.email = email
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/delete_user", methods=["POST"])
+@login_required
+def delete_user(form, session):
+    user = User.query.filter_by(id=session.user_id).first()
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/send_mail", methods=["POST"])
+def send_mail():
+    form = request.get_json()
+    email = get_json_arg(form, "email", type=str, default="")
+    user = User.query.filter(User.email == email).first()
+    if user is None:
+        return jsonify({"result": "error"})
+    code = secrets.token_hex(16)
+    reset = PasswordReset(user_id=user.id, code=code)
+    db.session.add(reset)
+    db.session.commit()
+    app = current_app
+    mailer = Mailer(app)
+    mailer.send_reset_mail(email, code)
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/reset_password", methods=["POST"])
+def reset_password():
+    form = request.get_json()
+    code = get_json_arg(form, "code", type=str, default="")
+    password = get_json_arg(form, "password", type=str, default="")
+    reset = PasswordReset.query.filter_by(code=code).first()
+    if reset is None:
+        return jsonify({"result": "error"})
+    currentUser = User.query.filter_by(id=reset.user_id).first()
+    pw_hash, salt = new_password(password)
+    currentUser.password = pw_hash
+    currentUser.salt = salt
+    db.session.delete(reset)
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/change_password", methods=["POST"])
+@login_required
+def change_password(form, session):
+    form = request.get_json()
+    newPassword = get_json_arg(form, "newPassword", type=str, default="")
+    oldPassword = get_json_arg(form, "oldPassword", type=str, default="")
+    if not verify_password(oldPassword, session.user.password, session.user.salt):
+        return jsonify({"result": "error"})
+    hash, salt = new_password(newPassword)
+    session.user.password = hash
+    session.user.salt = salt
+    db.session.commit()
+    return jsonify({"result": "ok"})
+
+
+@user_blueprint.route("/change_email", methods=["POST"])
+@login_required
+def change_email(form, session):
+    form = request.get_json()
+    password = get_json_arg(form, "password", type=str, default="")
+    newEmail = get_json_arg(form, "newEmail", type=str, default="")
+    if not verify_password(password, session.user.password, session.user.salt):
+        return jsonify({"result": "error"})
+    session.user.email = newEmail
     db.session.commit()
     return jsonify({"result": "ok"})
 
