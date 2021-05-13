@@ -17,6 +17,7 @@ export const GraphHoverTooltip = ({ yMax, hoveredDate, timeScale, priceScale, po
         pointerEvents="none"
         strokeDasharray="5,2"
       />
+      { hoveredPostPoint && (
       <circle
         cx={timeScale(hoveredDate)}
         cy={postScale(getPostCount(hoveredPostPoint))}
@@ -25,7 +26,8 @@ export const GraphHoverTooltip = ({ yMax, hoveredDate, timeScale, priceScale, po
         stroke="white"
         strokeWidth={2}
         pointerEvents="none"
-      />
+      /> )}
+      { hoveredPricePoint && (
       <circle
         cx={timeScale(hoveredDate)}
         cy={priceScale(getPrice(hoveredPricePoint))}
@@ -34,7 +36,7 @@ export const GraphHoverTooltip = ({ yMax, hoveredDate, timeScale, priceScale, po
         stroke="white"
         strokeWidth={2}
         pointerEvents="none"
-      />
+      /> )}
     </g>
   )
 }

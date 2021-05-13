@@ -19,7 +19,7 @@ export const SelectedPortion = ({ points, leftDate, rightDate, startDate, endDat
   const xEnd = useMemo(() => xscale(getX(dragEndPoint)), [xscale, getX, dragEndPoint])
   const yStart = useMemo(() => yscale(getY(dragStartPoint)), [yscale, getY, dragStartPoint])
   const yEnd = useMemo(() => yscale(getY(dragEndPoint)), [yscale, getY, dragEndPoint])
-  const percentChange = useMemo(() => -100 * (yEnd - yStart) / yStart, [yStart, yEnd])
+  const percentChange = useMemo(() => yStart === 0 ? 0 : -100 * (yEnd - yStart) / yStart, [yStart, yEnd])
 
   return (
     <g>

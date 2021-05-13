@@ -8,10 +8,9 @@ from sqlalchemy import desc
 from backend import api_settings
 from backend.google_login import construct_request_uri, callback
 from backend.app_helpers import get_json_arg, login_required
-from data.database.app_models import User, db, Session, Follow, Trigger, Notification
+from data.database.app_models import User, db, Session, Follow, Trigger, Notification, PasswordReset
 from misc import FollowType
 from backend.password import verify_password, new_password
-from app.main_app import create_app
 from backend.processor.mail_deployment import Mailer
 
 user_blueprint = Blueprint("user", __name__)
@@ -131,21 +130,6 @@ def discard_notification(form, session):
     if notification is None:
         return jsonify({"result": "error", "error_msg": "Invalid notification."})
     db.session.delete(notification)
-    db.session.commit()
-    return jsonify({"result": "ok"})
-
-
-@user_blueprint.route("/update", methods=["POST"])
-@login_required
-def update_user(form, session):
-    password = get_json_arg(form, "password", type=str, default=None)
-    email = get_json_arg(form, "email", type=str, default=None)
-    if password is not None:
-        hash, salt = new_password(password)
-        session.user.password = hash
-        session.user.salt = salt
-    if email is not None:
-        session.user.email = email
     db.session.commit()
     return jsonify({"result": "ok"})
 

@@ -36,6 +36,15 @@ class TimeRange(object):
     def equals(self, other):
         return other.low == self.low and self.high == other.high
 
+    def split(self, divisor) -> ('TimeRange', 'TimeRange'):
+        if self.high <= divisor:
+            return self, None
+        if self.low >= divisor:
+            return None, self
+        before_epoch = TimeRange(self.low, divisor)
+        after_epoch = TimeRange(divisor + 1, self.high)
+        return before_epoch, after_epoch
+
     def __repr__(self):
         return "[" + time_to_str(self.low) + ", " + time_to_str(self.high) + "]"
 

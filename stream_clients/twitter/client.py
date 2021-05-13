@@ -42,9 +42,11 @@ def start(driver):
 
 if __name__ == "__main__":
     driver = webdriver.Firefox(firefox_profile=profile)
-    driver.install_addon(EXTENSION_PATH.replace("/", "\\"), temporary=True)
+    driver.install_addon(os.path.abspath(EXTENSION_PATH), temporary=True)
     try:
         print("Initiating the client...")
         start(driver)
+        input()
     except Exception:
         driver.close()
+    driver.close()

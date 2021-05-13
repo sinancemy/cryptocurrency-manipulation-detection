@@ -1,10 +1,12 @@
 import functools
 from typing import Optional
 
-from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
+from data.collector.reddit.archived import ArchivedRedditCrawler
+from data.collector.reddit.realtime import RealtimeRedditCrawler
+from data.collector.reddit.multiplexer import RedditMultiplexedCrawler
 from data.collector.twitter import TwitterCrawler
 
-CRAWLERS = [ArchivedRedditCrawler, RealtimeRedditCrawler, TwitterCrawler]
+CRAWLERS = [RedditMultiplexedCrawler, ArchivedRedditCrawler, RealtimeRedditCrawler, TwitterCrawler]
 
 
 class Source:

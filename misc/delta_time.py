@@ -2,13 +2,17 @@ def seconds(s: int) -> int:
     return s
 
 
-def minutes(m: int) -> int:
-    return m * 60
+def minutes(m: float) -> int:
+    return int(m * 60)
 
 
 def hours(h: float) -> int:
-    return int(h * (60 * 60))
+    return int(minutes(h * 60))
 
 
 def days(d: float) -> int:
-    return int(d * (60 * 60 * 24))
+    return int(hours(d * 24))
+
+
+def months(m: float) -> int:
+    return int(days(m * 30))

@@ -7,10 +7,11 @@ from backend.api_settings import GENESIS
 from backend.processor.aggregate_post_count import create_aggregate_post_counts, create_streamed_aggregate_post_counts
 from backend.processor.notification_deployment import deploy_notifications
 from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
+from data.collector.reddit.multiplexer import RedditMultiplexedCrawler
 from data.collector.twitter import TwitterCrawler
 from data.collector.yahoo import YahooPriceCrawler
 from data.database import Post, Price, db
-from data.reader.cachedreader import CachedReader
+from data.reader.uncachedreader import UncachedReader
 from misc import CoinType, TimeRange, delta_time
 
 COINS = [CoinType.btc, CoinType.eth, CoinType.doge]
@@ -27,15 +28,15 @@ def collect_posts():
     from_time = api_settings.get_last_crawled_post_time(default=api_settings.GENESIS)
     effective_time_range = TimeRange(from_time + 1, curr_time)
     print("Collect posts endpoint: Collecting new posts within", effective_time_range)
-    social_media_crawlers = [TwitterCrawler(), ArchivedRedditCrawler(interval=60 * 60 * 24 * 7,
-                                                                     api_settings={'limit': 2000, 'score': '>4'}),
-                             RealtimeRedditCrawler()]
-    cached_post_readers = list(map(lambda c: CachedReader(c, Post), social_media_crawlers))
+    archived_reddit_crawler = ArchivedRedditCrawler(interval=delta_time.days(1), api_settings={'limit': 2000})
+    realtime_reddit_crawler = RealtimeRedditCrawler()
+    social_media_crawlers = [TwitterCrawler(), RedditMultiplexedCrawler(delta_time.days(2), realtime_reddit_crawler, archived_reddit_crawler)]
+    cached_post_readers = list(map(lambda c: UncachedReader(c, Post), social_media_crawlers))
     new_posts = []
     for coin in COINS:
         for cr in cached_post_readers:
             cr.collector.settings.coin = coin
-            new_posts += cr.read_cached(effective_time_range)
+            new_posts += cr.read_uncached(effective_time_range, save_interval=delta_time.days(10))
     return "ok"
 
 
@@ -58,14 +59,14 @@ def collect_prices():
         print("old effective", old_effective_time_range)
         print("new effective", effective_time_range)
 
-        old_price_reader = CachedReader(YahooPriceCrawler(resolution="1h"), Price)
+        old_price_reader = UncachedReader(YahooPriceCrawler(resolution="1h"), Price)
         for coin in COINS:
             old_price_reader.collector.settings.coin = coin
-            old_price_reader.read_cached(old_effective_time_range)
-    price_reader = CachedReader(YahooPriceCrawler(resolution="1m"), Price)
+            old_price_reader.read_uncached(old_effective_time_range)
+    price_reader = UncachedReader(YahooPriceCrawler(resolution="1m"), Price)
     for coin in COINS:
         price_reader.collector.settings.coin = coin
-        price_reader.read_cached(effective_time_range)
+        price_reader.read_uncached(effective_time_range)
     return "ok"
 
 

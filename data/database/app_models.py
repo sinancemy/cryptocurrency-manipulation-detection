@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from typing import List
+
 from data.database.db import db
 from misc import FollowType
 
@@ -20,8 +22,8 @@ class User(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     salt = db.Column(db.String(16), nullable=False)
-    follows = db.relationship("Follow", backref="user_follows", cascade="all, delete", lazy=True)
-    sessions = db.relationship("Session", backref="user_sessions", cascade="all, delete", lazy=True)
+    follows = db.relationship("Follow", back_populates="user", cascade="all, delete", lazy=True)
+    sessions = db.relationship("Session", back_populates="user", cascade="all, delete", lazy=True)
     notifications = db.relationship("Notification", cascade="all, delete")
 
 
@@ -39,7 +41,7 @@ class Session(db.Model):
     token = db.Column(db.String(16), nullable=False)
     expiration = db.Column(db.Integer, nullable=False)
 
-    user = db.relationship("User")
+    user = db.relationship("User", back_populates="sessions")
 
 
 @dataclass
@@ -58,9 +60,9 @@ class Follow(db.Model):
     type = db.Column(db.Enum(FollowType), nullable=False)
     target = db.Column(db.String, nullable=False)
     notify_email = db.Column(db.Boolean, nullable=False, default=False)
-    triggers = db.relationship("Trigger", backref="follow_triggers", cascade="all, delete", lazy=True)
+    triggers = db.relationship("Trigger", back_populates="follow", cascade="all, delete", lazy=True)
 
-    user = db.relationship("User")
+    user = db.relationship("User", back_populates="follows")
 
 
 @dataclass
@@ -77,9 +79,9 @@ class Trigger(db.Model):
     follow_id = db.Column(db.Integer, db.ForeignKey("follows.id"), nullable=False)
     time_window = db.Column(db.String, nullable=False)
     threshold = db.Column(db.Integer, nullable=False)
-    notifications = db.relationship("Notification", backref='trigger_notifications', cascade="all, delete", lazy=True)
+    notifications = db.relationship("Notification", back_populates='trigger', cascade="all, delete", lazy=True)
 
-    follow = db.relationship("Follow")
+    follow = db.relationship("Follow", back_populates='triggers')
 
 
 @dataclass
@@ -100,8 +102,7 @@ class Notification(db.Model):
     time = db.Column(db.Integer, nullable=False)
     read = db.Column(db.Boolean, nullable=False, default=False)
 
-    trigger = db.relationship("Trigger")
-
+    trigger = db.relationship("Trigger", back_populates="notifications")
 
 
 @dataclass
