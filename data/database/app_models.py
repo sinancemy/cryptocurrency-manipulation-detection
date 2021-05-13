@@ -77,7 +77,7 @@ class Trigger(db.Model):
     __bind_key__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     follow_id = db.Column(db.Integer, db.ForeignKey("follows.id"), nullable=False)
-    time_window = db.Column(db.Enum(db.String), nullable=False)
+    time_window = db.Column(db.String, nullable=False)
     threshold = db.Column(db.Integer, nullable=False)
     notifications = db.relationship("Notification", backref='trigger_notifications', cascade="all, delete", lazy=True)
 
