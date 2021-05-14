@@ -52,7 +52,8 @@ class NotificationDeployer:
         return start_cum, end_cum
 
     @staticmethod
-    def _calculate_aggregate_percent_change(time_range: TimeRange, before_epoch_aggregate_model, after_epoch_aggregate_model, source) -> float:
+    def _calculate_aggregate_percent_change(time_range: TimeRange, before_epoch_aggregate_model,
+                                            after_epoch_aggregate_model, source) -> float:
         before_epoch, after_epoch = NotificationDeployer._split_from_epoch(time_range)
         if before_epoch is not None:
             before_epoch_start, before_epoch_end = NotificationDeployer._calculate_counts(before_epoch,
@@ -78,17 +79,29 @@ class NotificationDeployer:
                                                                        after_epoch_model, aggr_source)
                 self.post_count_change_map[time_window_str][aggr_source] = coin_change
 
-    # Returns the notification and a boolean representing if an e-mail should be sent.
+    # Returns the notification and a boolean representing if an e-mail should be sent, returns None if trigger isn't
+    # triggered.
     def process_trigger(self, trigger: Trigger) -> (Notification, bool):
-        # Check if there are unread notifications that are associated with this trigger.
-        has_unread = any(n.read == 0 for n in trigger.notifications)
-        # Check if the e-mail notifications for this trigger are turned on.
-        notify_email = trigger.follow.notify_email
-
-        should_send_email = notify_email and not has_unread
-        n = Notification()
-
-        return None, False
+        # Lookup the relevant change in the change map.
+        change = self.post_count_change_map[trigger.time_window][trigger.follow.type + ":" + trigger.follow.target]
+        # If the change is above the set threshold...
+        if change > trigger.threshold:
+            # Check if there are unread notifications that are associated with this trigger.
+            has_unread = any(n.read == 0 for n in trigger.notifications)
+            # Check if the e-mail notifications for this trigger are turned on.
+            notify_email = trigger.follow.notify_email
+            # Decide whether to send or not send and email.
+            should_send_email = notify_email and not has_unread
+            # Create notification.
+            message = "%s saw a %s%% increase in the last %s" \
+                      % (trigger.follow.target, "{:.2f}".format(change), trigger.time_window)
+            notification = Notification(user_id=trigger.follow.user_id, trigger_id=trigger.id,
+                                        content=message, time=int(time.time()), read=False)
+            # Add notification to the list of notifications of the trigger.
+            trigger.notifications.append(notification)
+            return notification, should_send_email
+        else:
+            return None, False
 
 
 def deploy_notifications(curr_time: int, coins, sources):
@@ -96,9 +109,9 @@ def deploy_notifications(curr_time: int, coins, sources):
     d.prepare_change_map(AggregatePostCount, StreamedAggregatePostCount, curr_time)
     triggers = Trigger.query.all()
     for t in triggers:
-        notif, should_email = d.process_trigger(t)
-        if notif is not None:
-            db.session.add(notif)
-        if should_email:
+        notification, should_send_email = d.process_trigger(t)
+        if notification is not None:
+            db.session.add(notification)
+        if should_send_email:
             pass
             # send_email
