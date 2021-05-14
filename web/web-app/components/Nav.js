@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "../user-hook";
 import { Notifier } from "./Notifier";
-import { SearchBar } from "./SearchBar";
+import { SearchBar } from "./SearchBar/SearchBar";
 import { FiSettings } from "react-icons/fi";
 import { FaUserCog } from "react-icons/fa";
 import { CuteButton } from "./CuteButton";

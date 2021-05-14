@@ -188,13 +188,10 @@ def get_streamed_aggregate_post_counts():
 
 @api_blueprint.route("/aggregate/post_counts")
 def get_aggregate_post_counts():
-    extent = request.args.get("extent", type=str, default=None)
+    start = request.args.get("start", type=int, default=0)
+    end = request.args.get("end", type=int, default=int(time.time()))
     sma = request.args.get("sma", type=str, default=None)
     coin_type = get_coin_type_arg()
-    extent = api_settings.check_extent(extent)
-    sma = api_settings.check_sma(extent, sma)
-    end = api_settings.get_last_aggr_post_time()
-    start = max(end - api_settings.EXTENT_TO_SECONDS[extent], 0)
     if coin_type is None:
         return jsonify({"result": "error", "error_msg": "Invalid coin type."})
     post_counts = AggregatePostCount.query \

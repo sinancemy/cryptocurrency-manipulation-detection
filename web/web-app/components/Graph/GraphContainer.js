@@ -4,7 +4,7 @@ import {Bar} from "@vx/shape"
 import {PostGraph} from "./PostGraph"
 import {localPoint} from "@vx/event"
 import {scaleTime} from "@vx/scale"
-import {calculatePoint, getDate, getPostCount, getPrice, useHover, useMouseUpGlobal} from "./misc"
+import {getDate, getPostCount, getPrice, useHover, useMouseUpGlobal} from "./misc"
 import {useDrag} from "./drag"
 import {usePostCounts, usePrices} from "./data-hooks"
 import {AiOutlineLoading} from "react-icons/ai"
@@ -16,16 +16,22 @@ import {GraphHoverTooltip} from "./GraphHoverTooltip"
 export const GraphContainer = ({ apiInfo, width, height, coinType, currentTime, timeExtent, sma,
                                  onSelectedRange = () => {} }) => {
 
+  const maxTime = useMemo(() => {
+    if(!apiInfo) return null
+    return apiInfo.last_streamed_post_update
+  }, [apiInfo])
+  const minTime = useMemo(() => {
+    if(!apiInfo || !timeExtent || !maxTime) return null
+    return Math.max(apiInfo.genesis, maxTime - apiInfo.available_settings.extents[timeExtent])
+  }, [apiInfo, maxTime, timeExtent])
   // Calculate the global time scale.
   const globalTimeScale = useMemo(() => {
-    if (!apiInfo) return null
-    const maxTime = Math.min(apiInfo.last_streamed_post_update, currentTime)
-    const minTime = Math.max(apiInfo.genesis, maxTime - apiInfo.available_settings.extents[timeExtent])
+    if (!minTime || !maxTime) return null
     return scaleTime({
-      domain: [new Date(minTime * 1000), new Date(maxTime * 1000)],
-      range: [0, width]
+      domain: [new Date(maxTime * 1000), new Date(minTime * 1000)],
+      range: [width, 0]
     })
-  }, [apiInfo, timeExtent, width])
+  }, [minTime, maxTime])
 
   // Hover stuff...
   const [hoveredX, setHoveredX] = useState(null)
@@ -78,10 +84,10 @@ export const GraphContainer = ({ apiInfo, width, height, coinType, currentTime, 
   }, [globalTimeScale, dragLeftDate, dragRightDate, isDragging])
 
   // Fetching the prices.
-  const {prices, isLoadingPrices, priceScale} = usePrices(coinType, currentTime, apiInfo, timeExtent, height)
+  const {prices, isLoadingPrices, priceScale} = usePrices(coinType, currentTime, minTime, maxTime, height)
 
   // Fetching the post counts.
-  const {postCounts, isLoadingPostCounts, postCountScale} = usePostCounts(coinType, currentTime, timeExtent, sma, height)
+  const {postCounts, isLoadingPostCounts, postCountScale} = usePostCounts(coinType, currentTime, minTime, maxTime, sma, height)
 
   const isLoading = useMemo(() => isLoadingPrices || isLoadingPostCounts,
     [isLoadingPostCounts, isLoadingPrices])

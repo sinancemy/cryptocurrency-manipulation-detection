@@ -2,9 +2,9 @@ import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from
 import { IoMdSettings } from "react-icons/io"
 import { Arrow, useLayer } from "react-laag"
 import AutoUpdater from "./AutoUpdater"
-import { VerticalSelector } from "./VerticalSelector"
-import {GraphContainer} from "./Graph/GraphContainer"
-import {useApiData} from "../api-hook"
+import { VerticalSelector } from "../VerticalSelector"
+import {GraphContainer} from "./GraphContainer"
+import {useApiData} from "../../api-hook"
 
 export const ResponsiveGraph = ({ coinType, autoUpdateSetting, onSelectedRange = () => {}}) => {
 

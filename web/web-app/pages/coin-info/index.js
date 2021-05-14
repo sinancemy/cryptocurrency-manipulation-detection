@@ -10,7 +10,7 @@ import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
 import { PostList } from "../../components/PostList";
 import { SortSelector } from "../../components/SortSelector";
-import { ResponsiveGraph } from "../../components/ResponsiveGraph";
+import { ResponsiveGraph } from "../../components/Graph/ResponsiveGraph";
 
 export default function CoinInfo() {
   useRequireLogin()

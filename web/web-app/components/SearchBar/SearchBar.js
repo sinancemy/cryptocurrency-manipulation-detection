@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import { AiOutlineLoading } from "react-icons/ai"
-import { Arrow, useLayer } from "react-laag"
+import { useLayer } from "react-laag"
 import { debounce } from "throttle-debounce"
-import { useApiData } from "../api-hook"
-import { SimpleCycler } from "./SimpleCycler"
-import { SimpleDropdown } from "./SimpleDropdown"
+import { useApiData } from "../../api-hook"
+import {SearchResultList} from "./SearchResulList"
 
 export const SearchBar = () => {
 
@@ -16,14 +15,11 @@ export const SearchBar = () => {
     query: query
   }, [], (params) => params[1] !== "")
 
-  const [resultsShown, setResultsShown] = useState(false)
   const [focused, setFocused] = useState(false)
 
-  const updateQuery = debounce(500, (input) => {
-    setQuery(input)
-  })
+  const updateQuery = debounce(500, setQuery)
 
-  const updateSearchType = useCallback(() => {
+  const cycleSearchType = useCallback(() => {
     setSearchType(searchType === "coin" ? "group" : searchType === "group" ? "user" : "coin")
   }, [searchType])
 
@@ -50,7 +46,7 @@ export const SearchBar = () => {
           placeholder="Type to search..." />
         { focused && (
         <button className={`p-2 truncate text-xs flex-none text-gray-200 z-50 focus:outline-none`}
-          onClick={updateSearchType}>
+          onClick={cycleSearchType}>
           in {searchType}s
         </button>
         )}
@@ -59,12 +55,11 @@ export const SearchBar = () => {
         <div {...layerProps} className="w-72 text-gray-200">
           <div className={`flex flex-col bg-blue-50 max-h-64 overflow-scroll 
                           border border-gray-400 shadow-lg space-y-1 rounded-md
-                          ${query == "" && "hidden"}`}>
-            {searchResults.map(res => (
-              <div className={`px-2 py-2 hover:bg-gray-900 text-sm ${isLoadingResults && 'opacity-50'}`}>
-                { res }
-              </div>
-              ))}
+                          ${query === "" && "hidden"}`}>
+            <SearchResultList
+              searchResults={searchResults}
+              searchType={searchType}
+              isLoadingResults={isLoadingResults} />
               { searchResults.length === 0 && (
               <div className="px-2 py-2 text-gray-500 text-sm">
                 No results

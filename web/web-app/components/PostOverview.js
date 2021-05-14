@@ -40,7 +40,6 @@ export const PostOverview = ({ post }) => {
   const shouldShowExpander = useMemo(() => isOverflown && !selected, [isOverflown, selected])
 
   return (
-    <div className="my-2">
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} aligned={false}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col px-4 py-2 w-32`}>
@@ -106,7 +105,7 @@ export const PostOverview = ({ post }) => {
             </div>
           </>
           )}
-          <div className={`flex py-1 items-center flex-row lg:justify-end text-xs text-${mutedColor}`}>
+          <div className={`flex py-1 items-center flex-row lg:justify-end text-xs text-${mutedColor} truncate`}>
             <span>
               {dateToString(new Date(post.time*1000))}
             </span>
@@ -114,6 +113,5 @@ export const PostOverview = ({ post }) => {
         </div>
       </MultipurposeCard.Right>
     </MultipurposeCard>
-    </div>
     )
 }

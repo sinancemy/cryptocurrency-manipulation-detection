@@ -9,7 +9,7 @@ import { FormInput2 } from "../../components/FormInput2";
 
 export default function Profile() {
   useRequireLogin()
-  const { username, email, followedCoins, followedSources, areCoinNotificationsOn, areSourceNotificationsOn, delete_user, updateUser, change_email, change_password } = useUser()
+  const { username, email, followedCoins, followedSources, delete_user, updateUser, change_email, change_password } = useUser()
   const followedGroups = useMemo(() => followedSources.filter(f => f.target.startsWith("*@")), [followedSources])
   const followedUsers = useMemo(() => followedSources.filter(f => !f.target.startsWith("*@")), [followedSources])
   const [oldPassword, setOldPassword] = useState(null)
@@ -46,49 +46,43 @@ export default function Profile() {
 
   const [selectedPage, setSelectedPage] = useState(0)
 
-  
   const onSubmit = useCallback((e) => {
     e.preventDefault()
-    const endpoint = "change_password"
-        /*updateUser(endpoint, {
-          newPassword: correctPassword,
-          oldPassword: oldPassword,
-        })*/
-        change_password(oldPassword, correctPassword, (ok) => {
-          setSuccessMsg1("Password changed.")
-        }, (err) => {
-          setErrorMsg1("You have entered your current password wrong.")
-        })
+    change_password(oldPassword, correctPassword, (ok) => {
+      setSuccessMsg1("Password changed.")
+    }, (err) => {
+      setErrorMsg1("You have entered your current password wrong.")
+    })
   }, [canSubmit, correctPassword, oldPassword])
 
   const onSubmit1 = useCallback((e) => {
     e.preventDefault()
-    /*const endpoint = "change_email"
-        updateUser(endpoint, {
-          newEmail: correctEmail,
-          password: correctPassword,
-        })*/
-        change_email(correctPassword,correctEmail, (ok) => {
-          setSuccessMsg("Email changed.")
-        }, (err) => {
-          setErrorMsg("Email cannot be changed.")
-        })
+    change_email(correctPassword, correctEmail, (ok) => {
+      setSuccessMsg("Email changed.")
+    }, (err) => {
+      setErrorMsg("Email cannot be changed.")
+    })
   }, [canSubmit1, correctPassword, correctEmail])
 
   return (
     <div className="animate-fade-in-down">
-      <div className="text-white bg-gray-900 mt-4">
-        <div className="container mx-auto py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <img className="h-212 w-24" alt="profile picture" />
-              <span className="text-xl ml-4">{username}</span>
-            </div>
-          </div>
-        </div>
-      </div>
       <div className="flex flex-row pt-2 space-x-2 justify-center">
-        <div className="">
+        <div>
+          <DashboardPanel collapsable={false}>
+            <DashboardPanel.Header>
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+              <div className={"flex flex-col items-center space-y-2"}>
+                <img style={{"border-radius": "50%"}}
+                     width={64} height={64}
+                     src={"images/default-user-image.png"}
+                />
+                <div>
+                  { username }
+                </div>
+              </div>
+            </DashboardPanel.Body>
+          </DashboardPanel>
           <DashboardPanel collapsable={false}>
             <DashboardPanel.Header>
               Menu
@@ -239,7 +233,7 @@ export default function Profile() {
                   </TabbedView>
               </DashboardPanel.Body>
             </DashboardPanel>
-          <DashboardPanel restrictedHeight={false} collapsable={false}>
+            <DashboardPanel restrictedHeight={false} collapsable={false}>
               <DashboardPanel.Header>
                 Delete Your Account
               </DashboardPanel.Header>

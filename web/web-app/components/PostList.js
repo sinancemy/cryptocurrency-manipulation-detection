@@ -72,7 +72,7 @@ export const PostList = ({ selectedRange = "all", coinType = "all", selectedSour
               <AiOutlineLoading className="animate-spin" />
           </div>
         )}
-        <div className={`overflow-y-auto max-h-128 ${isLoadingPosts && 'opacity-50'}`}>
+        <div className={`flex flex-col space-y-2 overflow-y-auto max-h-128 ${isLoadingPosts && 'opacity-50'}`}>
           {shownPosts.map(post => (
             <PostOverview post={post} />
           ))}

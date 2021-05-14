@@ -11,7 +11,7 @@ import { IoMdSettings } from "react-icons/io"
 import { Prediction } from "../../components/Prediction"
 import { PostList } from "../../components/PostList"
 import { SortSelector } from "../../components/SortSelector"
-import { ResponsiveGraph } from "../../components/ResponsiveGraph"
+import { ResponsiveGraph } from "../../components/Graph/ResponsiveGraph"
 
 export default function DashboardPage() {  
   useRequireLogin()
@@ -63,7 +63,7 @@ export default function DashboardPage() {
                               showPostsFromOption, showPostsOption, showPostVolume, selectedPostRange, impactMap,
                               selectedSources, coinType]
 
-  return useMemo(() => (coinType &&
+  return useMemo(() => (
     <div>
       <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col
                       lg:flex lg:flex-row lg:justify-center">
@@ -73,7 +73,7 @@ export default function DashboardPage() {
                 Followed Coins
             </DashboardPanel.Header>
             <DashboardPanel.Body>
-              {followedCoins && followedCoins.length > 0 ? 
+              {coinType && followedCoins && followedCoins.length > 0 ?
                 followedCoins.map(follow => (
                   <div className="mt-2"> 
                     <CoinCard 
@@ -138,12 +138,19 @@ export default function DashboardPage() {
         </div>
         <div className="px-1 w-3/5 flex-none">
           <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
+            {coinType && (
               <ResponsiveGraph
                 coinType={coinType}
                 showPostVolume={showPostVolume}
                 timeWindowSetting={true}
                 autoUpdateSetting={true}
                 onSelectedRange={handleGraphSelect} />
+            )}
+            {!coinType && (
+              <div className={"text-white p-2"}>
+                Please choose a coin to analyze.
+              </div>
+            )}
             </div>
           <div>
             <DashboardPanel collapsable={false} restrictedHeight={false} width={'full'}>
