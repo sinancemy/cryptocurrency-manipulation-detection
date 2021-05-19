@@ -1,7 +1,8 @@
 import dataclasses
 from dataclasses import dataclass
+
 from misc import CoinType
-from data.database.config import db
+from data.database.db import db
 
 
 @dataclass
@@ -15,6 +16,7 @@ class Post(db.Model):
     time: int
     unique_id: str
     impact: bytes
+    avg_impact: float
     type: str
 
     __tablename__ = "posts"
@@ -27,30 +29,12 @@ class Post(db.Model):
     interaction = db.Column(db.Integer)
     time = db.Column(db.Integer)
     unique_id = db.Column(db.String)
-    impact = db.Column(db.Float, default=0)
+    impact = db.Column(db.LargeBinary, default=b'')
+    avg_impact = db.Column(db.Float, default=0.0)
     type = db.Column(db.String)
 
     def copy(self):
         return dataclasses.replace(self)
-
-
-@dataclass
-class PostVolume(db.Model):
-    id: int
-    time: int
-    next_time: int
-    volume: int
-    count: int
-    source: str
-
-    __tablename__ = "post_volumes"
-    __bind_key__ = "data"
-    id = db.Column(db.Integer, primary_key=True)
-    time = db.Column(db.Integer)
-    next_time = db.Column(db.Integer)
-    volume = db.Column(db.Integer)
-    count = db.Column(db.Integer)
-    source = db.Column(db.String)
 
 
 @dataclass

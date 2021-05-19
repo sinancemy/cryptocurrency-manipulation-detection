@@ -12,7 +12,7 @@ const bodyColor = "gray-900"
 const textColor = "gray-100"
 const headerTextColor = "gray-100"
 
-export const DashboardPanel = ({ children, collapsable = true, restrictedHeight = true, headerDivisior = false }) => {
+export const DashboardPanel = ({ children, collapsable = true, restrictedHeight = true, headerDivisior = false, width = "full" }) => {
 
   const header = children.find(c => c.type === Header)
   const body = children.find(c => c.type === Body)
@@ -21,7 +21,7 @@ export const DashboardPanel = ({ children, collapsable = true, restrictedHeight 
 
   return useMemo(() => (
         <div 
-          className={`text-${textColor} text-sm mb-2 w-full`}>
+          className={`text-${textColor} text-sm mb-2 w-${width}`}>
           <div 
             className={`text-${headerTextColor} bg-${headerColor} ${headerDivisior && `drop-shadow-md`} ${collapsable && 'cursor-pointer'} flex flex-justify-between ${shown ? 'rounded-t-md' : 'rounded-md'} py-4 px-5`}
             onClick={() => setShown(!collapsable || !shown)}>

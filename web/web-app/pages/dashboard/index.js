@@ -11,7 +11,7 @@ import { IoMdSettings } from "react-icons/io"
 import { Prediction } from "../../components/Prediction"
 import { PostList } from "../../components/PostList"
 import { SortSelector } from "../../components/SortSelector"
-import { ResponsiveGraph } from "../../components/ResponsiveGraph"
+import { ResponsiveGraph } from "../../components/Graph/ResponsiveGraph"
 
 export default function DashboardPage() {  
   useRequireLogin()
@@ -22,22 +22,14 @@ export default function DashboardPage() {
   const [showPostsOption, setShowPostsOption] = useState("relevant")
   const [showPostsFromOption, setShowPostsFromOption] = useState("selected")
 
-  const [graphSettings, setGraphSettings] = useState(null)
+  const [coinType, setCoinType] = useState(null)
   const [showPostVolume, setShowPostVolume] = useState(true)
-  const [graphSelection, setGraphSelection] = useState(null)
   const [selectedSources, setSelectedSources] = useState([])
-
-  const selectedPostRange = useMemo(() => {
-    if(!graphSelection || !graphSettings) return [0, 0]
-    const pw0 = graphSelection.selectedRange[0].valueOf()
-    const pw1 = graphSelection.selectedRange[1].valueOf()
-    return [parseInt(pw0/1000), parseInt(pw1/1000)]
-  }, [graphSelection, graphSettings])
-
+  const [selectedPostRange, setSelectedPostRange] = useState([0, 0])
   const [impactMap, setImpactMap] = useState(new Map())
 
   const calculateImpactMap = useCallback((posts) => {
-    if(posts == null || posts.size == 0) setImpactMap(new Map())
+    if(posts == null || posts.size === 0) setImpactMap(new Map())
     let newImpactMap = new Map()
     for (const p of posts) {
       newImpactMap.set(p.coin_type, [])
@@ -56,213 +48,177 @@ export default function DashboardPage() {
     setImpactMap(newImpactMap)
   })
 
-  const selectedPricePoint = useMemo(() => {
-    if(!graphSelection) return 0
-    return graphSelection.mid
-  }, [graphSelection])
 
-  const selectedPostPoint = useMemo(() => {
-    if(!graphSelection) return 0
-    return graphSelection.midVolume
-  }, [graphSelection])
+  const handleGraphSelect = useCallback((minDate, maxDate) => {
+    setSelectedPostRange([parseInt(minDate.valueOf()/1000),
+      parseInt(maxDate.valueOf()/1000)])
+  }, [])
 
-  // Set the initial graph settings.
+  // Set the initial coin type.
   useEffect(() => {
-    setGraphSettings( {
-      coinType: followedCoins.length > 0 ? followedCoins[0].target : null,
-      extent: "year",
-      timeWindow: 30,
-    })
+    setCoinType(followedCoins.length > 0 ? followedCoins[0].target : null)
   }, [followedCoins])
 
-  const renderDependencies = [followedSources, followedCoins, sortByOption, sortOrderOption, showPostVolume, showPostsFromOption, showPostsOption, showPostVolume, 
-                              graphSelection, selectedPostRange, impactMap, selectedSources]
+  const renderDependencies = [followedSources, followedCoins, sortByOption, sortOrderOption, showPostVolume,
+                              showPostsFromOption, showPostsOption, showPostVolume, selectedPostRange, impactMap,
+                              selectedSources, coinType]
 
-  return useMemo(() => (graphSettings &&
-    <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col lg:grid lg:grid-cols-6">
-      <div className="px-1 col-span-1">
-        <DashboardPanel>
-          <DashboardPanel.Header>
-              Followed Coins
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            {followedCoins && followedCoins.length > 0 ? 
-              followedCoins.map(follow => (
-                <div className="mt-2"> 
-                  <CoinCard 
-                    onToggle={() => setGraphSettings({...graphSettings, coinType: follow.target})}
-                    isSelected={() => graphSettings?.coinType && graphSettings?.coinType === follow.target}
-                    coin={follow.target} />
-                </div>
-              )) : ("Not following any coins.")}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-                <span className="flex-grow"></span>
-                <Link href="/search-coins">
-                <CuteButton>
-                  <IoMdSettings />
-                </CuteButton>
-              </Link>
-             </div>
-          </DashboardPanel.Footer>
-        </DashboardPanel>
-        <DashboardPanel>
-          <DashboardPanel.Header>
-                Followed Sources
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            {followedSources && followedSources.length > 0 ? (
-              followedSources.map(follow => (
-                <div className="mt-2">
-                  <SourceCard 
-                    onToggle={() => {if(selectedSources.includes(follow.target)) {
-                                      setSelectedSources(selectedSources.filter(x => x !== follow.target))
-                                    } else {
-                                      setSelectedSources([...selectedSources, follow.target])
-                                    }}}
-                    isSelected={() => selectedSources.includes(follow.target)}
-                    source={follow.target} />
-                </div>
-              ))
-            ) : ("Not following any sources.")}
-          </DashboardPanel.Body>
-          <DashboardPanel.Footer>
-            <div className="flex flex-row">
-              <CuteButton
-                onClick={() => setSelectedSources([...followedSources?.map(f => f.target)])}
-                isDisabled={() => selectedSources.length === followedSources.length}>
-                Select all
-              </CuteButton>
-              <span className="flex-grow"></span>
-              <CuteButton
-                onClick={() => setSelectedSources([])}
-                isDisabled={() => selectedSources.length === 0}>
-                Unselect all
-              </CuteButton>
-              <span className="flex-grow"></span>
-              <Link href="/search-sources">
-                <CuteButton>
-                  <IoMdSettings />
-                </CuteButton>
-              </Link>
-             </div>  
-          </DashboardPanel.Footer>
-        </DashboardPanel>
-      </div>
-      <div className="px-1 col-span-4">
-        <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
-            <ResponsiveGraph
-              coinType={graphSettings.coinType}
-              showPostVolume={showPostVolume}
-              timeWindowSetting={true}
-              autoUpdateSetting={true}
-              onSelected={(p) => { setGraphSelection(p); return true}} />
-          </div>
-        <div>
-          <DashboardPanel collapsable={false} restrictedHeight={false}>
+  return useMemo(() => (
+    <div>
+      <div className="animate-fade-in-down mx-5 mt-3 md:flex md:flex-col
+                      lg:flex lg:flex-row lg:justify-center">
+        <div className="px-1 flex-none">
+        <DashboardPanel width={72}>
             <DashboardPanel.Header>
-              <div className="flex items-center flex-justify-between font-normal">
-                { selectedPostRange  && (
-                <div>
-                  <span>Showing new posts from{" "}</span>
-                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]*1000), false) }</span>
-                  <span>{" "}to{" "}</span>
-                  <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]*1000), false) }</span>
-                </div>
-                )}
-                <span class="flex-grow"></span>
-                <SortSelector
-                  sortByState={[sortByOption, setSortByOption]}
-                  sortOrderState={[sortOrderOption, setSortOrderOption]}
-                  showPostsState={[showPostsOption, setShowPostsOption]}
-                  showPostsFromState={[showPostsFromOption, setShowPostsFromOption]} />
-              </div>
+                Followed Coins
             </DashboardPanel.Header>
             <DashboardPanel.Body>
-              <PostList
-                selectedRange={selectedPostRange}
-                coinType={showPostsOption === "all" ? "all" : graphSettings.coinType}
-                selectedSources={selectedSources.length === 0 ? "all" : selectedSources}
-                sortBy={sortByOption}
-                sortOrder={sortOrderOption}
-                onUpdate={calculateImpactMap} />
+              {coinType && followedCoins && followedCoins.length > 0 ?
+                followedCoins.map(follow => (
+                  <div className="mt-2"> 
+                    <CoinCard 
+                      onToggle={() => setCoinType(follow.target)}
+                      isSelected={() => coinType === follow.target}
+                      coin={follow.target} />
+                  </div>
+                )) : ("Not following any coins.")}
             </DashboardPanel.Body>
+            <DashboardPanel.Footer>
+              <div className="flex flex-row">
+                  <span className="flex-grow"></span>
+                  <Link href="/search-coins">
+                  <CuteButton>
+                    <IoMdSettings />
+                  </CuteButton>
+                </Link>
+              </div>
+            </DashboardPanel.Footer>
+          </DashboardPanel>
+          <DashboardPanel width={72}>
+            <DashboardPanel.Header>
+                  Followed Sources
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+              {followedSources && followedSources.length > 0 ? (
+                followedSources.map(follow => (
+                  <div className="mt-2">
+                    <SourceCard 
+                      onToggle={() => {if(selectedSources.includes(follow.target)) {
+                                        setSelectedSources(selectedSources.filter(x => x !== follow.target))
+                                      } else {
+                                        setSelectedSources([...selectedSources, follow.target])
+                                      }}}
+                      isSelected={() => selectedSources.includes(follow.target)}
+                      source={follow.target} />
+                  </div>
+                ))
+              ) : ("Not following any sources.")}
+            </DashboardPanel.Body>
+            <DashboardPanel.Footer>
+              <div className="flex flex-row space-x-2">
+                <CuteButton
+                  onClick={() => setSelectedSources([...followedSources?.map(f => f.target)])}
+                  isDisabled={() => selectedSources.length === followedSources.length}>
+                  Select all
+                </CuteButton>
+                <CuteButton
+                  onClick={() => setSelectedSources([])}
+                  isDisabled={() => selectedSources.length === 0}>
+                  Unselect all
+                </CuteButton>
+                <span className="flex-grow"></span>
+                <Link href="/search-sources">
+                  <CuteButton>
+                    <IoMdSettings />
+                  </CuteButton>
+                </Link>
+              </div>  
+            </DashboardPanel.Footer>
           </DashboardPanel>
         </div>
-      </div>
-      <div className="px-1 col-span-1">
-        <DashboardPanel restrictedHeight={false}>
-          <DashboardPanel.Header>
-            Options
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-          <div className="py-2 border-t border-gray-780 py-3">
-            <label className="flex items-center">
-              <input 
-                type="checkbox"
-                checked={showPostVolume}
-                onClick={() => setShowPostVolume(!showPostVolume)}
-              />
-              <p className="ml-2">Show heartbeat</p>
-            </label>
-            <label className="flex items-center mt-2">
-              <input 
-                type="checkbox"
-              />
-              <p className="ml-2">Denote predictions</p>
-            </label>
-          </div>
-          <div className="pt-2 border-t border-gray-780">
-            <div className="font-bold">
-              Selection
-            </div>
-            <div className="text-md">
-              <div className="px-4 py-4 mt-2 bg-gray-800 rounded-md">
-                {graphSelection ? (
-                <>
-                <div>
-                  { dateToString(new Date(graphSelection.midDate)) }
-                </div>
-                <div>
-                  <span className="font-semibold">{ graphSettings?.coinType?.toUpperCase() }/USD:{" "}</span>
-                  <span>{ selectedPricePoint?.price.toPrecision(5) } </span>
-                </div>
-                <div>
-                  <span className="font-semibold">Posts (cumulative):{" "}</span>
-                  <span className="col-span-4">{ selectedPostPoint?.volume }</span>
-                </div>
-                <div>
-                  <span className="font-semibold">Posts (new):{" "}</span>
-                  <span className="col-span-4">{ selectedPostPoint?.count }</span>
-                </div>
-                <div className="w-full pt-2">
-                  <CuteButton
-                    onClick={() => {
-                      setGraphSelection(null)
-                    }}
-                    size={'md'}>
-                    Clear selection
-                  </CuteButton>
-                </div>
-                </> ) : ("No selection") }
+        <div className="px-1 w-3/5 flex-none">
+          <div className="h-48 mb-2 overflow-hidden rounded-md bg-gray-900">
+            {coinType && (
+              <ResponsiveGraph
+                coinType={coinType}
+                showPostVolume={showPostVolume}
+                timeWindowSetting={true}
+                autoUpdateSetting={true}
+                onSelectedRange={handleGraphSelect} />
+            )}
+            {!coinType && (
+              <div className={"text-white p-2"}>
+                Please choose a coin to analyze.
               </div>
+            )}
             </div>
+          <div>
+            <DashboardPanel collapsable={false} restrictedHeight={false} width={'full'}>
+              <DashboardPanel.Header>
+                <div className="flex items-center flex-justify-between font-normal">
+                  { selectedPostRange  && (
+                  <div>
+                    <span>Showing new posts from{" "}</span>
+                    <span className="font-semibold">{ dateToString(new Date(selectedPostRange[0]*1000), false) }</span>
+                    <span>{" "}to{" "}</span>
+                    <span className="font-semibold">{ dateToString(new Date(selectedPostRange[1]*1000), false) }</span>
+                  </div>
+                  )}
+                  <span className="flex-grow"></span>
+                  <SortSelector
+                    sortByState={[sortByOption, setSortByOption]}
+                    sortOrderState={[sortOrderOption, setSortOrderOption]}
+                    showPostsState={[showPostsOption, setShowPostsOption]}
+                    showPostsFromState={[showPostsFromOption, setShowPostsFromOption]} />
+                </div>
+              </DashboardPanel.Header>
+              <DashboardPanel.Body>
+                <PostList
+                  selectedRange={selectedPostRange}
+                  coinType={showPostsOption === "all" ? "all" : coinType}
+                  selectedSources={selectedSources.length === 0 ? "all" : selectedSources}
+                  sortBy={sortByOption}
+                  sortOrder={sortOrderOption}
+                  onUpdate={calculateImpactMap} />
+              </DashboardPanel.Body>
+            </DashboardPanel>
           </div>
+        </div>
+        <div className="px-1 flex-none">
+        <DashboardPanel width={72}>
+            <DashboardPanel.Header>
+              Options
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
+            <div className="py-2 border-t border-gray-780 py-3">
+              <label className="flex items-center">
+                <input 
+                  type="checkbox"
+                  checked={showPostVolume}
+                  onChange={() => setShowPostVolume(!showPostVolume)}
+                />
+                <p className="ml-2">Show heartbeat</p>
+              </label>
+              <label className="flex items-center mt-2">
+                <input 
+                  type="checkbox"
+                />
+                <p className="ml-2">Denote predictions</p>
+              </label>
+            </div>
           </DashboardPanel.Body>
-        </DashboardPanel>
-        <DashboardPanel>
-          <DashboardPanel.Header>
-            Predictions
-          </DashboardPanel.Header>
-          <DashboardPanel.Body>
-            <div className="mt-2">
+          </DashboardPanel>
+          <DashboardPanel width={72}>
+            <DashboardPanel.Header>
+              Predictions
+            </DashboardPanel.Header>
+            <DashboardPanel.Body>
               { [...impactMap.entries()].map(e => (
                 <Prediction prediction={e[1]} coin={e[0]} />
               ))}
-            </div>
-          </DashboardPanel.Body>
-        </DashboardPanel>
+            </DashboardPanel.Body>
+          </DashboardPanel>
+        </div>
       </div>
     </div>
   ), renderDependencies);

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
-import { getCoinColor, getCoinIcon, getSourceColor, getSourceIcon, getSourceParts } from "../Helpers"
+import { getCoinColor, getCoinIcon, getSourceColor, getSourceIcon, getSourceParts } from "../helpers"
 import { NotifyButton } from "./NotifyButton"
 import { FollowButton } from "./FollowButton"
 import { MultipurposeCard } from "./MultipurposeCard"
@@ -49,7 +49,7 @@ export const FollowOverview = ({ follow }) => {
               </div>
               <div className="flex flex-row space-x-2">
                 { !hasUsername && <>
-                <CuteButton onClick={() => setSelected(!selected)}>
+                <CuteButton onClick={() => setSelected(!selected)} color={`${selected ? 'gray-900' : 'gray-780'}`}>
                   <div className="flex flex-row space-x-1 items-center">
                     <span><HiLightningBolt /></span>
                     <span>{ follow.triggers.length }</span>

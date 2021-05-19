@@ -1,25 +1,23 @@
 import functools
 
 from data.collector import Collector
-from data.database import Database, RangeSelector, MatchSelector
-from data.database.data_models import CachedRange
+from data.database import db, CachedRange
 from misc import TimeRange, interval_to_time_range
 import portion as P
 from tqdm import tqdm
 
 
-def cached_range_reader(db: Database, range_type: str):
-    return list(map(lambda cr: TimeRange(cr.low, cr.high), db.read_cached_ranges_by_type(range_type)))
+def cached_range_reader(range_type: str):
+    cached_ranges = CachedRange.query.filter_by(type=range_type)
+    return list(map(lambda cr: TimeRange(cr.low, cr.high), cached_ranges))
 
 
 # Represents a reader that collects from a collector and caches the results along with the state of the collector into
 # the database.
 class CachedReader(object):
-    def __init__(self, collector: Collector, db: Database, table: str, row_converter):
-        self.db = db
+    def __init__(self, collector: Collector, model):
         self.collector = collector
-        self.table = table
-        self.row_converter = row_converter
+        self.model = model
 
     def read_cached(self, time_range: TimeRange):
         collector_state = self.collector.state()
@@ -33,19 +31,25 @@ class CachedReader(object):
             # Set the type of the model to the operation description/collector state.
             for c in collected:
                 c.type = collector_state
-            self.db.create(self.table, collected)
+            db.session.bulk_save_objects(collected)
+            db.session.commit()
         # Save the cached range information into the database.
         if len(collector_ranges) > 0:
             print("CachedReader: Caching...")
-            self.db.create("cached_ranges",
-                           list(map(lambda r: CachedRange(low=r.low, high=r.high, type=collector_state), collector_ranges)))
-        # Now, read the data from the database.
-        return self.db.read_by(self.table, [RangeSelector("time", time_range.low, time_range.high),
-                                            MatchSelector("type", collector_state)], self.row_converter)
+            cached_ranges = [CachedRange(low=r.low, high=r.high, type=collector_state) for r in collector_ranges]
+            db.session.bulk_save_objects(cached_ranges)
+            db.session.commit()
+        # Now, read the data back from the database.
+        inserted = db.session.query(self.model)\
+            .filter(self.model.time <= time_range.high)\
+            .filter(self.model.time >= time_range.low)\
+            .filter(self.model.type == collector_state)\
+            .all()
+        return inserted
 
     # Returns overlapping ranges, excluded ranges
     def find_ranges(self, range_type: str, requested_range: TimeRange) -> (list, list):
-        cached_ranges = cached_range_reader(self.db, range_type)
+        cached_ranges = cached_range_reader(range_type)
         if len(cached_ranges) == 0:
             return [], [requested_range]
         requested_interval = P.closed(requested_range.low, requested_range.high)

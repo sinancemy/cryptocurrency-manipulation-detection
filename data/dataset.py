@@ -2,14 +2,12 @@ import os.path
 import random
 from pathlib import Path
 
+from flask import Flask
 from torch.utils.data import Dataset
 from torch import FloatTensor, IntTensor
 import numpy as np
 from tqdm import tqdm
 
-from data.collector.postvolume import PostVolumeCalculator
-from data.database import recreate_database, Database, row_to_post_volume
-from data.reader.cachedreader import CachedReader
 from data.reader.datareader import DataReader
 from analysis.trends import analyze_trends
 from data.vectorize import Vocabulary, DiscreteDomain, Vectorizer
@@ -210,10 +208,9 @@ def _example():
 
     dataset = CryptoSpeculationDataset("sample_set_2020_2021", social_media_crawlers=[
         ArchivedRedditCrawler(interval=60 * 60 * 24 * 60, api_settings={'limit': 100, 'score': '>7'},
-                              collect_comments=True),
-        TwitterCrawler()],
+                              collect_comments=True)],
                                        price_crawler=YahooPriceCrawler(resolution="1h"),
-                                       coin_types=[CoinType.btc, CoinType.eth, CoinType.doge],
+                                       coin_types=[CoinType.btc],
                                        time_range=TimeRange(1577836800, 1578836800))
     dataset.save()
 
@@ -222,7 +219,6 @@ def _collect_dataset():
     from data.collector.yahoo import YahooPriceCrawler
     from data.collector.reddit import ArchivedRedditCrawler
     from data.collector.twitter import TwitterCrawler
-    from data.database import recreate_database
 
     dataset = CryptoSpeculationDataset("Jun19_Feb21_Big", social_media_crawlers=[
         ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 2000, 'score': '>4'}),
@@ -234,7 +230,3 @@ def _collect_dataset():
                                        time_range=TimeRange(1559347200, 1612137600))
     dataset.save()
 
-
-if __name__ == "__main__":
-    # recreate_database()
-    _example()

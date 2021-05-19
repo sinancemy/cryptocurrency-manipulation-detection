@@ -5,6 +5,7 @@ import { MultipurposeCard } from "./MultipurposeCard"
 import { MiniImpact } from "./MiniImpact"
 import Link from "next/link"
 import { BsChevronCompactDown } from "react-icons/bs"
+import {MdTimelapse} from "react-icons/md"
 
 const mutedColor = "gray-500"
 const innerColor = "gray-850"
@@ -30,16 +31,15 @@ export const PostOverview = ({ post }) => {
   const [isOverflown, setIsOverflown] = useState(false)
 
   useLayoutEffect(() => {
+    if(!contentRef.current) return
     if (contentRef.current.clientHeight < contentRef.current.scrollHeight) {
       setIsOverflown(true);
     }
   }, [contentRef])
 
   const shouldShowExpander = useMemo(() => isOverflown && !selected, [isOverflown, selected])
-  const shouldShowLink = useMemo(() => !isOverflown|| selected, [isOverflown, selected])
 
-  return (post &&
-    <div className="my-2">
+  return (
     <MultipurposeCard badgeColor={getSourceColor(post.user + '@' + post.source)} aligned={false}>
       <MultipurposeCard.Left>
         <div className={`flex flex-col px-4 py-2 w-32`}>
@@ -84,20 +84,28 @@ export const PostOverview = ({ post }) => {
             </p> 
           }
         </div>
-        
       </MultipurposeCard.Middle>
       <MultipurposeCard.Right>
         <div className={`flex px-4 py-2 flex-col w-32`}>
-          <div className={`px-2 py-1 flex flex-row items-center lg:justify-end text-${getInteractionColor(post.interaction)}`}>
-            <span className="mr-1">
-              {post.interaction}
-            </span>
-            <IoChatbubblesSharp />
-          </div>
-          <div className={`px-2 flex flex-row lg:justify-end text-${mutedColor}`}>
-            <MiniImpact impact={ post.impact } />
-          </div>
-          <div className={`flex py-1 items-center flex-row lg:justify-end text-xs text-${mutedColor}`}>
+          { post.streamed ? (
+            <div className={`px-2 py-1 flex flex-row space-x-1 items-center lg:justify-end text-gray-300`}>
+              <span className={"text-sm"}><MdTimelapse /></span>
+              <span className={"text-xs"}>Streamed</span>
+            </div>
+          ) : (
+          <>
+            <div className={`px-2 py-1 flex flex-row items-center lg:justify-end text-${getInteractionColor(post.interaction)}`}>
+              <span className="mr-1">
+                {post.interaction}
+              </span>
+              <IoChatbubblesSharp />
+            </div>
+            <div className={`px-2 flex flex-row lg:justify-end text-${mutedColor}`}>
+              <MiniImpact avgImpact={post.avg_impact} impact={post.impact} />
+            </div>
+          </>
+          )}
+          <div className={`flex py-1 items-center flex-row lg:justify-end text-xs text-${mutedColor} truncate`}>
             <span>
               {dateToString(new Date(post.time*1000))}
             </span>
@@ -105,6 +113,5 @@ export const PostOverview = ({ post }) => {
         </div>
       </MultipurposeCard.Right>
     </MultipurposeCard>
-    </div>
     )
 }

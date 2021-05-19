@@ -24,7 +24,7 @@ export default function SourceInfo() {
   }, [sourceName])
   const { followedSources } = useUser()
   // Fetch the source info and update it when the user changes.
-  const sourceInfo = useApiData(null, "source_stats", { 
+  const { result: sourceInfo } = useApiData(null, "source_stats", { 
     source: sourceName
   }, [followedSources, sourceName], () => sourceName != null)
   const [sortByOption, setSortByOption] = useState("interaction")

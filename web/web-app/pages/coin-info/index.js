@@ -10,15 +10,14 @@ import { useApiData } from "../../api-hook";
 import { useRouter } from "next/router";
 import { PostList } from "../../components/PostList";
 import { SortSelector } from "../../components/SortSelector";
-import { Graph } from "../../components/Graph";
-import { ResponsiveGraph } from "../../components/ResponsiveGraph";
+import { ResponsiveGraph } from "../../components/Graph/ResponsiveGraph";
 
 export default function CoinInfo() {
   useRequireLogin()
   const router = useRouter()
   const coinName = router.query.coin
   const { user, isFollowingCoin } = useUser()
-  const coinStats = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
+  const { result: coinStats } = useApiData(null, "coin_stats", { type: coinName }, [coinName, user], () => coinName != null)
   const [selectedSources, setSelectedSources] = useState([])
   const [sortByOption, setSortByOption] = useState("interaction")
   const [sortOrderOption, setSortOrderOption] = useState("descending")
@@ -28,7 +27,6 @@ export default function CoinInfo() {
     setSelectedSources(coinStats.top_sources.map(s => s.source))
   }, [coinStats])
 
-  const SimpleResponsiveGraph = Graph
 
   return (!coinName ? "..." :
     <div className="animate-fade-in-down grid grid-cols-12 mt-2 gap-2">
@@ -97,7 +95,6 @@ export default function CoinInfo() {
               coinType={coinName}
               timeWindow={0}
               showPostVolume={true}
-              onSelected={() => false}
               autoUpdateSetting={true} />
           }
         </div>

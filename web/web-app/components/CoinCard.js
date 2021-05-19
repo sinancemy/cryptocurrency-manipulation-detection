@@ -8,7 +8,7 @@ const color = "transparent"
 const selectedColor = "gray-850"
 const textColor = "gray-100"
 
-export const CoinCard = ({ coin, isSelected, onToggle }) => {
+export const CoinCard = ({ coin, isSelected = () => true, onToggle = () => {} }) => {
 
   return (coin && isSelected && onToggle &&
     <div className={`opacity-${isSelected() ? '100 ' : '60 hover:opacity-100'}`}>
@@ -22,7 +22,7 @@ export const CoinCard = ({ coin, isSelected, onToggle }) => {
               type="radio"
               className="hidden"
               name="coin-type"
-              onClick={onToggle}
+              onChange={onToggle}
               checked={isSelected()} />
             <Link href={`/coin-info?coin=` + coin}>
               <span className="hover:underline">

@@ -1,11 +1,12 @@
 import functools
 from typing import Optional
 
-from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
+from data.collector.reddit.archived import ArchivedRedditCrawler
+from data.collector.reddit.realtime import RealtimeRedditCrawler
+from data.collector.reddit.multiplexer import RedditMultiplexedCrawler
 from data.collector.twitter import TwitterCrawler
-from data.database import Database
 
-CRAWLERS = [ArchivedRedditCrawler, RealtimeRedditCrawler, TwitterCrawler]
+CRAWLERS = [RedditMultiplexedCrawler, ArchivedRedditCrawler, RealtimeRedditCrawler, TwitterCrawler]
 
 
 class Source:
@@ -51,21 +52,11 @@ def parse_source(source) -> Optional[Source]:
 
 
 def get_exported_sources() -> list:
-    sources = [c.get_all_sources() for c in CRAWLERS]
+    sources = [[s for s in c.get_all_sources()] for c in CRAWLERS]
     sources_flat = functools.reduce(list.__add__, sources)
     sources_unique = set(sources_flat)
     sources_converted = map(parse_source, sources_unique)
     return list(sources_converted)
-
-
-def get_all_sources(db: Database) -> list:
-    users = db.read_users()
-    users += [{
-        "user": src.user,
-        "source": src.source
-    } for src in get_exported_sources()]
-    uniques_set = {s["user"] + '@' + s["source"] for s in users}
-    return list(uniques_set)
 
 
 if __name__ == "__main__":

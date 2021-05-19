@@ -11,27 +11,27 @@ export default function SearchCoins() {
 
   const isFollowingCoin = useCallback((coin) => isFollowing("coin", coin), [isFollowing])
   const [query, setQuery] = useState("");
-  const coins = useApiData([], "coin_list")
+  const { result: coins } = useApiData([], "coin_list")
   const [filteredCoins, setFilteredCoins] = useState([]);
 
   useEffect(() => {
     if (!query || query.trim() === "") {
-      const rearranged = [...coins.filter(c => isFollowingCoin(c.name)), ...coins.filter(c => !isFollowingCoin(c.name))]
+      const rearranged = [...coins.filter(c => isFollowingCoin(c)), ...coins.filter(c => !isFollowingCoin(c))]
       setFilteredCoins(rearranged)
       return
     }
-    const filtered = coins.filter((coin) => coin.name.toLowerCase().includes(query.toLowerCase()))
-    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+    const filtered = coins.filter((coin) => coin.toLowerCase().includes(query.toLowerCase()))
+    const sorted = [...filtered].sort((a, b) => a.localeCompare(b))
     setFilteredCoins(sorted)
   }, [coins, query, isFollowingCoin])
 
   return (
     <div className="grid grid-cols-3 mt-3 animate-fade-in-down">
       <div className="col-start-2">
-        <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true}>
+        <DashboardPanel collapsable={false} restrictedHeight={true} headerDivisior={true} width={"full"}>
           <DashboardPanel.Header>
             <h1 className="font-bold text-center text-2xl mt-4 mb-4">
-              Search Coins
+              Coins
             </h1>
             <div className="col-start-2 grid grid-cols-12">
               <input
@@ -48,11 +48,11 @@ export default function SearchCoins() {
                   <CoinOverview 
                     isSelected={() => true}
                     setSelected={() => true}
-                    coin={coin.name}
+                    coin={coin}
                     button={(
                       <FollowButton
                         followType={"coin"}
-                        followTarget={coin.name} />
+                        followTarget={coin} />
                     )}/>
                 </div>
               ))}

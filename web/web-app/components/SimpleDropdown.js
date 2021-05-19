@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { HiSortDescending, HiSortAscending } from "react-icons/hi"
+import { Arrow, useLayer } from "react-laag"
 
 const borderColor = "gray-900"
 const color = "gray-800"
@@ -10,41 +11,40 @@ export const SimpleDropdown = ({ options, selected, setSelected }) => {
 
   const [focused, setFocused] = useState(false)
 
+  const {
+    triggerProps,
+    layerProps,
+    arrowProps,
+    renderLayer
+  } = useLayer({
+    isOpen: focused,
+    onOutsideClick: () => setFocused(false),
+    placement: "bottom-center",
+    triggerOffset: 8,
+  })
+
   return (options && selected && setSelected &&
-    <div class="relative inline-block text-left text-xs" 
-      tabIndex="0" 
-      onBlur={() => setFocused(false)}>
+    <div className="relative inline-block text-left text-xs">
       <div>
-          <button 
+          <button {...triggerProps}
             type="button" 
-            className={`flex z-0 focus:ring-white focus:ring-1 items-center border-2 border-${borderColor} px-2 py-1 rounded-md bg-${color} text-${textColor} hover:bg-${hoverColor}`}
+            className={`flex items-center px-2 py-1 rounded-md bg-${color} text-${textColor} hover:bg-${hoverColor}`}
             onClick={() => setFocused(!focused)}>
-            { selected === "descending" ? (
-              <HiSortDescending />
-            ) : selected === "ascending" ? (
-              <HiSortAscending />
-            ) : null}
           <span>{selected}</span>
           </button>
       </div>
-      {focused && (
-        <div 
-          className={`origin-top-right w-24 absolute bg-${color} text-${textColor} overflow-hidden right-0 mt-2 rounded shadow-lg border z-50`} 
-          role="menu" 
-          aria-orientation="vertical" 
-          aria-labelledby="menu-button" 
-          tabindex="-1">
-          <div role="none">
-            {options.filter(opt => opt !== selected).map(opt => (
-                <a href="#"
-                  onMouseDown={() => setSelected(opt)}
-                  className={`block px-3 py-2 hover:bg-${hoverColor}`}
-                  role="menuitem" 
-                  tabindex="-1">
+      {focused && renderLayer(
+        <div {...layerProps} className="z-50">
+          <div className={`flex flex-col w-24 shadow-lg text-xs text-${textColor} rounded-lg overflow-hidden`}>
+            {options.filter(opt => opt !== selected).map((opt) => (
+                <button
+                  onClick={() => { setFocused(false); setSelected(opt) }}
+                  className={`px-3 py-2 bg-${color} hover:bg-${hoverColor}`}>
                   {opt}
-                </a>
+                </button>
             ))}
           </div>
+          <Arrow backgroundColor={`rgb(33,41,54)`} {...arrowProps} />
         </div>
       )}
     </div>

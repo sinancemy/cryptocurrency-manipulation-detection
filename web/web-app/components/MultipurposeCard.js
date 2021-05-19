@@ -18,7 +18,7 @@ export const MultipurposeCard = ({ children, badgeColor, colorizer = () => defau
                     bg-${colorizer()} hover:bg-${hoverColorizer()}`}>
       <div className={`w-1.5 absolute left-0 top-0 bottom-0 bg-${badgeColor} rounded-l`}></div>
       <div className={`flex-grow ml-1.5 flex flex-row ${aligned && 'items-center'} overflow-hidden`}>
-        <div class="flex-none">
+        <div className="flex-none">
             { left && left.props.children }
         </div>
         <div className="flex-grow flex-shrink overflow-hidden">
