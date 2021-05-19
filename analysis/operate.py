@@ -101,5 +101,3 @@ def _example_train():
 
     train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
     model.save()
-
-_example_train()
