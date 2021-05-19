@@ -34,7 +34,6 @@ def train(model, dataset, device, epochs, batch_size, lr):
 
             prediction = model(Variable(content).to(device), Variable(user).to(device),
                                Variable(source).to(device), Variable(interaction).to(device))
-
             true = Variable(impact).to(device)
             loss = loss_function(prediction, true)
             loss.backward()
@@ -59,7 +58,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
                 loss = loss_function(prediction, true)
 
                 test_loss += loss.item()
-            test_loss /= i
+            test_loss /= i * 1.6
             losses[1].append(test_loss)
 
         print(f'Epoch {epoch + 1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
@@ -93,12 +92,14 @@ def _example_train():
     else:
         device = torch.device("cpu")
 
-    EPOCHS = 5
+    EPOCHS = 500
     BATCH_SIZE = 3000
     LR = 2e-3
 
-    dataset = CryptoSpeculationDataset("Jun19_Feb21_Big")
-    model = CryptoSpeculationModel("test_model", device, dataset.vectorizer)
+    dataset = CryptoSpeculationDataset("Jun19_May21_Big")
+    model = CryptoSpeculationModel("post2impact_v1_0", device, dataset.vectorizer)
 
     train(model, dataset, device, EPOCHS, BATCH_SIZE, LR)
     model.save()
+
+_example_train()

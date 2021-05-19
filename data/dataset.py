@@ -42,7 +42,7 @@ class CryptoSpeculationDataset(Dataset):
                 # Update the coin type of each collector.
                 self.data_reader.update_coin_type(coin=coin_type)
                 # Collect or read from the database.
-                new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 56)
+                new_posts, prices[coin_type] = self.data_reader.read(time_range, price_window=60 * 60 * 24 * 15)
                 posts += new_posts
 
             self.data_points = list()
@@ -149,7 +149,7 @@ class CryptoSpeculationDataPoint:
             vectorizer = kwargs["vectorizer"]
             self.X = CryptoSpeculationX(post=post, vectorizer=vectorizer)
             self.y = CryptoSpeculationY(prices=list(filter(
-                lambda price: TimeRange(post.time - 60 * 60 * 24 * 56, post.time + 60 * 60 * 24 * 56).in_range(
+                lambda price: TimeRange(post.time - 60 * 60 * 24 * 15, post.time + 60 * 60 * 24 * 15).in_range(
                     price.time), prices)))
         elif len(kwargs) == 6:
             self.X = CryptoSpeculationX(content=kwargs["content"], user=kwargs["user"],
@@ -220,13 +220,13 @@ def _collect_dataset():
     from data.collector.reddit import ArchivedRedditCrawler
     from data.collector.twitter import TwitterCrawler
 
-    dataset = CryptoSpeculationDataset("Jun19_Feb21_Big", social_media_crawlers=[
-        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 2000, 'score': '>4'}),
-        TwitterCrawler()],
+    print("Collecting dataset")
+    dataset = CryptoSpeculationDataset("Jun19_May21_Big", social_media_crawlers=[
+        ArchivedRedditCrawler(interval=60 * 60 * 24 * 7, api_settings={'limit': 1000, 'score': '>7'}),
+        TwitterCrawler(only_users=True)],
                                        price_crawler=YahooPriceCrawler(resolution="1h"),
                                        coin_types=[CoinType.btc, CoinType.eth, CoinType.doge, CoinType.ada,
                                                    CoinType.link, CoinType.ltc, CoinType.omg,
                                                    CoinType.xlm, CoinType.xrp],
-                                       time_range=TimeRange(1559347200, 1612137600))
+                                       time_range=TimeRange(1560556800, 1619827200))
     dataset.save()
-

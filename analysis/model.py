@@ -21,7 +21,7 @@ class Swish(nn.Module):
 
 class CryptoSpeculationModel(nn.Module):
     def __init__(self, name, device, vectorizer, embed_dims=[72, 32, 8, 4], lstm_hidden_dim=32, lstm_layers=2,
-                 lstm_out_dim=1024, fc_dims=[512, 128, 32], out_dim=4, batch_size=1024, dropout=0.1):
+                 lstm_out_dim=1024, fc_dims=[512, 128, 32], out_dim=4, batch_size=1024, dropout=0.55):
         domain_sizes = vectorizer.domain_sizes()
         lstm_length = vectorizer.domains[0].max_sentence_length
 

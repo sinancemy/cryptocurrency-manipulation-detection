@@ -87,7 +87,7 @@ def _example_pull_request():
     """
     An example pull request for reference and debugging purposes.
     """
-    plt.plot(list(pull_coin_history(CoinType.doge, TimeRange(1497398400, 1614556800), "1d")["Price"]))
+    plt.plot(list(pull_coin_history(CoinType.doge, TimeRange(1559347200, 1612137600), "1h")["Price"]))
     plt.show()
 
 # print(pull_coin_history(CoinType.BTC, TimeRange(1609459200, 1614556800), "1h"))

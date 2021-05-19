@@ -13,17 +13,18 @@ def analyze_trends(price_list):
     should be included in the list.
     :return: EMA8, SMA13, SMA21, SMA55 slopes of the given price_list centered at the middle of the list.
     """
-    df = pd.DataFrame([price.price for price in price_list], index=[price.time for price in price_list])
+    price_list = [(price.price, price.time) for price in price_list]
+    df = pd.DataFrame([price[0] for price in price_list], index=[price[1] for price in price_list])
 
     try:
-        ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 8, False)), 8 * 24),
-                      _get_time_window_range(df, 8, True))
-        sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 13, False)), 13 * 24),
-                       _get_time_window_range(df, 13, True))
-        sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 21, False)), 21 * 24),
-                       _get_time_window_range(df, 21, True))
-        sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 55, False)), 55 * 24),
-                       _get_time_window_range(df, 55, True))
+        ema8 = _slope(_exponential_moving_average(_select_time_range(df, _get_time_window_range(df, 1, False)), 1 * 24),
+                      _get_time_window_range(df, 1, True))
+        sma13 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 3, False)), 3 * 24),
+                       _get_time_window_range(df, 3, True))
+        sma21 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 5, False)), 5 * 24),
+                       _get_time_window_range(df, 5, True))
+        sma55 = _slope(_simple_moving_average(_select_time_range(df, _get_time_window_range(df, 14, False)), 14 * 24),
+                       _get_time_window_range(df, 14, True))
     except Exception:
         return 0.0, 0.0, 0.0, 0.0
 
@@ -88,15 +89,13 @@ def _example():
     print("SMA55 Slope: ", sma55)
     plt.plot(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h")[["Price"]], label="BTC/USD")
     plt.plot(
-        _exponential_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 8 * 24),
+        _exponential_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 1 * 24),
         label="EMA8")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 13 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 3 * 24),
              label="SMA13")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 21 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 5 * 24),
              label="SMA21")
-    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 55 * 24),
+    plt.plot(_simple_moving_average(pull_coin_history(CoinType.btc, TimeRange(1577836800, 1587340800), "1h"), 14 * 24),
              label="SMA55")
     plt.legend(loc='lower left', frameon=False)
     plt.show()
-
-# _example()
