@@ -58,7 +58,7 @@ def train(model, dataset, device, epochs, batch_size, lr):
                 loss = loss_function(prediction, true)
 
                 test_loss += loss.item()
-            test_loss /= i * 1.6
+            test_loss /= i
             losses[1].append(test_loss)
 
         print(f'Epoch {epoch + 1}: Training Loss: {training_loss:.4f}, Testing Loss: {test_loss: .4f}')
