@@ -28,9 +28,6 @@ export default function Nav() {
         <Link href="/dashboard">Dashboard</Link>
       </div>
       <div>
-        <Link href="/reports">My Reports</Link>
-      </div>
-      <div>
         <Link href="/search-coins">Coins</Link>
       </div>
       <div>
