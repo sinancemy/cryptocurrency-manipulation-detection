@@ -128,6 +128,8 @@ class PredictSet(Dataset):
 
     def __getitem__(self, index):
         x = self.X[index]
+        if x.content is None:
+            x.content = np.zeros((128))
         return (IntTensor(x.content), FloatTensor(x.user),
                 FloatTensor(x.source), FloatTensor([x.interaction]))
 

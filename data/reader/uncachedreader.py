@@ -1,5 +1,6 @@
 from sqlalchemy import func, desc
 
+from backend import api_settings
 from data.collector import Collector
 from data.database import db
 from misc import TimeRange, closed_distinct_intervals
@@ -24,10 +25,14 @@ class UncachedReader(object):
             last_collected = db.session.query(func.max(self.model.time))\
                 .filter(self.model.type == collector_state)\
                 .scalar()
-            if last_collected is not None and time_range.low > last_collected:
-                print("UncachedReader: Adjusting the time range start from", time_range.low, "to", last_collected,
+            if last_collected is None or last_collected < time_range.low:
+                if last_collected is not None and last_collected < time_range.low:
+                    new_low = last_collected
+                if last_collected is None:
+                    new_low = api_settings.GENESIS
+                print("UncachedReader: Adjusting the time range start from", time_range.low, "to", new_low,
                       "for", collector_state)
-                time_range.low = last_collected
+                time_range.low = new_low
         pre_query = self.model.query\
             .filter(self.model.time <= time_range.high)\
             .filter(self.model.time > time_range.low)\

@@ -19,3 +19,6 @@ class Collector(object):
     @staticmethod
     def get_all_sources() -> list:
         raise NotImplementedError()
+
+    def update_coin(self, coin):
+        self.settings.coin = coin

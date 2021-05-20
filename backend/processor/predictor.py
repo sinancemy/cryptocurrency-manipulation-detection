@@ -33,7 +33,7 @@ class Predictor:
 pred = Predictor("post2impact_v1_0", "Jun19_May21_Big")
 
 
-def update_impacts(time_range: TimeRange, commit=True):
+def update_post_impacts(time_range: TimeRange, commit=True):
     posts = Post.query.filter(Post.time <= time_range.high).filter(Post.time >= time_range.low).all()
     for post, prediction in tqdm(zip(posts, pred.predict(posts)), "Updating predictions..."):
         post.impact = prediction.tobytes()
