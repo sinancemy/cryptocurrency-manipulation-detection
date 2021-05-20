@@ -25,7 +25,8 @@ class UncachedReader(object):
                 .filter(self.model.type == collector_state)\
                 .scalar()
             if last_collected is not None and time_range.low > last_collected:
-                print("UncachedReader: Adjusting the time range start from", time_range.low, "to", last_collected)
+                print("UncachedReader: Adjusting the time range start from", time_range.low, "to", last_collected,
+                      "for", collector_state)
                 time_range.low = last_collected
         pre_query = self.model.query\
             .filter(self.model.time <= time_range.high)\
