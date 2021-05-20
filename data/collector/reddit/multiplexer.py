@@ -15,6 +15,9 @@ class RedditMultiplexedCrawler(Collector):
         self.archived = archived
 
     def collect(self, time_range: TimeRange) -> iter:
+        # Update the coin setting of the crawlers.
+        self.realtime.settings.coin = self.settings.coin
+        self.archived.settings.coin = self.settings.coin
         divisor = time.time() - self.settings.realtime_threshold
         archived_range, realtime_range = time_range.split(divisor)
         print("RedditMultiplexedCrawler: Archived range is", archived_range, "and realtime range is", realtime_range)

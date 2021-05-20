@@ -23,7 +23,7 @@ class RealtimeRedditCrawler(Collector):
         return ["*@reddit/" + s for s in functools.reduce(list.__add__, COIN_SUBREDDITS.values())]
 
     def collect(self, time_range: TimeRange) -> list:
-        print("RealtimeRedditCrawler: Initiated collection within", time_range)
+        print("RealtimeRedditCrawler: Initiated collection within", time_range, "with coin", str(self.settings.coin))
         posts = []
         for subreddit in COIN_SUBREDDITS[self.settings.coin]:
             posts += self.collect_posts_from_subreddit(subreddit, self.settings.coin, time_range, self.settings.limit)

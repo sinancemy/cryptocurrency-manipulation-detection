@@ -6,6 +6,7 @@ from backend import api_settings
 from backend.api_settings import GENESIS
 from backend.processor.aggregate_post_count import create_aggregate_post_counts, create_streamed_aggregate_post_counts
 from backend.processor.notification_deployment import deploy_notifications
+from backend.processor.predictor import update_impacts
 from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
 from data.collector.reddit.multiplexer import RedditMultiplexedCrawler
 from data.collector.twitter import TwitterCrawler
@@ -30,10 +31,13 @@ def collect_posts():
     print("Collect posts endpoint: Collecting new posts within", effective_time_range)
     archived_reddit_crawler = ArchivedRedditCrawler(interval=delta_time.days(1), api_settings={'limit': 2000})
     realtime_reddit_crawler = RealtimeRedditCrawler()
-    social_media_crawlers = [TwitterCrawler(), RedditMultiplexedCrawler(delta_time.days(2), realtime_reddit_crawler, archived_reddit_crawler)]
-    cached_post_readers = list(map(lambda c: UncachedReader(c, Post, save_interval=delta_time.days(10)), social_media_crawlers))
+    social_media_crawlers = [TwitterCrawler(), RedditMultiplexedCrawler(delta_time.days(2), realtime_reddit_crawler,
+                                                                        archived_reddit_crawler)]
+    cached_post_readers = list(map(lambda c: UncachedReader(c, Post, save_interval=delta_time.days(10)),
+                                   social_media_crawlers))
     new_posts = []
     for coin in COINS:
+        print("Collect posts endpoint: Switching coin to", coin.value)
         for cr in cached_post_readers:
             cr.collector.settings.coin = coin
             new_posts += cr.read_uncached(effective_time_range)
@@ -81,7 +85,7 @@ def update_posts():
     # groups = list(filter(lambda s: s.startswith("*"), get_all_sources()))
     # create_aggregate_post_impacts(coin_types, groups, effective_time_range)
     create_aggregate_post_counts(COINS, [], effective_time_range)
-    # update_impacts(new_posts)
+    update_impacts(effective_time_range)
     return "ok"
 
 

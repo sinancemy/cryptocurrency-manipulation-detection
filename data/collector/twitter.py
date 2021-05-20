@@ -69,6 +69,7 @@ class TwitterCrawler(Collector):
         lower, upper = convert_to_date(time_range)
         self.config.Since = lower
         self.config.Until = upper
+        print("TwitterCrawler: Collecting...")
         for keyword in COIN_KEYWORDS[self.settings.coin]:
             if self.settings.only_users:
                 for username in usernames:

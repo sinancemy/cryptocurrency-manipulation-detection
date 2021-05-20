@@ -30,10 +30,11 @@ class Predictor:
             yield impact
 
 
-pred = Predictor("test_model", "Jun19_Feb21_Big")
+pred = Predictor("post2impact_v1_0", "Jun19_May21_Big")
 
 
-def update_impacts(posts, commit=True):
+def update_impacts(time_range: TimeRange, commit=True):
+    posts = Post.query.filter(Post.time <= time_range.high).filter(Post.time >= time_range.low).all()
     for post, prediction in tqdm(zip(posts, pred.predict(posts)), "Updating predictions..."):
         post.impact = prediction.tobytes()
         post.avg_impact = mean(list(prediction))
