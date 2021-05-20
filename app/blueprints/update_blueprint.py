@@ -36,7 +36,7 @@ def collect_posts():
     for coin in COINS:
         for cr in cached_post_readers:
             cr.collector.settings.coin = coin
-            new_posts += cr.read_uncached(effective_time_range, save_interval=delta_time.days(10))
+            new_posts += cr.read_uncached(effective_time_range)
     return "ok"
 
 
