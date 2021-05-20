@@ -38,7 +38,7 @@ def create_source_conditions(sources: list, model) -> list:
     return source_conditions
 
 
-def prepare_post_query(model, start, end, coin_type, sources, order_by, orderable_columns, from_bound, desc, limit):
+def prepare_post_query(model, start, end, coin_type, sources, order_by, orderable_columns, from_bound, desc, limit, group_by_unique_id=False):
     query = db.session.query(model) \
         .filter(model.time >= start) \
         .filter(model.time <= end)
@@ -58,6 +58,9 @@ def prepare_post_query(model, start, end, coin_type, sources, order_by, orderabl
             query = query.order_by(model.__table__.c[order_by].desc())
         else:
             query = query.order_by(model.__table__.c[order_by])
+    # Unique id filtering for posts.
+    if group_by_unique_id:
+        query = query.group_by(model.__table__.c["unique_id"])
     return query.limit(limit)
 
 
@@ -91,7 +94,7 @@ def get_posts():
     posts = [dataclasses.asdict(p) for p in
              prepare_post_query(Post, start, end, coin_type, sources, order_by,
                                 ["interaction", "impact", "time", "user"],
-                                from_bound, desc, limit).all()]
+                                from_bound, desc, limit, group_by_unique_id=True).all()]
     # Replace the impact values by their float array representation.
     for p in posts:
         p["impact"] = list(numpy.frombuffer(p["impact"]))
@@ -99,7 +102,7 @@ def get_posts():
     # Get the streamed posts.
     streamed_posts = [dataclasses.asdict(p) for p in
                       prepare_post_query(StreamedPost, start, end, coin_type, sources, order_by,
-                                         ["time", "user"], from_bound, desc, limit).all()]
+                                         ["time", "user"], from_bound, desc, limit, group_by_unique_id=False).all()]
     for p in streamed_posts:
         p["avg_impact"] = 0
         p["impact"] = [0, 0, 0, 0]
