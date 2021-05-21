@@ -6,6 +6,7 @@ from sqlalchemy import func
 
 import misc
 from backend import api_settings
+from backend.processor.mail_deployment import Mailer
 from data.database import Trigger, Notification, db, AggregatePostCount, StreamedAggregatePostCount
 from misc import TimeRange
 
@@ -85,7 +86,7 @@ class NotificationDeployer:
         # Lookup the relevant change in the change map.
         change = self.post_count_change_map[trigger.time_window][trigger.follow.type + ":" + trigger.follow.target]
         # If the change is above the set threshold...
-        if change > trigger.threshold:
+        if change >= trigger.threshold:
             # Check if there are unread notifications that are associated with this trigger.
             has_unread = any(n.read == 0 for n in trigger.notifications)
             # Check if the e-mail notifications for this trigger are turned on.
@@ -97,21 +98,22 @@ class NotificationDeployer:
                       % (trigger.follow.target, "{:.2f}".format(change), trigger.time_window)
             notification = Notification(user_id=trigger.follow.user_id, trigger_id=trigger.id,
                                         content=message, time=int(time.time()), read=False)
-            # Add notification to the list of notifications of the trigger.
-            trigger.notifications.append(notification)
+            print("Sending a notification to user", trigger.follow.user_id)
             return notification, should_send_email
         else:
             return None, False
 
 
-def deploy_notifications(curr_time: int, coins, sources):
+def deploy_notifications(curr_time: int, coins, sources, mailer: Mailer):
     d = NotificationDeployer(coins, sources)
     d.prepare_change_map(AggregatePostCount, StreamedAggregatePostCount, curr_time)
     triggers = Trigger.query.all()
+    triggers_to_email = []
     for t in triggers:
         notification, should_send_email = d.process_trigger(t)
         if notification is not None:
             db.session.add(notification)
+            db.session.commit()
         if should_send_email:
-            pass
-            # send_email
+            triggers_to_email.append(t)
+    mailer.send_trigger_mail(triggers_to_email)

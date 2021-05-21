@@ -75,7 +75,7 @@ export default function Profile() {
               <div className={"flex flex-col items-center space-y-2"}>
                 <img style={{"border-radius": "50%"}}
                      width={64} height={64}
-                     src={"images/default-user-image.png"}
+                     src={"https://kstu.edu.tr/kstu-file/uploads/default-user-image.png"}
                 />
                 <div>
                   { username }

@@ -1,10 +1,11 @@
 import time
 
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 
 from backend import api_settings
 from backend.api_settings import GENESIS
 from backend.processor.aggregate_post_count import create_aggregate_post_counts, create_streamed_aggregate_post_counts
+from backend.processor.mail_deployment import Mailer
 from backend.processor.notification_deployment import deploy_notifications
 from backend.processor.predictor import update_post_impacts
 from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
@@ -105,5 +106,6 @@ def update_stream():
 
 @update_blueprint.route("/notifications", methods=["POST"])
 def update_notifications():
-    deploy_notifications(int(time.time()), COINS, [])
+    mailer = Mailer(current_app)
+    deploy_notifications(int(time.time()), COINS, [], mailer)
     return "ok"

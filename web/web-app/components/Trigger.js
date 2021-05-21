@@ -35,12 +35,12 @@ export const Trigger = ({ trigger }) => {
         <HiLightningBolt />
         <div>Notify when the posts increase by</div>
         <div>
-          <SimpleDropdown options={["5%", "10%", "15%", "20%"]} selected={trigger.threshold + "%"} 
+          <SimpleDropdown options={["0%", "1%", "5%", "10%", "15%", "20%", "50%"]} selected={trigger.threshold + "%"}
             setSelected={(t) => updateThreshold(t.substring(0, t.length-1))} />
         </div>
         <div>within the last </div>
         <div>
-          <SimpleDropdown options={["1h", "2h", "5h", "1d"]} selected={trigger.time_window} setSelected={updateTimeWindow} />
+          <SimpleDropdown options={["5m", "10m", "30m", "1h", "5h", "12h", "1d"]} selected={trigger.time_window} setSelected={updateTimeWindow} />
         </div>
       </div>
       <div className="text-base">

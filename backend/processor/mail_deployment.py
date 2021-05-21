@@ -14,7 +14,7 @@ class Mailer:
         app.config['MAIL_DEFAULT_SENDER'] = 'surupgroup@gmail.com'
         self.mail = Mail(app)
 
-    def deploy_mails(self, triggers: list):
+    def send_trigger_mail(self, triggers: list):
         # Get the users
         # {user: [trigger1, trigger2]}
         userTriggers = {}
@@ -42,7 +42,7 @@ class Mailer:
             content = content + ".</p><br>"
             for triggerType in userTriggers.get(user1):
                 threshold = str(triggerType.threshold)
-                window = triggerType.time_window.value
+                window = triggerType.time_window
                 content = content + "Posts about " + triggerType.follow.target.upper() + " has rised " + threshold + "% in the last " + window + "<br>"
             content = content + "<br><p>Sincerely,</p>Şurup Team"
             msg = Message(subject, recipients=[email])
