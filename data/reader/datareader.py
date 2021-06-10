@@ -2,7 +2,6 @@ import itertools
 
 from data.collector import Collector
 from data.database import Post, Price
-from data.database.aggregate_models import AggregatePostCount
 from data.reader.cachedreader import CachedReader
 from misc import CoinType, TimeRange
 from functools import reduce

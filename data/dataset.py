@@ -2,7 +2,6 @@ import os.path
 import random
 from pathlib import Path
 
-from flask import Flask
 from torch.utils.data import Dataset
 from torch import FloatTensor, IntTensor
 import numpy as np

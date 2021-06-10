@@ -5,7 +5,6 @@ from app.main_app import create_app
 from backend.app_helpers import get_all_sources
 from backend.processor.aggregate_post_count import create_aggregate_post_counts
 from backend.processor.mail_deployment import Mailer
-from backend.processor.notification_deployment import deploy_notifications
 from data.collector.reddit import ArchivedRedditCrawler, RealtimeRedditCrawler
 from data.collector.twitter import TwitterCrawler
 from data.collector.yahoo import YahooPriceCrawler

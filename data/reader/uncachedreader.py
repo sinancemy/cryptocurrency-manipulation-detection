@@ -1,4 +1,4 @@
-from sqlalchemy import func, desc
+from sqlalchemy import func
 
 from backend import api_settings
 from data.collector import Collector
