@@ -2,6 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
+import { HOST } from "./helpers";
 
 // Create the context.
 const UserContext = createContext()
@@ -30,7 +31,7 @@ const useUserProvider = () => {
 
   // Helper function.
   const fetch = useCallback((endpoint, params, then, withToken = true) => {
-    axios.post('http://127.0.0.1:5000/user/' + endpoint, {
+    axios.post(HOST + '/user/' + endpoint, {
       ...params,
       token: withToken ? cookies["token"] : null
     }).then(then)

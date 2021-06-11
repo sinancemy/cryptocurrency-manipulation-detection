@@ -3,6 +3,8 @@ import {FaBitcoin, FaEthereum, FaRedditAlien, FaTwitter} from "react-icons/fa"
 import {RiCoinFill} from "react-icons/ri"
 import {TiAt} from "react-icons/ti"
 
+export const HOST = ""
+
 const sourceColorMap = [["twitter", "blue-400"], ["reddit", "red-500"]]
 const sourceIconMap = [["twitter", <FaTwitter/>], ["reddit", <FaRedditAlien/>]]
 

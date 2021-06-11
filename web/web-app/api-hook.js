@@ -1,9 +1,10 @@
 import axios from "axios"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { HOST } from "./helpers"
 
 // Helper function.
 export const fetchFromApi = (endpoint, params, then) => {
-    axios.get("http://127.0.0.1:5000/api/" + endpoint, { params: params }).then(res => {
+    axios.get(HOST + "/api/" + endpoint, { params: params }).then(res => {
         then(res.data)
     })
 }
